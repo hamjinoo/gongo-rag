@@ -1,0 +1,4 @@
+{"id": "q001", "type": "normal", "question": "청년창업지원사업의 신청 자격은 어떻게 되나요?", "answer_span": "만 39세 이하 예비창업자 또는 창업 3년 이내 기업", "doc_id": "청년창업지원_공고.pdf", "note": "자격 유형 - 키워드 명확, BM25 유리 예상"}
+{"id": "q002", "type": "normal", "question": "지원 금액은 최대 얼마인가요?", "answer_span": "최대 1억원", "doc_id": "청년창업지원_공고.pdf", "note": "금액 유형"}
+{"id": "q003", "type": "normal", "question": "돈은 언제까지 신청해야 받을 수 있어요?", "answer_span": "2026년 7월 31일 18:00까지", "doc_id": "청년창업지원_공고.pdf", "note": "구어체 패러프레이즈 - embedding 유리 예상"}
+{"id": "q004", "type": "no_answer", "question": "이 사업에 선정되면 사무실도 제공되나요?", "answer_span": null, "doc_id": null, "note": "문서에 없는 내용 - '정보 없음'이 정답"}
