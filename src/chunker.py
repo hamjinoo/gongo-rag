@@ -33,15 +33,18 @@ def chunk_fixed(text: str, doc_id: str = "doc", chunk_size: int = 500, overlap: 
     """
     # TODO: 여기에 직접 구현
     text_data = []
-    for start in range(0, len(text), 500):
-        split_text = text[start:start+500]
+    for start in range(0, len(text), chunk_size - overlap):
+        split_text = text[start:start + chunk_size]
 
-        text_data.append(split_text)
+        chunk = {
+            "id": f"{doc_id}-{len(text_data)}",
+            "text": split_text,
+            "start": start
+        }
 
+        text_data.append(chunk)
 
-        
-        
-
+    return text_data
 
     raise NotImplementedError("chunk_fixed를 직접 구현하세요 (힌트는 docstring에)")
 
@@ -62,7 +65,28 @@ def chunk_by_paragraph(text: str, doc_id: str = "doc", max_chars: int = 800) -> 
     생각해볼 것(노트에 기록): 표가 깨진 텍스트에서 이 방식은 어떤 사고를 칠까?
     """
     # TODO: 여기에 직접 구현
-    text.split('\\n\\n').splitline()
+    text_data = text.split("\n\n")
+    chunk_paragraph = []
+
+    for idx, paragraph in enumerate(text_data):
+        clear_text = paragraph.strip()
+        if clear_text == "":
+            continue
+
+        if len(clear_text) > max_chars:
+            chunk_paragraph.extend(chunk_fixed(clear_text, chunk_size=max_chars, overlap=100))
+        else:
+            chunk = {
+                "id": f"{doc_id}-{idx}",
+                "text" : clear_text,
+                "start": idx
+            }
+            
+            chunk_paragraph.append(chunk)
+    return chunk_paragraph
+
+
+
 
     raise NotImplementedError("chunk_by_paragraph를 직접 구현하세요")
 
