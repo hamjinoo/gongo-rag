@@ -10,6 +10,7 @@ rag_answer.py — 검색 결과로 프롬프트를 조립해 LLM 답변 생성  
 """
 import os
 import sys
+import re
 from pathlib import Path
 
 # 같은 폴더의 모듈을 어디서 실행해도 import 가능하게 (배관)
@@ -17,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # ── LLM 설정 ─────────────────────────────────────────────────
 # 모델명은 바뀌니 공식 문서에서 확인. 저렴한 소형 모델이면 충분하다.
-OPENAI_MODEL = "gpt-4o-mini"
+OPENAI_MODEL = "gpt-5.4-nano"
 TEMPERATURE = 0.2   # 사실 기반 답변이므로 낮게 (02-LLM-기초.md 3번)
 
 # ── 프롬프트 템플릿 [✅ 배관 — 하지만 직접 고쳐가며 실험할 것!] ──
@@ -81,20 +82,24 @@ def answer(question: str, retrieved_chunks: list[str]) -> str:
 # ──────────────────────────────────────────────────────────────
 
 def verify_citation(answer_text: str, chunks: list[str]) -> dict:
-    """답변이 정말 근거에서 나왔는지 코드로 검사한다.
+    """답변의 숫자가 검색 근거에 실제로 존재하는지 검사한다.
 
-    왜 필요한가: 모델이 [근거 1]이라고 써놓고 실제로는 지어냈을 수 있다.
-    "근거 인용 검증은 어떻게 했나?"는 12주차 관문 질문이다.
-
-    TODO(직접 구현) — 시작은 단순하게, 단계 힌트:
-      1. "정보 없음" 답변이면 검증 통과로 처리 (검사할 주장 없음).
-      2. v1 (숫자 검사): 답변에서 숫자/금액 토큰(예: 1억, 39세, 7월 31일의 '31')을 뽑아
-         각각이 어느 chunk에든 존재하는지 확인. 숫자는 환각이 가장 위험한 부분!
-         힌트: import re; re.findall(r"\\d+", text)
-      3. v2 (선택): 답변을 문장으로 쪼개, 각 문장의 핵심 단어들이 chunk와 겹치는 비율 계산.
-      4. 반환 예: {"grounded": True/False, "missing": ["근거에 없는 숫자들"]}
+    v1은 금액·나이·날짜처럼 위험도가 높은 숫자 환각만 확인한다.
+    문장 전체의 의미가 근거에 부합하는지는 이후 평가와 사람 검토가 필요하다.
     """
-    raise NotImplementedError("verify_citation을 직접 구현하세요")
+
+    if answer_text.strip() == "정보 없음":
+        return {"grounded": True, "missing": []}
+
+    answer_without_citations = re.sub(r"\[근거\s+\d+\]", "", answer_text)
+    answer_numbers = list(dict.fromkeys(re.findall(r"\d+(?:[.,]\d+)?", answer_without_citations)))
+    evidence = "\n".join(chunks)
+    missing = [number for number in answer_numbers if number not in evidence]
+
+    return {
+        "grounded": len(missing) == 0,
+        "missing": missing
+    }
 
 
 # ──────────────────────────────────────────────────────────────
