@@ -2,8 +2,13 @@
 # 설치: pip install -r requirements.txt
 # (아래 주석 처리된 것들은 해당 주차에 주석 풀고 다시 설치)
 
+# --- 문서 입력 ---
+PyMuPDF>=1.26,<2            # 일반 PDF 텍스트 추출 + 스캔 페이지 이미지 변환
+python-docx>=1.2,<2         # DOCX 문단·표 추출
+Pillow>=11,<13              # 이미지 읽기
+pytesseract>=0.3.13,<1     # Tesseract OCR 연결 (실행 엔진은 별도 설치)
+
 # --- Week 1부터 ---
-pdfplumber>=0.11        # PDF 텍스트 추출 (표 인식이 pypdf보다 나음)
 numpy>=1.26
 
 # --- Week 4부터 (임베딩 검색) ---

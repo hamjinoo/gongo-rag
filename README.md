@@ -14,12 +14,12 @@
 
 | 영역 | 현재 구현 | 다음 단계 |
 |---|---|---|
-| 문서 처리 | PDF 텍스트 추출, 고정 길이·문단 chunking | 구조·metadata 보강 |
+| 문서 처리 | PDF·스캔 PDF·DOCX·이미지 업로드와 텍스트 추출 | 추출 결과 검수 후 색인 저장 |
 | 검색 | 직접 구현한 BM25, 한국어 SBERT 의미 검색 | Kiwi BM25 + ChromaDB + RRF |
 | 재정렬 | 미구현 | multilingual CrossEncoder, 필요 시 Cohere 비교 |
 | 답변 | LLM prompt, 숫자 근거 일치 검사, `정보 없음` 처리 | LangGraph 재검색·거절 흐름 |
 | 평가 | 골든셋 36문항, Hit@k, no-answer 평가 | dev/test 분리 + Ragas |
-| 서비스 | Streamlit 데모 | FastAPI + Docker |
+| 서비스 | Streamlit 문서 업로드·추출·질문 데모 | FastAPI + Docker |
 
 현재 BM25 Hit@3의 탐색용 결과는 일반 질문 기준 **16/30(53.3%)**입니다. 골든셋을 dev/test로 나누기 전 수치이므로 최종 성능이나 모델 간 공정 비교 결과로 사용하지 않습니다.
 
@@ -27,7 +27,7 @@
 
 ```mermaid
 flowchart LR
-    A["공고문 PDF"] --> B["텍스트 추출"]
+    A["PDF · DOCX · 이미지"] --> B["텍스트 추출 · 필요한 페이지만 OCR"]
     B --> C["Chunking"]
     C --> D["BM25 검색"]
     C --> E["SBERT 의미 검색"]
@@ -56,9 +56,25 @@ python tests\test_chunker.py
 python tests\test_bm25.py
 python tests\test_evaluate.py
 python tests\test_rag_answer.py
+python tests\test_document_ingestion.py
+python tests\test_document_upload_ui.py
 ```
 
 검색 결과만 확인할 때는 API 키가 없어도 됩니다.
+
+### 파일을 올려 글자로 바꾸기
+
+```powershell
+streamlit run app.py
+```
+
+브라우저의 `1. 문서 넣기` 탭에서 일반 PDF, 스캔 PDF, DOCX, 이미지를
+올릴 수 있습니다. 일반 PDF와 DOCX는 바로 읽고, 스캔 PDF와 이미지는
+Tesseract OCR로 한국어와 영어를 읽습니다. OCR 엔진 설치와 파일별 제한은
+[문서 입력 안내](docs/INGESTION.md)에 정리되어 있습니다.
+
+이번 단계에서는 추출 결과를 미리 보고 TXT로 받는 데까지 지원합니다.
+업로드한 내용을 ChromaDB 검색 색인에 자동 저장하는 일은 다음 단계입니다.
 
 ```powershell
 python src\rag_answer.py "신청 자격이 어떻게 되나요?"
@@ -83,13 +99,13 @@ streamlit run app.py
 
 ```text
 gongo-rag/
-├── app.py                 # Streamlit 데모
+├── app.py                 # 업로드·추출·질문 Streamlit 데모
 ├── data/                  # 골든셋
 ├── docs/raw/              # 원본 공고문 PDF
 ├── docs/text/             # 추출 텍스트
 ├── experiments/           # 비교 실험과 결정 기록
 ├── notes/                 # 관찰 기록
-├── src/                   # 추출·chunking·검색·답변·평가
+├── src/                   # 문서 추출·chunking·검색·답변·평가
 └── tests/                 # 핵심 로직 자가 검증
 ```
 
@@ -97,11 +113,11 @@ gongo-rag/
 
 ## 다음 마일스톤
 
-1. 골든셋 검토 및 dev/test 고정
-2. BM25·embedding 기준선 결과 저장
-3. LangChain 공통 문서 모델과 ChromaDB 연결
-4. Kiwi BM25 + dense 검색을 RRF로 결합
-5. CrossEncoder reranking 전후 성능·지연 비교
-6. LangGraph 재검색·거절 흐름 구현
-7. Ragas·수동 검토를 포함한 평가표 작성
-8. FastAPI·Docker와 재현 가능한 실행 환경 제공
+1. 업로드한 추출 결과를 확인하고 chunk로 나누기
+2. LangChain 공통 문서 모델과 ChromaDB에 저장하기
+3. 골든셋을 dev/test로 나누고 BM25·embedding 기준선 고정하기
+4. Kiwi BM25 + dense 검색을 RRF로 결합하기
+5. CrossEncoder reranking 전후 성능·지연 비교하기
+6. LangGraph 재검색·거절 흐름 구현하기
+7. Ragas·수동 검토를 포함한 평가표 작성하기
+8. FastAPI·Docker와 재현 가능한 실행 환경 제공하기
