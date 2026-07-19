@@ -71,7 +71,7 @@ streamlit run app.py
 브라우저의 `1. 문서 넣기` 탭에서 일반 PDF, 스캔 PDF, DOCX, 이미지를
 올릴 수 있습니다. 일반 PDF와 DOCX는 바로 읽고, 스캔 PDF와 이미지는
 Tesseract OCR로 한국어와 영어를 읽습니다. OCR 엔진 설치와 파일별 제한은
-[문서 입력 안내](docs/INGESTION.md)에 정리되어 있습니다.
+[1번 작업: 파일 속 글자 꺼내기](docs/INGESTION.md)에 쉽게 정리되어 있습니다.
 
 이번 단계에서는 추출 결과를 미리 보고 TXT로 받는 데까지 지원합니다.
 업로드한 내용을 ChromaDB 검색 색인에 자동 저장하는 일은 다음 단계입니다.
