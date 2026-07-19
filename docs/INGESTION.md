@@ -70,6 +70,12 @@ $env:TESSERACT_CMD = "C:\Program Files\Tesseract-OCR\tesseract.exe"
 tesseract --list-langs
 ```
 
+언어 파일을 사용자 폴더에 따로 설치했다면 그 위치도 알려줍니다.
+
+```powershell
+$env:TESSDATA_PREFIX = "$env:LOCALAPPDATA\Tesseract-OCR\tessdata"
+```
+
 목록에 `kor`와 `eng`가 모두 보이면 한국어+영어 OCR 준비가 끝난 것입니다.
 앱의 `추출 설정`에서도 준비 상태를 바로 확인할 수 있습니다.
 
