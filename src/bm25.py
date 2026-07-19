@@ -154,7 +154,6 @@ class BM25:
 
         return sorted(results, key=lambda x: x[1], reverse=True)[:k]
     
-    
 # ──────────────────────────────────────────────────────────────
 # 완성 배관: 손계산 예제 데모 (BM25-완전정복.md의 코퍼스와 동일)
 # 실행:  python src\bm25.py

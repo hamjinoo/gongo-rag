@@ -7,14 +7,14 @@ pdfplumber>=0.11        # PDF 텍스트 추출 (표 인식이 pypdf보다 나음
 numpy>=1.26
 
 # --- Week 4부터 (임베딩 검색) ---
-# sentence-transformers>=3.0   # 문장 임베딩. 최초 실행 시 모델 ~400MB 자동 다운로드
-# openai>=1.40                 # LLM 답변 생성용 (또는 anthropic — rag_answer.py 주석 참고)
+sentence-transformers>=3.0   # 문장 임베딩. 최초 실행 시 모델 ~400MB 자동 다운로드
+openai>=1.40                 # LLM 답변 생성용 (또는 anthropic — rag_answer.py 주석 참고)
 
 # --- Week 6부터 (한국어 형태소 분석 실험) ---
 # kiwipiepy>=0.18
 
-# --- Week 11 (데모 UI) ---
-# streamlit>=1.36
+# --- 데모 UI ---
+streamlit>=1.36
 
 # --- 테스트 (선택 — 테스트 파일은 pytest 없이 python으로도 실행됨) ---
 # pytest>=8.0

@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+# [배관] 윈도우 콘솔/파이프에서 ✅ 이모지 출력이 UnicodeEncodeError로 죽는 것 방지 (채점과 무관)
+sys.stdout.reconfigure(encoding="utf-8")
 
 from chunker import chunk_fixed, chunk_by_paragraph  # noqa: E402
 

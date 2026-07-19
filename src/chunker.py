@@ -46,8 +46,6 @@ def chunk_fixed(text: str, doc_id: str = "doc", chunk_size: int = 500, overlap: 
 
     return text_data
 
-    raise NotImplementedError("chunk_fixed를 직접 구현하세요 (힌트는 docstring에)")
-
 
 def chunk_by_paragraph(text: str, doc_id: str = "doc", max_chars: int = 800) -> list[dict]:
     """방식 2: 문단(빈 줄) 기반. 의미 단위를 존중하는 방식.
@@ -84,11 +82,6 @@ def chunk_by_paragraph(text: str, doc_id: str = "doc", max_chars: int = 800) -> 
             
             chunk_paragraph.append(chunk)
     return chunk_paragraph
-
-
-
-
-    raise NotImplementedError("chunk_by_paragraph를 직접 구현하세요")
 
 
 # ──────────────────────────────────────────────────────────────
