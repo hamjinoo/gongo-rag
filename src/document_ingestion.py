@@ -219,7 +219,7 @@ class TesseractOCRBackend:
                 return pytesseract.image_to_string(
                     rgb_image,
                     lang=language,
-                    config="--oem 1 --psm 3",
+                    config="--oem 1 --psm 4",
                     timeout=timeout_seconds,
                 )
         except RuntimeError as exc:
