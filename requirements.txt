@@ -13,6 +13,7 @@ psutil>=7,<8                # reranker 모델 로드·추론 프로세스 메모
 
 # --- 한국어 의미 검색·재정렬 ---
 sentence-transformers>=5.6,<6  # 로컬 embedding·CrossEncoder 모델 실행
+cohere>=7,<8                   # 선택: 관리형 Cohere Rerank API 비교
 langchain-core>=1.4,<2         # Document와 Embeddings 표준 인터페이스
 langchain-huggingface>=1.2,<2  # HuggingFaceEmbeddings 연결
 langchain-chroma>=1.1,<2       # LangChain용 Chroma vector store
