@@ -1,0 +1,708 @@
+{
+  "metadata": {
+    "generated_at_utc": "2026-07-20T12:11:58.966419+00:00",
+    "split": "dev",
+    "systems": [
+      "reranker"
+    ],
+    "ks": [
+      1,
+      3,
+      5
+    ],
+    "golden_path": "data\\golden_set.jsonl",
+    "golden_sha256": "040454e92e3bf4e10544f3a0c2688e37aa851d4edfcad8dbe5c823183f047e8f",
+    "question_counts": {
+      "total": 23,
+      "normal": 20,
+      "no_answer": 3
+    },
+    "documents": [
+      {
+        "filename": "2026년 글로벌 IP스타기업 육성 사업 공고문.txt",
+        "sha256": "0bc7ebd932e460daaae6ab281a7d8a34915f85458a0303733b6ce81badd6d9cb"
+      },
+      {
+        "filename": "2026년 중소기업AI훈련확산센터 추가모집 공고문.txt",
+        "sha256": "e91c0bd83ff8d8c3f2711f437f2dd4a641768e77392caa2b3cca62e539804919"
+      },
+      {
+        "filename": "붙임 1. 2026년 글로벌화 사전검증 지원사업 참여기업 모집 공고.txt",
+        "sha256": "3fa2ee4d25faa54dba3b4a4c533fb51b94f6faa91f78321bf4bdaccc7527af0b"
+      }
+    ],
+    "chunking": {
+      "strategy": "paragraph",
+      "chunk_size": 700,
+      "overlap": 120,
+      "chunk_count": 38
+    },
+    "retrieval": {
+      "bm25_tokenizer": "kiwi",
+      "embedding_model": "intfloat/multilingual-e5-small",
+      "rrf_rank_constant": 60,
+      "rrf_fetch_k": 20,
+      "reranker_model": "BAAI/bge-reranker-v2-m3",
+      "reranker_candidates": 5,
+      "reranker_batch_size": 2,
+      "reranker_max_length": 512
+    },
+    "note": "검색 평가는 normal 문항만 사용합니다. no_answer는 최종 답변의 거절 평가에서 별도로 사용합니다."
+  },
+  "systems": [
+    {
+      "system_name": "Reranker",
+      "split": "dev",
+      "question_count": 20,
+      "ks": [
+        1,
+        3,
+        5
+      ],
+      "hit_rates": {
+        "hit@1": 0.75,
+        "hit@3": 0.9,
+        "hit@5": 0.9
+      },
+      "mrr": 0.825,
+      "ndcg": {
+        "ndcg@1": 0.75,
+        "ndcg@3": 0.820703647568304,
+        "ndcg@5": 0.820703647568304
+      },
+      "mean_latency_ms": 3252.4895300040953,
+      "p95_latency_ms": 3459.933700039983,
+      "misses@5": [
+        "q028",
+        "q031"
+      ],
+      "cases": [
+        {
+          "question_id": "q001",
+          "question": "글로벌화 사전검증 사업은 대전의 어떤 기업이 신청할 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3237.9924999549985,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q002",
+          "question": "대전에 있는 AI 스타트업도 해외 실증이 가능하면 지원 대상인가요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c2",
+            "e91c0bd83ff8-p1-c6"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0"
+          ],
+          "relevant_ranks": [
+            2
+          ],
+          "first_relevant_rank": 2,
+          "reciprocal_rank": 0.5,
+          "latency_ms": 3378.4752000356093,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.6309297535714575,
+            "ndcg@5": 0.6309297535714575
+          }
+        },
+        {
+          "question_id": "q004",
+          "question": "글로벌화 사전검증 지원사업은 기업을 몇 곳 정도 선정하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c3"
+          ],
+          "relevant_ranks": [
+            2
+          ],
+          "first_relevant_rank": 2,
+          "reciprocal_rank": 0.5,
+          "latency_ms": 3338.1829999852926,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.38685280723454163,
+            "ndcg@5": 0.38685280723454163
+          }
+        },
+        {
+          "question_id": "q005",
+          "question": "북미에서 PoC를 진행할 현지 수요처나 협력기관도 연결해 주나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c1",
+            "e91c0bd83ff8-p1-c14"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c3"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3261.59990002634,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q007",
+          "question": "신청서는 어디로 보내면 돼요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c2",
+            "e91c0bd83ff8-p1-c3",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c4"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3231.8928000167944,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q008",
+          "question": "제출할 회사 소개자료는 한국어 자료만 준비하면 되나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c6",
+            "3fa2ee4d25fa-p1-c3",
+            "e91c0bd83ff8-p1-c18"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c5"
+          ],
+          "relevant_ranks": [
+            1,
+            2
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3165.945600019768,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q010",
+          "question": "사업이 끝난 뒤에도 성과 자료 제출 요청에 몇 년 동안 응해야 하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c6",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c7",
+            "e91c0bd83ff8-p1-c3"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c6"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3054.7271000104956,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q013",
+          "question": "글로벌 IP스타기업 육성사업에는 어떤 기업이 신청할 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c3"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c0"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3459.933700039983,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q014",
+          "question": "선정되면 지식재산권 지원을 몇 년 동안 받을 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c0"
+          ],
+          "relevant_ranks": [
+            2
+          ],
+          "first_relevant_rank": 2,
+          "reciprocal_rank": 0.5,
+          "latency_ms": 3292.0798999839462,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.6309297535714575,
+            "ndcg@5": 0.6309297535714575
+          }
+        },
+        {
+          "question_id": "q016",
+          "question": "이 사업의 기업분담금 비율은 어떻게 구성되나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c1",
+            "e91c0bd83ff8-p1-c16",
+            "3fa2ee4d25fa-p1-c6",
+            "3fa2ee4d25fa-p1-c1",
+            "e91c0bd83ff8-p1-c14"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3444.4629999925382,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q017",
+          "question": "예전에 글로벌 IP스타기업을 졸업한 기업도 다시 신청할 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c10",
+            "0bc7ebd932e4-p1-c8"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3572.8503999998793,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q019",
+          "question": "글로벌 IP스타기업은 온라인에서 어떤 순서로 신청하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c10",
+            "3fa2ee4d25fa-p1-c3"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c2"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3220.7518000504933,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q020",
+          "question": "PCT 방식의 해외 특허 출원은 전체 지원한도가 얼마인가요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c4",
+            "0bc7ebd932e4-p1-c5",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c3"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c4"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3235.9161999775097,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q022",
+          "question": "AI 기업으로 인정되면 가점을 몇 점 더 받을 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c9",
+            "0bc7ebd932e4-p1-c7",
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c16"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c8"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3434.8914000438526,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q025",
+          "question": "중소기업AI훈련확산센터 추가모집에서는 몇 개 기관을 선정하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c1",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c15"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c1"
+          ],
+          "relevant_ranks": [
+            1,
+            2
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 2957.075399986934,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q027",
+          "question": "제안서 파일은 어느 이메일로 제출하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c1",
+            "e91c0bd83ff8-p1-c3",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c7",
+            "3fa2ee4d25fa-p1-c6"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c1",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c4"
+          ],
+          "relevant_ranks": [
+            1,
+            2
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 2819.1187999909744,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 0.7653606369886217,
+            "ndcg@5": 0.7653606369886217
+          }
+        },
+        {
+          "question_id": "q028",
+          "question": "AI나 스마트제조 관련 기업도 확산센터 운영기관으로 신청할 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c13"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c1",
+            "e91c0bd83ff8-p1-c2"
+          ],
+          "relevant_ranks": [],
+          "first_relevant_rank": null,
+          "reciprocal_rank": 0.0,
+          "latency_ms": 2893.1731000193395,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": false
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.0
+          }
+        },
+        {
+          "question_id": "q030",
+          "question": "기업의 AI 도입 훈련로드맵은 몇 개 기업을 대상으로 수립해야 하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c9",
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c4"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3349.509899970144,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q031",
+          "question": "문제해결형 AI 직무 훈련과정 개발 목표는 몇 개소인가요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c9",
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c11"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c4"
+          ],
+          "relevant_ranks": [],
+          "first_relevant_rank": null,
+          "reciprocal_rank": 0.0,
+          "latency_ms": 3294.261999952141,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": false
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.0
+          }
+        },
+        {
+          "question_id": "q033",
+          "question": "석사학위가 없어도 AI 분야 실무 경력만으로 훈련코치가 될 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c3"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c10"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 3406.9489000248723,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        }
+      ]
+    }
+  ]
+}
