@@ -654,7 +654,8 @@ cloud 배포를 사용합니다.
 다음 명령으로 **dev normal 20개만** 비교합니다.
 
 ```powershell
-$env:COHERE_API_KEY = "your-cohere-api-key"
+Copy-Item .env.example .env
+# .env 파일에서 COHERE_API_KEY 값만 채우기
 .venv\Scripts\python.exe src\run_retrieval_evaluation.py `
   --split dev `
   --systems reranker `
@@ -663,7 +664,6 @@ $env:COHERE_API_KEY = "your-cohere-api-key"
   --rerank-candidates 7 `
   --output experiments\reranker-model-cohere-dev.json `
   --markdown-output experiments\reranker-model-cohere-dev.md
-Remove-Item Env:COHERE_API_KEY
 ```
 
 비교 없이 “API 모델이 더 좋다” 또는 “로컬이 더 좋다”고 결론 내리지 않습니다.

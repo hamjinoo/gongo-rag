@@ -134,11 +134,13 @@ dev 결과는 [7번 작업: 같은 시험지로 검색기 성적 비교하기](d
 python src\run_retrieval_evaluation.py --split dev
 ```
 
-선택적으로 Cohere를 비교할 때만 별도 API 키를 환경 변수에 넣습니다. 키는
-`.env`, 코드, 실험 결과에 커밋하지 않습니다.
+선택적으로 Cohere를 비교할 때만 별도 API 키를 사용합니다. `.env.example`을
+`.env`로 복사하고 `COHERE_API_KEY`만 채우면 평가 CLI가 자동으로 읽습니다.
+`.env`는 git에서 제외되며 키를 코드나 실험 결과에 저장하지 않습니다.
 
 ```powershell
-$env:COHERE_API_KEY = "your-cohere-api-key"
+Copy-Item .env.example .env
+# .env 파일에서 COHERE_API_KEY 값만 채우기
 python src\run_retrieval_evaluation.py `
   --split dev `
   --systems reranker `
@@ -147,7 +149,6 @@ python src\run_retrieval_evaluation.py `
   --rerank-candidates 7 `
   --output experiments\reranker-model-cohere-dev.json `
   --markdown-output experiments\reranker-model-cohere-dev.md
-Remove-Item Env:COHERE_API_KEY
 ```
 
 무료 평가 키는 rate limit이 있으므로 품질 확인에는 쓸 수 있지만 지연 시간은

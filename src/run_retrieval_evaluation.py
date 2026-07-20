@@ -8,6 +8,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from bm25 import BM25ChunkRetriever
 from chunker import ChunkingConfig, DocumentChunk, chunk_documents
 from document_ingestion import ExtractedDocument, extract_document_from_path
@@ -619,6 +621,7 @@ def _render_changed_rank_table(
 
 def main() -> None:
     configure_utf8_console()
+    load_dotenv()
     args = parse_args()
     systems = parse_systems(args.systems)
     ks = parse_ks(args.ks)
