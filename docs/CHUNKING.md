@@ -226,22 +226,24 @@ overlap: 120자
 - [x] BM25에 새 chunk 연결
 - [x] embedding 생성
 - [x] ChromaDB 저장
-- [ ] RRF 결합
+- [x] RRF 결합
 
-## 다음 작업
+## 이후 작업
 
 Chunking 공부가 끝난 뒤 다음 순서로 진행합니다.
 
 ```text
 현재 chunk
 → BM25 검색에 연결 ✓
-→ embedding 생성
-→ ChromaDB 저장·검색
-→ BM25와 embedding 결과를 RRF로 합치기
+→ embedding 생성 ✓
+→ ChromaDB 저장·검색 ✓
+→ BM25와 embedding 결과를 RRF로 합치기 ✓
+→ CrossEncoder reranker 추가 (다음)
 ```
 
-BM25 단계는 [3번 작업: 질문과 같은 단어가 있는 조각 찾기](BM25.md)에서
-이어집니다. 이번 단계에서는 embedding과 RRF를 구현하지 않습니다.
+각 단계의 자세한 내용은 [BM25 검색](BM25.md), [Chroma 벡터 검색](VECTOR_SEARCH.md),
+[RRF 통합 검색](RRF.md)에서 이어집니다. 현재는 RRF까지 구현했고, 다음은
+CrossEncoder reranker입니다.
 
 ---
 
@@ -476,8 +478,8 @@ Document(
 )
 ```
 
-이 문서를 Chroma vector store에 전달했습니다. BM25는 같은 원본
-`DocumentChunk`를 사용하므로 다음 단계에서 공통 chunk ID로 RRF 결합합니다.
+이 문서를 Chroma vector store에 전달했습니다. BM25도 같은 원본
+`DocumentChunk`를 사용하므로 현재 구현된 RRF가 공통 chunk ID로 결과를 결합합니다.
 
 ---
 

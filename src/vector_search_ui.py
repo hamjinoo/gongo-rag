@@ -162,7 +162,7 @@ def render_vector_search(
         key=f"{key_prefix}_download_{query_key}",
     )
     st.info(
-        "다음 단계에서는 같은 chunk ID의 BM25 순위와 Chroma 순위를 RRF로 합칩니다."
+        "아래에서 같은 chunk ID의 BM25 순위와 Chroma 순위를 RRF로 합쳐볼 수 있습니다."
     )
     return results
 

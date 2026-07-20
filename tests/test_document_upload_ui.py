@@ -193,6 +193,83 @@ def test_chunked_text_can_be_searched_with_chroma_ui():
         vector_search_ui._build_vector_retriever = original_builder
 
 
+def test_chunked_text_can_be_searched_with_rrf_ui():
+    import hybrid_search_ui
+    from hybrid_search import HybridSearchResult
+
+    class FakeHybridRetriever:
+        def __init__(self, chunks):
+            self.chunks = list(chunks)
+
+        def search(self, query: str, k: int):
+            matching_chunk = next(
+                chunk for chunk in self.chunks if "최대 1억원" in chunk.text
+            )
+            return [
+                HybridSearchResult(
+                    rank=1,
+                    rrf_score=(1 / 61) + (1 / 62),
+                    chunk=matching_chunk,
+                    rank_constant=60,
+                    bm25_rank=1,
+                    bm25_score=3.2,
+                    bm25_contribution=1 / 61,
+                    vector_rank=2,
+                    vector_similarity=0.91,
+                    vector_contribution=1 / 62,
+                )
+            ]
+
+    original_builder = hybrid_search_ui._build_hybrid_retriever
+    hybrid_search_ui._build_hybrid_retriever = (
+        lambda chunks, rank_constant, fetch_k, persist_directory:
+        FakeHybridRetriever(chunks)
+    )
+    try:
+        app = open_app()
+        text = (
+            "신청 자격은 창업 3년 이내 기업입니다.\n\n"
+            "사업화 지원 금액은 최대 1억원입니다.\n\n"
+            "접수 기간은 7월 31일까지입니다.\n\n"
+        ) * 20
+
+        app.get("file_uploader")[0].upload(
+            "hybrid-search-sample.txt",
+            text.encode("utf-8"),
+            "text/plain",
+        ).run()
+        next(
+            button for button in app.button if button.label == "텍스트 추출"
+        ).click().run()
+        next(
+            button for button in app.button if button.label == "Chunk 만들기"
+        ).click().run()
+
+        query = next(
+            text_input
+            for text_input in app.text_input
+            if text_input.label == "통합 검색 질문"
+        )
+        query.set_value("돈을 얼마나 받을 수 있나요?").run()
+        next(
+            button for button in app.button if button.label == "RRF 통합 검색"
+        ).click().run()
+
+        assert not app.exception
+        assert any(
+            area.label == "RRF로 선택된 Chunk" and "최대 1억원" in area.value
+            for area in app.text_area
+        )
+        assert "BM25 RRF 기여" in [metric.label for metric in app.metric]
+        assert "Chroma RRF 기여" in [metric.label for metric in app.metric]
+        assert any(
+            button.label == "RRF 검색 결과 JSON 받기"
+            for button in app.get("download_button")
+        )
+    finally:
+        hybrid_search_ui._build_hybrid_retriever = original_builder
+
+
 if __name__ == "__main__":
     tests = [value for name, value in sorted(globals().items()) if name.startswith("test_")]
     passed = 0
