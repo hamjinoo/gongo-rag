@@ -238,12 +238,13 @@ Chunking 공부가 끝난 뒤 다음 순서로 진행합니다.
 → embedding 생성 ✓
 → ChromaDB 저장·검색 ✓
 → BM25와 embedding 결과를 RRF로 합치기 ✓
-→ CrossEncoder reranker 추가 (다음)
+→ CrossEncoder reranker 추가 ✓
+→ 고정 질문으로 단계별 검색 평가 (다음)
 ```
 
 각 단계의 자세한 내용은 [BM25 검색](BM25.md), [Chroma 벡터 검색](VECTOR_SEARCH.md),
-[RRF 통합 검색](RRF.md)에서 이어집니다. 현재는 RRF까지 구현했고, 다음은
-CrossEncoder reranker입니다.
+[RRF 통합 검색](RRF.md), [CrossEncoder 재정렬](RERANKER.md)에서 이어집니다.
+현재는 reranker까지 구현했고, 다음은 같은 질문으로 단계별 품질을 비교하는 평가입니다.
 
 ---
 

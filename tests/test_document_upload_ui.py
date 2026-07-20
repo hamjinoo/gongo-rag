@@ -270,6 +270,94 @@ def test_chunked_text_can_be_searched_with_rrf_ui():
         hybrid_search_ui._build_hybrid_retriever = original_builder
 
 
+def test_rrf_candidates_can_be_reranked_with_cross_encoder_ui():
+    import reranker_ui
+    from hybrid_search import HybridSearchResult
+    from reranker import RerankResult
+
+    class FakeReranker:
+        def __init__(self, chunks):
+            self.chunks = list(chunks)
+
+        def search(self, query: str, k: int):
+            matching_chunk = next(
+                chunk for chunk in self.chunks if "최대 1억원" in chunk.text
+            )
+            rrf_result = HybridSearchResult(
+                rank=2,
+                rrf_score=(1 / 62) + (1 / 63),
+                chunk=matching_chunk,
+                rank_constant=60,
+                bm25_rank=2,
+                bm25_score=2.8,
+                bm25_contribution=1 / 62,
+                vector_rank=3,
+                vector_similarity=0.88,
+                vector_contribution=1 / 63,
+            )
+            return [
+                RerankResult(
+                    rank=1,
+                    reranker_score=0.97,
+                    rrf_result=rrf_result,
+                    model_name="test-cross-encoder",
+                )
+            ]
+
+    original_builder = reranker_ui._build_reranker
+    reranker_ui._build_reranker = (
+        lambda chunks, rank_constant, rrf_fetch_k, rerank_candidate_k,
+        model_name, batch_size, max_length, persist_directory:
+        FakeReranker(chunks)
+    )
+    try:
+        app = open_app()
+        text = (
+            "신청 자격은 창업 3년 이내 기업입니다.\n\n"
+            "사업화 지원 금액은 최대 1억원입니다.\n\n"
+            "접수 기간은 7월 31일까지입니다.\n\n"
+        ) * 20
+
+        app.get("file_uploader")[0].upload(
+            "reranker-sample.txt",
+            text.encode("utf-8"),
+            "text/plain",
+        ).run()
+        next(
+            button for button in app.button if button.label == "텍스트 추출"
+        ).click().run()
+        next(
+            button for button in app.button if button.label == "Chunk 만들기"
+        ).click().run()
+
+        query = next(
+            text_input
+            for text_input in app.text_input
+            if text_input.label == "재정렬 질문"
+        )
+        query.set_value("돈을 얼마나 받을 수 있나요?").run()
+        next(
+            button for button in app.button
+            if button.label == "CrossEncoder 재정렬"
+        ).click().run()
+
+        assert not app.exception
+        assert any(
+            area.label == "재정렬된 Chunk" and "최대 1억원" in area.value
+            for area in app.text_area
+        )
+        metric_labels = [metric.label for metric in app.metric]
+        assert "CrossEncoder 점수" in metric_labels
+        assert "이전 RRF 순위" in metric_labels
+        assert "순위 변화" in metric_labels
+        assert any(
+            button.label == "재정렬 결과 JSON 받기"
+            for button in app.get("download_button")
+        )
+    finally:
+        reranker_ui._build_reranker = original_builder
+
+
 if __name__ == "__main__":
     tests = [value for name, value in sorted(globals().items()) if name.startswith("test_")]
     passed = 0

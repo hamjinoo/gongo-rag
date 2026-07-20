@@ -63,7 +63,7 @@ def render_hybrid_search(
     st.subheader("5. RRF 통합 검색")
     st.caption(
         "Kiwi BM25의 단어 순위와 Chroma의 의미 순위를 점수가 아닌 순위로 합칩니다. "
-        "아직 reranker는 사용하지 않습니다."
+        "이 패널은 RRF 결과를 그대로 보여주며, 아래 패널에서 reranker와 비교합니다."
     )
 
     if not chunks:
@@ -206,7 +206,7 @@ def render_hybrid_search(
         key=f"{key_prefix}_download_{query_key}",
     )
     st.info(
-        "다음 단계에서는 RRF가 모은 후보의 본문과 질문을 함께 읽는 reranker를 추가합니다."
+        "아래에서 RRF가 모은 후보를 CrossEncoder가 직접 읽고 다시 정렬합니다."
     )
     return results
 
