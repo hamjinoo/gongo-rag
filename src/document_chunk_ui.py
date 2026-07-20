@@ -33,7 +33,7 @@ def render_document_chunking(
     st.subheader("2. 글자 나누기")
     st.caption(
         "긴 문서를 질문에 답하기 좋은 작은 조각으로 나눕니다. "
-        "아직 ChromaDB에는 저장하지 않습니다."
+        "만든 조각은 아래 BM25와 Chroma 검색에서 사용합니다."
     )
 
     if not documents:
