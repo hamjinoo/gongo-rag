@@ -1,28 +1,16 @@
-"""
-rag_answer.py — 검색 결과로 프롬프트를 조립해 LLM 답변 생성  [Week 4]
-    - 프롬프트/LLM 호출: ✅ 배관 제공 (계획서: "API 호출 코드"는 맡겨도 됨)
-    - 근거 인용 검증:   ✍️ 직접 구현
+"""검색 근거로 LLM 답변을 만들고 숫자 근거를 검사하는 공통 함수.
 
-먼저 읽기: ../../01-basics/02-LLM-기초.md (프롬프트, temperature, 환각)
-준비:      requirements.txt에서 openai 주석 해제 후 설치.
-           PowerShell에서 API 키 설정:  $env:OPENAI_API_KEY = "sk-..."
-           (영구 저장: setx OPENAI_API_KEY "sk-..."  후 터미널 재시작)
+검색·재검색·거절 전체 흐름은 ``rag_workflow.py``에서 이 함수를 사용한다.
 """
-import os
-import sys
+
 import re
-from pathlib import Path
-
-# 같은 폴더의 모듈을 어디서 실행해도 import 가능하게 (배관)
-sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # ── LLM 설정 ─────────────────────────────────────────────────
 # 모델명은 바뀌니 공식 문서에서 확인. 저렴한 소형 모델이면 충분하다.
 OPENAI_MODEL = "gpt-5.4-nano"
-TEMPERATURE = 0.2   # 사실 기반 답변이므로 낮게 (02-LLM-기초.md 3번)
+TEMPERATURE = 0.2  # 사실 기반 답변이므로 낮게 (02-LLM-기초.md 3번)
 
-# ── 프롬프트 템플릿 [✅ 배관 — 하지만 직접 고쳐가며 실험할 것!] ──
-# 규칙을 번호 목록으로 명시하는 이유: FAQ Q18
+# ── 단순 답변 프롬프트 템플릿 ────────────────────────────────
 PROMPT_TEMPLATE = """당신은 정부 지원사업 공고문 안내 도우미입니다.
 아래 [근거] 조각들만 사용해서 [질문]에 답하세요.
 
@@ -41,13 +29,14 @@ PROMPT_TEMPLATE = """당신은 정부 지원사업 공고문 안내 도우미입
 
 
 def build_context(chunks: list[str]) -> str:
-    """[✅ 배관] chunk들을 번호 붙여 프롬프트용 문자열로."""
-    return "\n\n".join(f"[근거 {i+1}]\n{c}" for i, c in enumerate(chunks))
+    """chunk들을 번호 붙여 프롬프트용 문자열로 만든다."""
+    return "\n\n".join(f"[근거 {i + 1}]\n{c}" for i, c in enumerate(chunks))
 
 
 def call_llm(prompt: str) -> str:
-    """[✅ 배관] LLM 호출. OpenAI 기본, Anthropic 대안은 아래 주석."""
+    """OPENAI_API_KEY 환경 변수를 사용하는 LLM 호출."""
     from openai import OpenAI
+
     client = OpenAI()  # 환경변수 OPENAI_API_KEY 사용
     resp = client.chat.completions.create(
         model=OPENAI_MODEL,
@@ -55,6 +44,7 @@ def call_llm(prompt: str) -> str:
         messages=[{"role": "user", "content": prompt}],
     )
     return resp.choices[0].message.content.strip()
+
 
 # --- Anthropic(Claude)을 쓰고 싶다면 (pip install anthropic, $env:ANTHROPIC_API_KEY) ---
 # def call_llm(prompt: str) -> str:
@@ -71,15 +61,17 @@ def call_llm(prompt: str) -> str:
 
 
 def answer(question: str, retrieved_chunks: list[str]) -> str:
-    """[✅ 배관] 검색 결과 → 프롬프트 조립 → 생성."""
-    prompt = PROMPT_TEMPLATE.format(context=build_context(retrieved_chunks),
-                                    question=question)
+    """검색 결과 → 프롬프트 조립 → 생성."""
+    prompt = PROMPT_TEMPLATE.format(
+        context=build_context(retrieved_chunks), question=question
+    )
     return call_llm(prompt)
 
 
 # ──────────────────────────────────────────────────────────────
-# ✍️ 직접 구현: 근거 인용 검증 (grounding check)
+# 근거 인용 검증 (grounding check)
 # ──────────────────────────────────────────────────────────────
+
 
 def verify_citation(answer_text: str, chunks: list[str]) -> dict:
     """답변의 숫자가 검색 근거에 실제로 존재하는지 검사한다.
@@ -92,53 +84,20 @@ def verify_citation(answer_text: str, chunks: list[str]) -> dict:
         return {"grounded": True, "missing": []}
 
     answer_without_citations = re.sub(r"\[근거\s+\d+\]", "", answer_text)
-    answer_numbers = list(dict.fromkeys(re.findall(r"\d+(?:[.,]\d+)?", answer_without_citations)))
+    answer_numbers = list(
+        dict.fromkeys(re.findall(r"\d+(?:[.,]\d+)?", answer_without_citations))
+    )
     evidence = "\n".join(chunks)
     missing = [number for number in answer_numbers if number not in evidence]
 
-    return {
-        "grounded": len(missing) == 0,
-        "missing": missing
-    }
+    return {"grounded": len(missing) == 0, "missing": missing}
 
 
-# ──────────────────────────────────────────────────────────────
-# 완성 배관: 전체 흐름 연결 데모 (chunker + bm25 구현 후 동작)
-# 실행: python src\rag_answer.py "신청 자격이 어떻게 되나요?"
-# ──────────────────────────────────────────────────────────────
-if __name__ == "__main__":
-    from chunker import chunk_fixed
-    from bm25 import BM25
-
-    question = sys.argv[1] if len(sys.argv) > 1 else "신청 자격이 어떻게 되나요?"
-
-    text_dir = Path(__file__).resolve().parents[1] / "docs" / "text"
-    txt_files = sorted(text_dir.glob("*.txt"))
-    if not txt_files:
-        print("docs/text/ 가 비어 있습니다. 먼저 extract_pdf.py를 실행하세요.")
-        raise SystemExit(0)
-
-    try:
-        chunks = []
-        for f in txt_files:
-            chunks += chunk_fixed(f.read_text(encoding="utf-8"), doc_id=f.stem)
-        bm25 = BM25([c["text"] for c in chunks])
-        top = bm25.search(question, k=3)
-        retrieved = [chunks[i]["text"] for i, _ in top]
-
-        print(f"질문: {question}\n")
-        for rank, (i, s) in enumerate(top, 1):
-            print(f"[근거 {rank}] (score={s:.2f}, {chunks[i]['id']}) {chunks[i]['text'][:60]!r}...")
-
-        if not os.environ.get("OPENAI_API_KEY"):
-            print("\nOPENAI_API_KEY가 없어 생성은 건너뜁니다. 검색 결과만 확인하세요.")
-            raise SystemExit(0)
-
-        ans = answer(question, retrieved)
-        print(f"\n답변:\n{ans}")
-        try:
-            print(f"\n인용 검증: {verify_citation(ans, retrieved)}")
-        except NotImplementedError:
-            print("\n(verify_citation은 아직 구현 전)")
-    except NotImplementedError as e:
-        print(f"아직 구현 전: {e} → chunker.py, bm25.py의 TODO를 먼저 완성하세요.")
+__all__ = [
+    "OPENAI_MODEL",
+    "PROMPT_TEMPLATE",
+    "answer",
+    "build_context",
+    "call_llm",
+    "verify_citation",
+]

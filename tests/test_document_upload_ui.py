@@ -57,7 +57,11 @@ def test_extracted_text_can_be_chunked_and_previewed():
     ).run()
     app.button[0].click().run()
 
-    assert [button.label for button in app.button] == ["텍스트 추출", "Chunk 만들기"]
+    assert [button.label for button in app.button] == [
+        "텍스트 추출",
+        "Chunk 만들기",
+        "근거를 찾아 답변하기",
+    ]
     app.button[1].click().run()
 
     assert not app.exception

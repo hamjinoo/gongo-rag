@@ -222,7 +222,7 @@ Chroma에서 정답 chunk 순위:
 - OCR 오류나 잘못 나눈 chunk는 embedding으로도 완전히 고칠 수 없습니다.
 - `.chroma`에 사용하지 않는 collection을 정리하는 관리 기능은 아직 없습니다.
 - BM25와 Chroma 결과는 RRF로 합치고 CrossEncoder로 재정렬합니다.
-- 재정렬 결과는 아직 최종 답변 생성에 연결하지 않았습니다.
+- 재정렬 결과는 LangGraph 최종 답변·재검색·거절 흐름에 연결했습니다.
 
 ## 4번 작업의 완료 상태
 
