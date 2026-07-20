@@ -108,7 +108,7 @@ def render_document_upload(
     if not results:
         return []
 
-    st.info("현재 단계는 텍스트 추출과 확인까지입니다. 다음 단계에서 검색 색인에 연결합니다.")
+    st.success("텍스트 추출이 끝났습니다. 아래에서 검색용 chunk로 나눌 수 있습니다.")
     for index, result in enumerate(results):
         icon = "🖼️" if result.used_ocr else "📄"
         with st.expander(f"{icon} {result.filename}", expanded=True):

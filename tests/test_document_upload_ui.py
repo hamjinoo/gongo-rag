@@ -42,6 +42,35 @@ def test_text_file_can_be_uploaded_and_previewed():
     assert any(button.label == "추출 텍스트 받기" for button in app.get("download_button"))
 
 
+def test_extracted_text_can_be_chunked_and_previewed():
+    app = open_app()
+    text = (
+        "신청 자격은 창업 3년 이내 기업입니다.\n\n"
+        "지원 금액은 최대 1억원입니다.\n\n"
+    ) * 30
+
+    app.get("file_uploader")[0].upload(
+        "long-sample.txt",
+        text.encode("utf-8"),
+        "text/plain",
+    ).run()
+    app.button[0].click().run()
+
+    assert [button.label for button in app.button] == ["텍스트 추출", "Chunk 만들기"]
+    app.button[1].click().run()
+
+    assert not app.exception
+    metric_labels = [metric.label for metric in app.metric]
+    assert "Chunk 수" in metric_labels
+    assert "평균 크기" in metric_labels
+    assert any(area.label == "Chunk 내용" and area.value for area in app.text_area)
+    assert len(app.json) == 1
+    assert any(
+        button.label == "Chunk JSON 받기"
+        for button in app.get("download_button")
+    )
+
+
 if __name__ == "__main__":
     tests = [value for name, value in sorted(globals().items()) if name.startswith("test_")]
     passed = 0
