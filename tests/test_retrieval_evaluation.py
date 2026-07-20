@@ -188,6 +188,59 @@ def test_reranker_model_experiment_artifacts_record_same_dev_conditions():
     )
 
 
+def test_final_test_artifact_records_locked_search_configuration_once():
+    payload = json.loads(
+        (
+            PROJECT_ROOT
+            / "experiments"
+            / "retrieval-evaluation-test.json"
+        ).read_text(encoding="utf-8")
+    )
+    metadata = payload["metadata"]
+    retrieval = metadata["retrieval"]
+    systems = {
+        system["system_name"]: system
+        for system in payload["systems"]
+    }
+
+    assert metadata["split"] == "test"
+    assert metadata["question_counts"] == {
+        "total": 13,
+        "normal": 10,
+        "no_answer": 3,
+    }
+    assert retrieval["reranker_provider"] == "local"
+    assert retrieval["reranker_model"] == DEFAULT_RERANKER_MODEL
+    assert retrieval["reranker_candidates"] == 7
+    assert retrieval["reranker_batch_size"] == 2
+    assert retrieval["reranker_max_length"] == 512
+    assert set(systems) == {"BM25", "Chroma", "RRF", "Reranker"}
+
+    reranker = systems["Reranker"]
+    assert reranker["hit_rates"] == {
+        "hit@1": 0.8,
+        "hit@3": 0.9,
+        "hit@5": 0.9,
+    }
+    assert reranker["mrr"] == 0.85
+    assert reranker["misses@5"] == ["q026"]
+    assert all(system["misses@5"] == ["q026"] for system in systems.values())
+
+    bm25_q026 = next(
+        case
+        for case in systems["BM25"]["cases"]
+        if case["question_id"] == "q026"
+    )
+    _, chunks = load_corpus(
+        PROJECT_ROOT / "docs" / "text",
+        chunking_config=ChunkingConfig(),
+    )
+    chunks_by_id = {chunk.id: chunk for chunk in chunks}
+    alternate_evidence = chunks_by_id[bm25_q026["returned_chunk_ids"][0]].text
+    assert "제출기간" in alternate_evidence
+    assert "26. 2. 24.(화) 18:00" in alternate_evidence
+
+
 def test_bm25_cli_writes_auditable_json_and_markdown_reports():
     with tempfile.TemporaryDirectory() as temp_dir:
         output = Path(temp_dir) / "result.json"

@@ -240,13 +240,13 @@ Chunking 공부가 끝난 뒤 다음 순서로 진행합니다.
 → BM25와 embedding 결과를 RRF로 합치기 ✓
 → CrossEncoder reranker 추가 ✓
 → 고정 질문으로 단계별 검색 평가 ✓
-→ 작은 reranker 비교·Cohere 연결 완료, API dev 비교 (다음)
+→ 작은 reranker 비교·Cohere 연결 완료, 로컬 BGE 설정 고정·test 1회 ✓
 ```
 
 각 단계의 자세한 내용은 [BM25 검색](BM25.md), [Chroma 벡터 검색](VECTOR_SEARCH.md),
 [RRF 통합 검색](RRF.md), [CrossEncoder 재정렬](RERANKER.md),
-[검색 평가](EVALUATION.md)에서 이어집니다. 현재는 dev 검색 평가까지 완료했고,
-다음은 reranker의 지연을 줄이면서 품질을 유지할 방법을 비교하는 작업입니다.
+[검색 평가](EVALUATION.md)에서 이어집니다. 현재 검색 파이프라인과 test 1회 확인까지
+완료했고, 다음은 LangGraph로 답변·재검색·정보 없음 거절 흐름을 연결하는 작업입니다.
 
 ---
 
