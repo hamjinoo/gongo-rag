@@ -27,8 +27,10 @@ from reranker import (
     DEFAULT_RERANK_CANDIDATES,
     DEFAULT_RERANK_MAX_LENGTH,
     DEFAULT_RERANKER_MODEL,
+    RERANKER_MODEL_SPECS,
     CrossEncoderReranker,
     SentenceTransformersCrossEncoderScorer,
+    get_reranker_model_spec,
 )
 from vector_search import DEFAULT_EMBEDDING_MODEL, ChromaChunkRetriever
 
@@ -101,6 +103,12 @@ def parse_args() -> argparse.Namespace:
         "--rerank-candidates",
         type=int,
         default=DEFAULT_RERANK_CANDIDATES,
+    )
+    parser.add_argument(
+        "--reranker-model",
+        choices=tuple(RERANKER_MODEL_SPECS),
+        default=DEFAULT_RERANKER_MODEL,
+        help="revision을 고정하고 검토한 로컬 reranker 모델",
     )
     parser.add_argument(
         "--rerank-batch-size",
@@ -197,6 +205,7 @@ def build_retrievers(
     rerank_candidates: int,
     rerank_batch_size: int,
     rerank_max_length: int,
+    reranker_model: str = DEFAULT_RERANKER_MODEL,
 ) -> dict[str, RankedRetriever]:
     retrievers: dict[str, RankedRetriever] = {}
     needs_hybrid = any(name in systems for name in ("rrf", "reranker"))
@@ -236,7 +245,7 @@ def build_retrievers(
         retrievers["RRF"] = hybrid
     if "reranker" in systems and hybrid is not None:
         scorer = SentenceTransformersCrossEncoderScorer(
-            model_name=DEFAULT_RERANKER_MODEL,
+            model_name=reranker_model,
             batch_size=rerank_batch_size,
             max_length=rerank_max_length,
             device="cpu",
@@ -284,7 +293,23 @@ def build_metadata(
     documents: list[ExtractedDocument],
     chunks: list[DocumentChunk],
     chunking_config: ChunkingConfig,
+    retrievers: dict[str, RankedRetriever],
 ) -> dict[str, object]:
+    reranker_spec = get_reranker_model_spec(args.reranker_model)
+    reranker_runtime: dict[str, object] = {}
+    reranker = retrievers.get("Reranker")
+    if isinstance(reranker, CrossEncoderReranker) and isinstance(
+        reranker.scorer,
+        SentenceTransformersCrossEncoderScorer,
+    ):
+        scorer = reranker.scorer
+        reranker_runtime = {
+            "model_load_seconds": scorer.model_load_seconds,
+            "model_rss_delta_mb": scorer.model_rss_delta_mb,
+            "process_rss_after_load_mb": scorer.process_rss_after_load_mb,
+            "peak_process_rss_mb": scorer.peak_process_rss_mb,
+        }
+
     return {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "split": args.split,
@@ -315,11 +340,18 @@ def build_metadata(
             "embedding_model": DEFAULT_EMBEDDING_MODEL,
             "rrf_rank_constant": DEFAULT_RANK_CONSTANT,
             "rrf_fetch_k": DEFAULT_FETCH_K,
-            "reranker_model": DEFAULT_RERANKER_MODEL,
+            "reranker_model": reranker_spec.model_name,
+            "reranker_model_revision": reranker_spec.revision,
+            "reranker_code_revision": reranker_spec.code_revision,
+            "reranker_parameter_count": reranker_spec.parameter_count,
+            "reranker_languages": reranker_spec.languages,
+            "reranker_license": reranker_spec.license_name,
+            "reranker_trust_remote_code": reranker_spec.trust_remote_code,
             "reranker_candidates": args.rerank_candidates,
             "reranker_batch_size": args.rerank_batch_size,
             "reranker_max_length": args.rerank_max_length,
         },
+        "reranker_runtime": reranker_runtime,
         "note": (
             "검색 평가는 normal 문항만 사용합니다. no_answer는 최종 답변의 "
             "거절 평가에서 별도로 사용합니다."
@@ -335,12 +367,27 @@ def render_full_markdown_report(
     question_counts = metadata["question_counts"]
     chunking = metadata["chunking"]
     retrieval = metadata["retrieval"]
+    reranker_runtime = metadata.get("reranker_runtime", {})
     if not isinstance(question_counts, dict):
         raise EvaluationError("question_counts metadata 형식이 잘못됐습니다.")
     if not isinstance(chunking, dict):
         raise EvaluationError("chunking metadata 형식이 잘못됐습니다.")
     if not isinstance(retrieval, dict):
         raise EvaluationError("retrieval metadata 형식이 잘못됐습니다.")
+    if not isinstance(reranker_runtime, dict):
+        raise EvaluationError("reranker_runtime metadata 형식이 잘못됐습니다.")
+
+    runtime_lines: list[str] = []
+    if reranker_runtime:
+        load_seconds = reranker_runtime.get("model_load_seconds")
+        rss_delta = reranker_runtime.get("model_rss_delta_mb")
+        peak_rss = reranker_runtime.get("peak_process_rss_mb")
+        if isinstance(load_seconds, (int, float)):
+            runtime_lines.append(f"- 모델 로드: {load_seconds:.2f}초")
+        if isinstance(rss_delta, (int, float)):
+            runtime_lines.append(f"- 모델 로드 RSS 증가: {rss_delta:.1f}MB")
+        if isinstance(peak_rss, (int, float)):
+            runtime_lines.append(f"- 평가 중 프로세스 최대 RSS: {peak_rss:.1f}MB")
 
     best_hit1 = max(summaries, key=lambda summary: summary.hit_rates.get(1, 0))
     fastest = min(summaries, key=lambda summary: summary.mean_latency_ms)
@@ -369,10 +416,13 @@ def render_full_markdown_report(
         ),
         (
             f"- Reranker: `{retrieval['reranker_model']}` · "
+            f"{retrieval['reranker_parameter_count'] / 1_000_000:.0f}M params · "
+            f"{retrieval['reranker_license']} · "
             f"후보 {retrieval['reranker_candidates']}개 · "
             f"batch {retrieval['reranker_batch_size']} · "
             f"max length {retrieval['reranker_max_length']}"
         ),
+        *runtime_lines,
         f"- 골든셋 SHA-256: `{metadata['golden_sha256']}`",
         "",
         "## 비교 결과",
@@ -518,6 +568,7 @@ def main() -> None:
         rerank_candidates=args.rerank_candidates,
         rerank_batch_size=args.rerank_batch_size,
         rerank_max_length=args.rerank_max_length,
+        reranker_model=args.reranker_model,
     )
     summaries = evaluate_systems(
         retrievers,
@@ -533,6 +584,7 @@ def main() -> None:
         documents=documents,
         chunks=chunks,
         chunking_config=chunking_config,
+        retrievers=retrievers,
     )
 
     output = args.output or Path(

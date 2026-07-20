@@ -342,6 +342,7 @@ CrossEncoder 점수는 `0.998472`였습니다.
 - [x] 실제 한국어 PDF 성공·실패 확인
 - [x] 고정 질문셋으로 RRF 전후 품질 평가
 - [x] 후보 10·7·5개 품질·속도 비교 후 기본값 7개 선택
+- [x] BGE와 작은 MiniLM의 품질·속도·메모리 비교
 - [ ] Cohere Rerank와 품질·비용·속도 비교
 - [ ] 최종 LLM 답변과 인용에 연결
 
@@ -380,7 +381,11 @@ vs CrossEncoder
 후보 10·7·5개를 비교해 기본값을 7개로 바꿨습니다. Hit@1은 0.80에서 0.85로
 유지·개선됐고 CPU 평균 지연은 약 6.28초에서 4.20초로 33.1% 줄었습니다.
 자세한 근거는 [reranker 후보 수 비교](../experiments/reranker-candidate-comparison-dev.md)에
-있습니다. 다음은 더 작은 로컬 모델과 Cohere를 같은 후보 7개로 비교합니다.
+있습니다. 이어서 같은 후보 7개에서 568M BGE와 118M MiniLM을 비교했습니다.
+MiniLM은 평균 약 9.8배 빨랐지만 Hit@1이 0.85에서 0.70으로 떨어져 BGE를
+기본값으로 유지했습니다. 전체 결과는
+[작은 로컬 reranker 비교](../experiments/reranker-model-comparison-dev.md)에
+있습니다. 다음은 Cohere 비교 여부를 결정하는 단계입니다.
 
 ---
 
@@ -639,7 +644,10 @@ retrieve node
 > 실패도 확인했습니다. 이후 후보 10·7·5개를 dev 20문항에서 비교했습니다.
 > 후보 5개는 정답 두 개를 잃었고, 후보 7개는 Hit@1 0.85와 MRR 0.925를 기록하면서
 > CPU 평균 latency를 약 6.28초에서 4.20초로 줄였습니다. 따라서 7개를 기본값으로
-> 선택했고, 다음은 더 작은 모델과 Cohere를 같은 조건에서 비교하는 단계입니다.
+> 선택했습니다. 같은 조건에서 568M BGE와 118M MiniLM도 비교했습니다. MiniLM은
+> 약 9.8배 빨랐지만 Hit@1이 0.85에서 0.70으로 떨어졌고 정답 한 건을 Top 5에서
+> 놓쳤습니다. 그래서 품질 우선 기본값은 BGE로 유지하고, 작은 모델은 속도 우선
+> 선택지로만 남겼습니다.
 
 ---
 
@@ -675,7 +683,9 @@ RRF는 여러 검색기의 순위를 합칩니다. reranker는 질문과 각 후
 ### Q6. 왜 이 모델을 선택했나요?
 
 한국어를 포함한 다국어 지원, reranking 목적, 로컬 실행, Apache-2.0 라이선스,
-Sentence Transformers 호환성을 기준으로 선택했습니다.
+Sentence Transformers 호환성을 기준으로 후보를 골랐습니다. 이후 작은 MiniLM과
+같은 dev 질문으로 비교했을 때 BGE의 Hit@1·MRR·Hit@5가 모두 높아 기본 모델로
+유지했습니다.
 
 ### Q7. 모델이 정답을 1위로 못 올리면 실패인가요?
 
@@ -685,7 +695,8 @@ Sentence Transformers 호환성을 기준으로 선택했습니다.
 ### Q8. 속도를 줄이려면 무엇을 하나요?
 
 후보 수와 max length를 조정하고, batch 처리, GPU, ONNX/OpenVINO, 더 작은 모델,
-관리형 API를 같은 평가셋으로 비교할 수 있습니다.
+관리형 API를 같은 평가셋으로 비교할 수 있습니다. 실제로 MiniLM은 약 9.8배
+빨랐지만 품질이 하락해 기본값으로 채택하지 않았습니다.
 
 ### Q9. 정답이 후보에 없으면 어떻게 하나요?
 
@@ -704,9 +715,9 @@ rewrite로 다시 검색해야 합니다.
 
 ### Q12. 다음 단계는 무엇인가요?
 
-후보 수는 dev 비교로 7개를 선택했습니다. 이제 더 작은 로컬 모델과 Cohere를 같은
-후보 7개로 비교합니다. 모델 설정을 잠근 뒤 test를 한 번만 실행하고, LangGraph
-답변·재검색·거절 흐름에 연결합니다.
+후보 수는 7개로 선택했고 작은 로컬 모델 비교도 마쳤습니다. 이제 Cohere를 실제로
+비교할지 비용과 문서 외부 전송까지 고려해 결정합니다. 모델 설정을 잠근 뒤 test를
+한 번만 실행하고, LangGraph 답변·재검색·거절 흐름에 연결합니다.
 
 ---
 
@@ -715,6 +726,7 @@ rewrite로 다시 검색해야 합니다.
 - [Sentence Transformers CrossEncoder 문서](https://www.sbert.net/docs/package_reference/cross_encoder/model.html)
 - [Sentence Transformers 빠른 시작: CrossEncoder](https://www.sbert.net/docs/quickstart.html#cross-encoder)
 - [BAAI bge-reranker-v2-m3 모델 카드](https://huggingface.co/BAAI/bge-reranker-v2-m3)
+- [MiniLM 다국어 CrossEncoder 모델 카드](https://huggingface.co/cross-encoder/mmarco-mMiniLMv2-L12-H384-v1)
 
 ---
 

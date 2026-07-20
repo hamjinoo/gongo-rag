@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import time
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Protocol
@@ -14,6 +15,7 @@ from hybrid_search import HybridSearchResult
 
 
 DEFAULT_RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
+SMALL_RERANKER_MODEL = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
 DEFAULT_RERANK_CANDIDATES = 7
 DEFAULT_RERANK_BATCH_SIZE = 4
 DEFAULT_RERANK_MAX_LENGTH = 512
@@ -37,6 +39,64 @@ class RerankerScoringError(RerankerError):
 
 class RerankerCandidateError(RerankerError):
     """RRF가 동일한 chunk를 중복 후보로 반환함."""
+
+
+@dataclass(frozen=True)
+class RerankerModelSpec:
+    """실험을 재현하고 원격 코드를 제한하기 위한 허용 모델 정보."""
+
+    model_name: str
+    revision: str
+    code_revision: str | None
+    trust_remote_code: bool
+    parameter_count: int
+    languages: str
+    license_name: str
+
+
+RERANKER_MODEL_SPECS = {
+    DEFAULT_RERANKER_MODEL: RerankerModelSpec(
+        model_name=DEFAULT_RERANKER_MODEL,
+        revision="953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+        code_revision=None,
+        trust_remote_code=False,
+        parameter_count=567_755_777,
+        languages="multilingual",
+        license_name="Apache-2.0",
+    ),
+    SMALL_RERANKER_MODEL: RerankerModelSpec(
+        model_name=SMALL_RERANKER_MODEL,
+        revision="1427fd652930e4ba29e8149678df786c240d8825",
+        code_revision=None,
+        trust_remote_code=False,
+        parameter_count=117_641_603,
+        languages="15 training languages; Korean zero-shot evaluation",
+        license_name="Apache-2.0",
+    ),
+}
+
+
+def get_reranker_model_spec(model_name: str) -> RerankerModelSpec:
+    """검토하고 revision을 고정한 모델만 반환한다."""
+
+    try:
+        return RERANKER_MODEL_SPECS[model_name]
+    except KeyError as exc:
+        supported = ", ".join(RERANKER_MODEL_SPECS)
+        raise RerankerModelUnavailableError(
+            f"허용되지 않은 reranker 모델입니다: {model_name}. "
+            f"지원 모델: {supported}"
+        ) from exc
+
+
+def _current_process_rss_mb() -> float | None:
+    """현재 프로세스 RSS를 반환하며 측정 의존성이 없으면 None을 반환한다."""
+
+    try:
+        import psutil
+    except ImportError:
+        return None
+    return psutil.Process().memory_info().rss / (1024 * 1024)
 
 
 class CandidateRetriever(Protocol):
@@ -96,6 +156,7 @@ def load_cross_encoder(
 
     if max_length < 1:
         raise ValueError("max_length는 1 이상이어야 합니다.")
+    spec = get_reranker_model_spec(model_name)
 
     try:
         from sentence_transformers import CrossEncoder
@@ -105,11 +166,19 @@ def load_cross_encoder(
         ) from exc
 
     try:
+        code_kwargs = (
+            {"code_revision": spec.code_revision}
+            if spec.code_revision is not None
+            else None
+        )
         return CrossEncoder(
             model_name,
             device=device,
             max_length=max_length,
-            trust_remote_code=False,
+            revision=spec.revision,
+            trust_remote_code=spec.trust_remote_code,
+            model_kwargs=code_kwargs,
+            config_kwargs=code_kwargs,
         )
     except Exception as exc:
         raise RerankerModelUnavailableError(
@@ -138,15 +207,27 @@ class SentenceTransformersCrossEncoderScorer:
         self.batch_size = batch_size
         self.max_length = max_length
         self.device = device
-        self.model = (
-            model
-            if model is not None
-            else load_cross_encoder(
+        self.model_load_seconds: float | None = None
+        self.model_rss_delta_mb: float | None = None
+        self.process_rss_after_load_mb: float | None = None
+        self.peak_process_rss_mb: float | None = None
+
+        if model is not None:
+            self.model = model
+        else:
+            rss_before = _current_process_rss_mb()
+            started = time.perf_counter()
+            self.model = load_cross_encoder(
                 model_name,
                 max_length=max_length,
                 device=device,
             )
-        )
+            self.model_load_seconds = time.perf_counter() - started
+            rss_after = _current_process_rss_mb()
+            self.process_rss_after_load_mb = rss_after
+            self.peak_process_rss_mb = rss_after
+            if rss_before is not None and rss_after is not None:
+                self.model_rss_delta_mb = max(0.0, rss_after - rss_before)
 
     def score_pairs(self, query: str, passages: list[str]) -> list[float]:
         if not passages:
@@ -166,6 +247,12 @@ class SentenceTransformersCrossEncoderScorer:
             raise RerankerScoringError(
                 f"CrossEncoder 점수 계산에 실패했습니다: {exc}"
             ) from exc
+        rss_after_predict = _current_process_rss_mb()
+        if rss_after_predict is not None:
+            self.peak_process_rss_mb = max(
+                self.peak_process_rss_mb or 0.0,
+                rss_after_predict,
+            )
 
         try:
             scores = np.asarray(raw_scores, dtype=float).reshape(-1)
