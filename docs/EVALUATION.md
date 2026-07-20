@@ -1,0 +1,730 @@
+# 7번 작업: 같은 시험지로 검색기 성적 비교하기
+
+이 문서는 두 가지 목적으로 작성했습니다.
+
+1. 처음 보는 사람도 **고정 평가 질문이 왜 필요한지** 이해하기
+2. 면접에서 Hit@k, MRR, nDCG, dev/test, latency를 설명하기
+
+---
+
+## 0. 한눈에 보기
+
+### 이번에 만든 것
+
+```text
+공고문 3개
+  ↓
+같은 Chunk 38개
+  ↓
+같은 dev 질문 20개
+  ↓
+┌────────┬────────┬────────┬──────────┐
+│ BM25   │ Chroma │ RRF    │ Reranker │
+└────────┴────────┴────────┴──────────┘
+  ↓
+Hit@1·3·5·10 + MRR + nDCG + 지연 시간
+  ↓
+문항별 첫 정답 순위와 실패 목록 저장
+```
+
+### 왜 지금 평가하나요?
+
+이제 다음 기능이 모두 있습니다.
+
+- 텍스트 추출
+- Chunking
+- BM25
+- E5 embedding과 Chroma
+- RRF
+- CrossEncoder reranker
+
+기능이 많아졌다고 좋은 RAG가 된 것은 아닙니다. 같은 질문으로 비교해야 어느 단계가
+정말 도움이 됐는지 알 수 있습니다.
+
+### 이번 단계에서 얻어야 하는 것
+
+- 고정 질문셋은 누가 만들고 왜 고정하는가?
+- 정답 Chunk를 어떻게 판정하는가?
+- Hit@k, MRR, nDCG는 각각 무엇을 보는가?
+- 품질과 속도를 왜 같이 봐야 하는가?
+- dev와 test를 왜 나누는가?
+- Ragas는 왜 검색 평가 다음에 사용하는가?
+
+---
+
+## 1. 12살도 이해할 수 있는 설명
+
+### 네 명에게 같은 시험 보기
+
+BM25, Chroma, RRF, reranker가 학생이라고 생각해 봅시다.
+
+학생마다 다른 문제를 주면 누가 더 잘하는지 알 수 없습니다.
+
+```text
+BM25에게 쉬운 문제
+Chroma에게 어려운 문제
+→ 점수를 비교할 수 없음
+```
+
+그래서 다음을 모두 같게 고정합니다.
+
+```text
+같은 공고문
+같은 Chunk
+같은 질문
+같은 정답 근거
+같은 결과 개수 k
+```
+
+이제 검색 방법만 바뀌므로 성적 차이가 어디에서 생겼는지 설명할 수 있습니다.
+
+---
+
+## 2. 고정 질문셋은 누가 만드나요?
+
+최종 책임은 **문서를 이해하는 사람**에게 있습니다.
+
+이 프로젝트에서는 다음 순서가 안전합니다.
+
+1. 사람이 실제 사용자가 물을 질문을 적습니다.
+2. 원문에서 답이 적힌 정확한 문장을 표시합니다.
+3. 답이 정말 해당 문서에 있는지 확인합니다.
+4. AI는 질문 초안, 표현 변형, 형식 검사를 도울 수 있습니다.
+5. 최종 정답 여부는 사람이 승인합니다.
+
+AI가 질문과 정답을 전부 자동으로 만들고 그대로 채점하면, AI가 잘못 만든 정답을
+기준으로 시스템을 고칠 위험이 있습니다.
+
+### 현재 골든셋
+
+```text
+공고문 3개
+전체 질문 36개
+├── 답이 있는 normal 30개
+└── 문서에 답이 없는 no-answer 6개
+```
+
+현재 문서와 Chunk를 다시 검사한 결과:
+
+- 지정한 문서 3개가 모두 존재함
+- normal 30개 정답 문장이 원문에 모두 존재함
+- 기본 Chunk 38개 안에서도 정답 문장을 모두 찾을 수 있음
+- overlap 때문에 정답 Chunk가 여러 개인 문항도 별도로 기록함
+
+즉 현재 데이터는 형식만 있는 가짜 예제가 아니라 실제 공고문과 연결된 평가셋입니다.
+
+---
+
+## 3. dev와 test는 무엇인가요?
+
+### dev
+
+개발하면서 반복해서 보는 연습 시험입니다.
+
+```text
+normal 20개
+no-answer 3개
+```
+
+Chunk 크기, 후보 수, 모델 등을 바꿀 때 dev 결과를 비교합니다.
+
+### test
+
+최종 선택이 끝난 뒤 확인하는 시험입니다.
+
+```text
+normal 10개
+no-answer 3개
+```
+
+test 결과를 계속 보면서 설정을 바꾸면 test 문제의 답에 맞춘 시스템이 됩니다.
+실제 새 질문에서도 좋은지 알기 어려워집니다.
+
+그래서 이번 작업에서는 **dev만 실행하고 test는 실행하지 않았습니다.**
+
+---
+
+## 4. 정답은 어떻게 표시하나요?
+
+한 문항은 다음 정보를 가집니다.
+
+```json
+{
+  "id": "q001",
+  "type": "normal",
+  "split": "dev",
+  "question": "대전의 어떤 기업이 신청할 수 있나요?",
+  "answer_span": "대전에 본사, 지사, 또는 기업부설연구소가 소재한 기업",
+  "doc_id": "공고문.txt",
+  "note": "지원자격 질문"
+}
+```
+
+### 왜 Chunk 번호를 정답으로 쓰지 않나요?
+
+Chunk 크기를 바꾸면 Chunk 번호가 바뀝니다.
+
+```text
+700자 Chunk에서 정답: chunk 4
+500자 Chunk로 변경: 같은 문장이 chunk 6
+```
+
+정답을 `chunk 4`로 저장하면 Chunk 실험을 할 수 없습니다.
+
+그래서 다음 두 가지로 정답을 찾습니다.
+
+- 어느 문서인가? `doc_id`
+- 어떤 원문 문장인가? `answer_span`
+
+평가를 시작할 때 현재 Chunk에서 그 문장을 포함한 Chunk ID를 다시 계산합니다.
+
+---
+
+## 5. 답이 없는 질문은 왜 검색 점수에서 빼나요?
+
+Chroma와 같은 검색기는 질문을 받으면 항상 가까운 Chunk를 반환합니다.
+
+하지만 검색 결과가 나온 것과 문서에 답이 있는 것은 다른 문제입니다.
+
+```text
+normal 질문
+→ 정답 Chunk를 몇 위에 찾았는지 평가
+
+no-answer 질문
+→ 최종 답변이 "정보 없음"이라고 거절하는지 평가
+```
+
+현재 단계는 **검색 순위 평가**이므로 normal만 사용합니다.
+no-answer 6개는 이후 LangGraph와 최종 답변 거절 평가에서 사용합니다.
+
+두 문제를 한 숫자로 섞지 않는 것이 중요합니다.
+
+---
+
+## 6. Hit@k란 무엇인가요?
+
+### Hit@1
+
+첫 번째 결과가 정답인 질문의 비율입니다.
+
+```text
+20문제 중 16문제의 1위가 정답
+Hit@1 = 16 / 20 = 0.8
+```
+
+### Hit@3
+
+상위 3개 안에 정답이 있는 질문의 비율입니다.
+
+사용자에게 근거 3개를 보여주거나 LLM에 3개를 전달한다면 중요한 값입니다.
+
+### Hit@10
+
+reranker에게 전달할 후보 10개 안에 정답이 있는지 봅니다.
+
+```text
+Hit@10이 낮음
+→ reranker가 정답을 읽을 기회조차 없음
+```
+
+---
+
+## 7. MRR은 무엇인가요?
+
+MRR은 **첫 정답이 얼마나 위에 있는지** 봅니다.
+
+```text
+정답 1위 → 1 / 1 = 1.0점
+정답 2위 → 1 / 2 = 0.5점
+정답 5위 → 1 / 5 = 0.2점
+정답 없음 → 0점
+```
+
+모든 질문의 점수를 평균냅니다.
+
+Hit@10은 1위와 10위를 모두 성공으로 보지만, MRR은 1위에 더 큰 점수를 줍니다.
+
+---
+
+## 8. nDCG는 무엇인가요?
+
+overlap 때문에 같은 정답 문장을 포함한 Chunk가 여러 개 생길 수 있습니다.
+
+nDCG는 정답 Chunk들이 위쪽에 잘 배치됐는지 봅니다.
+
+```text
+정답, 정답, 오답
+→ 높은 점수
+
+오답, 오답, 정답
+→ 더 낮은 점수
+```
+
+순위가 내려갈수록 `log2(rank + 1)`로 점수를 할인하고, 완벽한 순서의 점수로 나눠
+0과 1 사이로 정규화합니다.
+
+현재 평가는 원문 정답 문장을 포함하면 relevant, 아니면 non-relevant인
+binary relevance를 사용합니다.
+
+---
+
+## 9. 왜 지연 시간도 재나요?
+
+가장 정확한 검색기가 너무 느리면 실제 서비스에서 사용하기 어렵습니다.
+
+```text
+정확도 1% 증가
+응답 시간 100배 증가
+```
+
+이 선택이 항상 옳은 것은 아닙니다.
+
+현재는 질문별로 검색 호출 시간을 측정하고 다음을 기록합니다.
+
+- 평균 latency
+- p95 latency: 질문 95%가 이 시간 안에 끝나는 경계
+
+현재 측정값은 개발 PC의 참고값입니다. 운영 성능을 보장하지 않습니다.
+
+---
+
+## 10. 실제 dev 평가 결과
+
+실행 조건:
+
+```text
+문서 3개
+Chunk 38개
+dev normal 질문 20개
+Kiwi BM25
+multilingual-e5-small + Chroma
+RRF rank constant 60, 검색기별 후보 20개
+bge-reranker-v2-m3, RRF 후보 10개
+CPU
+```
+
+| 검색 방식 | Hit@1 | Hit@3 | Hit@5 | Hit@10 | MRR | nDCG@10 | 평균 ms | p95 ms |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| BM25 | 0.700 | 0.950 | 1.000 | 1.000 | 0.827 | 0.854 | 0.6 | 0.8 |
+| Chroma | 0.600 | 0.700 | 0.800 | 0.900 | 0.673 | 0.711 | 16.3 | 17.5 |
+| RRF | 0.600 | 0.850 | 0.900 | 1.000 | 0.734 | 0.790 | 19.2 | 23.1 |
+| Reranker | **0.800** | **1.000** | **1.000** | **1.000** | **0.900** | **0.914** | 6277.0 | 6625.4 |
+
+전체 결과:
+
+- [사람이 읽는 dev 리포트](../experiments/retrieval-evaluation-dev.md)
+- [문항별 JSON 원본](../experiments/retrieval-evaluation-dev.json)
+
+---
+
+## 11. 결과를 어떻게 해석해야 하나요?
+
+### 11-1. Reranker 품질은 가장 좋았습니다
+
+```text
+RRF Hit@1 0.60
+→ Reranker Hit@1 0.80
+
+RRF MRR 0.734
+→ Reranker MRR 0.900
+```
+
+RRF에서 정답이 낮았던 다음 문항을 reranker가 1위로 올렸습니다.
+
+| 문항 | RRF | Reranker |
+|---|---:|---:|
+| q028 | 7위 | 1위 |
+| q030 | 5위 | 1위 |
+| q031 | 6위 | 1위 |
+
+### 11-2. Reranker는 매우 느렸습니다
+
+```text
+BM25 평균 0.6ms
+Reranker 평균 6277.0ms
+```
+
+현재 CPU 기준으로 약 6.28초이므로 그대로 실시간 서비스에 사용하기에는 부담이 큽니다.
+
+다음 비교 대상:
+
+- 후보 수 10 → 5
+- GPU 또는 ONNX/OpenVINO
+- 더 작은 다국어 reranker
+- Cohere Rerank
+- 필요할 때만 reranker를 실행하는 routing
+
+### 11-3. BM25가 예상보다 강했습니다
+
+BM25는 Hit@1 0.70, Hit@10 1.00이면서 매우 빨랐습니다.
+
+현재 공고문 질문에는 날짜, 이메일, 숫자, 사업명처럼 정확한 단어가 많아 BM25가
+유리했습니다.
+
+이 결과만 보고 “항상 BM25가 Chroma보다 좋다”고 결론 내리면 안 됩니다.
+문서가 3개이고 질문 유형이 공고문 정보 검색에 집중돼 있기 때문입니다.
+
+### 11-4. Chroma 단독은 정답 두 개를 후보 10개에 넣지 못했습니다
+
+```text
+q028
+q031
+```
+
+하지만 RRF는 BM25 후보를 함께 사용해 두 문항을 모두 복구했고 Hit@10 1.00이 됐습니다.
+
+이는 현재 파이프라인에서 Chroma를 단독 검색기로 쓰기보다 BM25와 후보를 합치는 이유가
+됩니다.
+
+### 11-5. RRF의 역할은 최종 1위보다 후보 회수였습니다
+
+RRF Hit@1은 0.60으로 BM25보다 낮았지만 Hit@10은 1.00이었습니다.
+
+```text
+RRF의 현재 역할
+→ 정답을 1위로 확정하기
+아니라
+→ 여러 검색기의 정답 후보를 잃지 않고 reranker에 전달하기
+```
+
+---
+
+## 12. 지금 내릴 수 있는 결정
+
+### 유지
+
+- Kiwi BM25
+- multilingual E5 + Chroma
+- RRF 후보 결합
+- 상위 후보 CrossEncoder 재정렬
+
+### 아직 결정하지 않음
+
+- 현재 대형 로컬 reranker를 운영 기본값으로 사용할지
+- 후보를 5개로 줄일지
+- Cohere가 비용 대비 더 나은지
+- RRF weight와 rank constant를 바꿀지
+
+### 이유
+
+dev 결과는 설정을 고르는 자료입니다. 이 결과에 맞춰 여러 번 수정한 뒤 최종 성능이라고
+말하면 안 됩니다.
+
+설정을 결정한 후 test normal 10개를 한 번 실행해 확인합니다.
+
+---
+
+## 13. 실행 방법
+
+### 빠르게 BM25만 확인
+
+```powershell
+.venv\Scripts\python.exe src\run_retrieval_evaluation.py `
+  --split dev `
+  --systems bm25
+```
+
+### 네 검색기 비교
+
+```powershell
+.venv\Scripts\python.exe src\run_retrieval_evaluation.py `
+  --split dev `
+  --systems bm25,chroma,rrf,reranker `
+  --ks 1,3,5,10
+```
+
+결과는 다음 위치에 저장됩니다.
+
+```text
+experiments/retrieval-evaluation-dev.json
+experiments/retrieval-evaluation-dev.md
+```
+
+### test 실행
+
+```powershell
+.venv\Scripts\python.exe src\run_retrieval_evaluation.py --split test
+```
+
+이 명령은 설정 선택이 끝난 뒤 실행합니다.
+
+---
+
+## 14. 평가 전에 자동으로 검사하는 것
+
+- JSONL 문법
+- 중복 질문 ID
+- `normal`과 `no_answer` 외 type
+- dev/test 외 split
+- normal 문항의 빈 정답 또는 문서 ID
+- no-answer 문항에 잘못 들어간 정답
+- 지정 문서의 존재
+- 현재 Chunk에 정답 문장이 실제로 있는지
+- 검색 결과의 중복 Chunk ID
+- 검색기마다 같은 k를 사용했는지
+
+검사가 실패하면 점수를 만들지 않고 오류를 냅니다.
+
+잘못된 정답으로 그럴듯한 점수를 만드는 것보다 실행을 중단하는 편이 안전합니다.
+
+---
+
+# 면접 대비 기술 설명
+
+## 15. 현재 relevance 판정 방식
+
+normal 문항마다 다음 조건을 모두 만족하는 Chunk를 relevant로 봅니다.
+
+```text
+chunk.source_filename == question.doc_id
+그리고
+normalize(answer_span) in normalize(chunk.text)
+```
+
+문서 ID까지 확인하므로 다른 문서에 같은 숫자나 짧은 문장이 있어도 정답으로 잘못
+판정할 가능성을 줄입니다.
+
+공백과 줄바꿈은 정규화합니다. PDF 추출 과정에서 줄바꿈 위치가 달라질 수 있기
+때문입니다.
+
+---
+
+## 16. metric 공식
+
+### Hit@k
+
+```text
+Hit@k = 상위 k개 안에 정답이 있는 질문 수 / 전체 질문 수
+```
+
+### Reciprocal Rank
+
+```text
+RR = 1 / 첫 정답 순위
+```
+
+정답이 없으면 0입니다.
+
+### MRR
+
+```text
+MRR = 모든 질문 RR의 평균
+```
+
+### DCG
+
+binary relevance에서:
+
+```text
+DCG@k = Σ relevance(rank) / log2(rank + 1)
+```
+
+### nDCG
+
+```text
+nDCG@k = 실제 DCG@k / 완벽한 순서의 IDCG@k
+```
+
+---
+
+## 17. 여러 relevant Chunk 처리
+
+overlap 때문에 한 정답 문장이 두 Chunk에 들어갈 수 있습니다.
+
+이 경우:
+
+- Hit@k와 MRR은 가장 먼저 나온 정답 Chunk를 사용
+- nDCG는 반환된 relevant Chunk 전체의 순서를 반영
+
+중복 Chunk ID를 검색기가 두 번 반환하면 평가를 중단합니다.
+같은 결과를 여러 번 보여줘 nDCG를 부풀리는 일을 막기 위해서입니다.
+
+---
+
+## 18. latency 측정의 한계
+
+현재는 Python `perf_counter`로 각 `search()` 호출의 벽시계 시간을 측정합니다.
+
+포함되는 것:
+
+- query tokenization
+- query embedding
+- Chroma 조회
+- RRF
+- CrossEncoder 추론
+
+상황에 따라 포함되지 않을 수 있는 것:
+
+- 첫 모델 다운로드
+- 앱 시작 전 준비
+- 네트워크 API 지연
+- 여러 사용자의 동시 요청 queue
+
+현재 값은 단일 개발 PC와 warm cache의 참고값입니다. 운영 전에는 별도 부하 테스트가
+필요합니다.
+
+---
+
+## 19. 데이터 누수와 과적합
+
+dev 질문의 실패를 보고 설정을 바꾸는 것은 허용됩니다.
+
+test 질문의 실패를 보고 다시 설정을 바꾸면 test가 사실상 dev가 됩니다.
+
+안전한 순서:
+
+```text
+dev로 비교
+→ 설정 선택
+→ 선택을 고정
+→ test 한 번 실행
+→ 결과 보고
+```
+
+문서나 사용자 유형이 크게 바뀌면 새 test 데이터를 추가하되, 기존 결과와 새 결과를
+구분해 기록합니다.
+
+---
+
+## 20. Ragas와 이번 평가는 무엇이 다른가요?
+
+이번 평가는 정답 원문 문장과 Chunk ID를 사용하는 **결정적인 검색 평가**입니다.
+
+```text
+질문 → 검색 결과
+정답 Chunk가 몇 위인가?
+```
+
+Ragas는 이후 다음과 같은 RAG 전체 품질을 보는 데 사용합니다.
+
+- 검색된 문맥이 질문과 관련 있는가?
+- 필요한 근거를 충분히 가져왔는가?
+- 최종 답변이 근거에 충실한가?
+- 답변이 질문에 맞는가?
+
+일부 Ragas metric은 LLM 판정을 사용하므로 비용과 비결정성이 생길 수 있습니다.
+그래서 먼저 현재처럼 빠르고 설명 가능한 검색 metric을 기준선으로 둡니다.
+
+---
+
+## 21. 현재 평가의 한계
+
+- 문서가 3개뿐입니다.
+- dev normal 질문이 20개로 작습니다.
+- 질문 작성자의 표현 습관이 들어갈 수 있습니다.
+- relevance가 원문 문장 포함 여부인 binary 기준입니다.
+- 의미상 맞지만 정답 문장을 포함하지 않은 Chunk는 오답으로 처리될 수 있습니다.
+- 검색 결과가 답변에 실제로 충분한지는 아직 평가하지 않습니다.
+- latency는 개발 PC 단일 실행값입니다.
+- 통계적 신뢰구간을 계산하지 않았습니다.
+- test split은 아직 실행하지 않았습니다.
+
+이 한계를 문서에 밝히고 “Hit@1 0.8이 일반적인 모든 공고문에서 보장된다”고 말하지
+않습니다.
+
+---
+
+## 22. 30초 면접 설명
+
+> 실제 공고문 3개에서 만든 36문항 골든셋을 dev와 test로 분리하고, normal 문항은
+> answer span과 source document를 이용해 현재 Chunk ID에 다시 매핑했습니다. 같은
+> dev 20문항으로 BM25, Chroma, RRF, CrossEncoder reranker를 평가해 Hit@1·3·5·10,
+> MRR, binary nDCG와 latency를 비교했습니다. reranker가 Hit@1 0.80, MRR 0.90으로
+> 가장 좋았지만 CPU 평균 지연은 약 6.28초였습니다. BM25는 Hit@1 0.70이면서
+> 0.6ms였고, RRF는 Hit@10 1.0으로 reranker 후보 회수 역할을 확인했습니다.
+> no-answer 문항은 검색 순위와 섞지 않고 이후 답변 거절 평가에 사용합니다. dev로
+> 설정을 고른 뒤 test는 한 번만 실행할 계획입니다.
+
+---
+
+## 23. 자주 나오는 면접 질문
+
+### Q1. 골든셋은 누가 만들었나요?
+
+실제 사용자 질문을 기준으로 사람이 만들고 원문의 정답 문장을 사람이 확인합니다.
+AI는 초안과 형식 검사를 도울 수 있지만 정답의 최종 책임은 사람에게 있습니다.
+
+### Q2. 왜 Chunk ID를 정답으로 저장하지 않았나요?
+
+Chunk 크기와 overlap을 바꾸면 ID가 달라지기 때문입니다. 문서 ID와 원문 answer
+span을 저장하고 실행 시 현재 Chunk에 다시 매핑합니다.
+
+### Q3. Hit@k와 MRR의 차이는 무엇인가요?
+
+Hit@k는 k 안에 있기만 하면 성공입니다. MRR은 첫 정답이 1위에 가까울수록 더 높은
+점수를 줍니다.
+
+### Q4. nDCG를 왜 추가했나요?
+
+overlap으로 relevant Chunk가 여러 개일 수 있어, 정답들이 위쪽에 얼마나 잘
+배치됐는지 보기 위해서입니다.
+
+### Q5. 왜 no-answer를 Hit@k에서 제외했나요?
+
+검색기는 항상 후보를 반환할 수 있지만 답의 존재 여부는 별도 판단 문제입니다.
+no-answer는 최종 답변이 안전하게 거절하는지 평가할 때 사용합니다.
+
+### Q6. 왜 BM25가 Chroma보다 좋았나요?
+
+현재 질문에는 날짜, 이메일, 숫자, 사업명처럼 정확한 단어가 많았습니다. 작은
+공고문 데이터의 결과이며 다른 도메인까지 일반화하지 않습니다.
+
+### Q7. RRF가 BM25보다 Hit@1이 낮은데 왜 유지하나요?
+
+RRF는 Chroma와 BM25 후보를 합쳐 Hit@10 1.0을 만들었습니다. 현재는 최종 판정보다
+reranker가 읽을 후보를 회수하는 역할입니다.
+
+### Q8. reranker를 바로 운영에 쓰나요?
+
+품질은 가장 좋지만 CPU 평균 6초 이상이어서 그대로 결정하지 않습니다. 후보 수,
+최적화 모델, GPU, Cohere를 같은 dev 질문으로 비교해야 합니다.
+
+### Q9. test는 왜 아직 실행하지 않았나요?
+
+설정 선택 중 test 결과를 보면 test에 과적합할 수 있기 때문입니다. dev로 결정한 뒤
+고정된 설정으로 한 번 평가합니다.
+
+### Q10. 다음 단계는 무엇인가요?
+
+reranker의 품질을 유지하면서 지연을 줄일 방법과 Cohere를 비교한 뒤, 선택한 검색
+파이프라인을 LangGraph 답변·재검색·거절 흐름에 연결합니다.
+
+---
+
+## 24. 공식 참고 자료
+
+- [Stanford IR Book: ranked retrieval evaluation](https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html)
+- [scikit-learn nDCG 설명](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.ndcg_score.html)
+- [Ragas Context Precision](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/context_precision/)
+- [Ragas 사용 가능한 평가 metric](https://docs.ragas.io/en/stable/concepts/metrics/available_metrics/)
+
+---
+
+## 25. 코드 위치
+
+```text
+data/golden_set.jsonl
+  └── 질문, 정답 문장, 문서, dev/test
+
+src/evaluate.py
+  ├── 골든셋 검증
+  ├── 정답 Chunk 매핑
+  ├── Hit@k, MRR, nDCG, latency
+  └── JSON·Markdown용 결과
+
+src/run_retrieval_evaluation.py
+  ├── 문서와 Chunk 준비
+  ├── 네 검색기 구성
+  ├── dev/test 실행
+  └── experiments 리포트 저장
+
+tests/test_evaluate.py
+tests/test_retrieval_evaluation.py
+```
+
+테스트:
+
+```powershell
+.venv\Scripts\python.exe tests\test_evaluate.py
+.venv\Scripts\python.exe tests\test_retrieval_evaluation.py
+```

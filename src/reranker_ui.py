@@ -290,8 +290,8 @@ def render_reranker(
         key=f"{key_prefix}_download_{query_key}",
     )
     st.info(
-        "다음은 같은 고정 질문으로 BM25, Chroma, RRF, reranker의 순위와 속도를 "
-        "비교하는 검색 평가입니다."
+        "고정 dev 질문 비교에서는 reranker 품질이 가장 높았지만 CPU 평균 지연이 "
+        "약 6.28초였습니다. 다음은 후보 수·최적화 모델·Cohere 비교입니다."
     )
     return results
 
