@@ -58,6 +58,7 @@ class RAGState(TypedDict, total=False):
     decision_reason: str
     draft_answer: str
     rewrite_count: int
+    rewrite_changed: bool
     answer: str
     status: Literal["answered", "refused"]
     refusal_reason: str | None
@@ -265,15 +266,38 @@ def assess_evidence_with_llm(
     *,
     llm_call: Callable[[str], str] = call_evidence_judge_llm,
 ) -> EvidenceDecision:
-    """LLM이 근거 충분성을 판정하되 잘못된 형식은 fail-closed 처리한다."""
+    """LLM 판정이 실패하면 상위 근거만으로 한 번 더 보수적으로 확인한다."""
 
     if not evidence:
         return EvidenceDecision(False, "검색 결과가 없습니다.")
+
     prompt = EVIDENCE_ASSESSMENT_PROMPT.format(
         question=question,
         context=build_evidence_context(evidence),
     )
-    return parse_evidence_decision(llm_call(prompt))
+    decision = parse_evidence_decision(llm_call(prompt))
+    if decision.sufficient or len(evidence) <= 3:
+        return decision
+
+    focused_evidence = evidence[:3]
+    focused_prompt = EVIDENCE_ASSESSMENT_PROMPT.format(
+        question=question,
+        context=build_evidence_context(focused_evidence),
+    )
+    focused_decision = parse_evidence_decision(llm_call(focused_prompt))
+    if focused_decision.sufficient:
+        return EvidenceDecision(
+            sufficient=True,
+            reason=f"상위 3개 근거로 재확인: {focused_decision.reason}",
+            draft_answer=focused_decision.draft_answer,
+        )
+    return EvidenceDecision(
+        sufficient=False,
+        reason=(
+            f"전체 근거 판정: {decision.reason} "
+            f"상위 3개 재확인: {focused_decision.reason}"
+        ),
+    )
 
 
 def rewrite_query_with_llm(
@@ -456,7 +480,14 @@ class RAGWorkflow:
                 "refuse": "refuse",
             },
         )
-        builder.add_edge("rewrite_query", "retrieve")
+        builder.add_conditional_edges(
+            "rewrite_query",
+            self._route_after_rewrite,
+            {
+                "retrieve": "retrieve",
+                "refuse": "refuse",
+            },
+        )
         builder.add_edge("answer", END)
         builder.add_edge("refuse", END)
         return builder.compile()
@@ -533,11 +564,19 @@ class RAGWorkflow:
             state["question"],
             state.get("evidence", []),
         ).strip()
+        next_query = rewritten or state["question"]
         return {
-            "active_query": rewritten or state["question"],
+            "active_query": next_query,
             "rewrite_count": state.get("rewrite_count", 0) + 1,
+            "rewrite_changed": next_query != state.get("active_query", state["question"]),
             "steps": [*state.get("steps", []), "rewrite_query"],
         }
+
+    @staticmethod
+    def _route_after_rewrite(state: RAGState) -> Literal["retrieve", "refuse"]:
+        """질문이 달라졌을 때만 같은 비용의 검색을 다시 실행한다."""
+
+        return "retrieve" if state.get("rewrite_changed", False) else "refuse"
 
     def _answer(self, state: RAGState) -> dict[str, object]:
         evidence = state.get("evidence", [])

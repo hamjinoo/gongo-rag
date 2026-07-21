@@ -16,6 +16,7 @@ from rag_workflow import (  # noqa: E402
     EvidenceDecision,
     RAGWorkflow,
     RAGWorkflowConfig,
+    assess_evidence_with_llm,
     generate_answer_with_llm,
     parse_evidence_decision,
     rewrite_query_with_llm,
@@ -236,6 +237,32 @@ def test_refusal_path_stops_after_one_rewrite_when_evidence_is_still_missing():
     assert len(retriever.queries) == 2
 
 
+def test_unchanged_rewrite_does_not_repeat_the_same_expensive_search():
+    question = "어떤 사람이 신청 가능해?"
+    retriever = FakeRetriever(
+        {question: [make_result("weak", "사업 개요를 안내합니다.")]}
+    )
+    workflow = RAGWorkflow(
+        retriever,
+        judge=lambda _question, _evidence: EvidenceDecision(
+            False,
+            "신청 대상을 찾지 못했습니다.",
+        ),
+        rewriter=lambda original, _evidence: original,
+    )
+
+    response = workflow.invoke(question)
+
+    assert response.status == REFUSED
+    assert response.steps == (
+        "retrieve",
+        "assess_evidence",
+        "rewrite_query",
+        "refuse",
+    )
+    assert retriever.queries == [(question, 5)]
+
+
 def test_invalid_citation_fails_closed_instead_of_showing_answer():
     question = "지원 금액은 얼마인가요?"
     retriever = FakeRetriever(
@@ -308,6 +335,49 @@ def test_structured_decision_can_carry_answer_draft():
     )
 
     assert decision.draft_answer == "예비창업자가 신청할 수 있습니다. [근거 1]"
+
+
+def test_failed_full_judgment_retries_with_top_three_evidence():
+    evidence = [
+        {
+            "rank": rank,
+            "chunk_id": f"chunk-{rank}",
+            "text": text,
+            "source_filename": "공고문.pdf",
+            "page_label": f"페이지 {rank}",
+        }
+        for rank, text in enumerate(
+            [
+                "사업 개요",
+                "창업기업과 예비창업자가 신청할 수 있습니다.",
+                "신청 서류",
+                "상담 절차",
+                "문의처",
+            ],
+            start=1,
+        )
+    ]
+    responses = iter(
+        [
+            "형식이 잘못된 첫 응답",
+            '{"sufficient": true, "reason": "신청 대상이 있습니다.", '
+            '"draft_answer": "창업기업과 예비창업자가 신청할 수 있습니다. [근거 2]"}',
+        ]
+    )
+    prompts: list[str] = []
+
+    decision = assess_evidence_with_llm(
+        "어떤 사람이 신청 가능해?",
+        evidence,  # type: ignore[arg-type]
+        llm_call=lambda prompt: prompts.append(prompt) or next(responses),
+    )
+
+    assert decision.sufficient is True
+    assert decision.draft_answer is not None
+    assert decision.reason.startswith("상위 3개 근거로 재확인:")
+    assert len(prompts) == 2
+    assert "문의처" in prompts[0]
+    assert "문의처" not in prompts[1]
 
 
 def test_structured_query_rewrite_uses_only_query_field():
