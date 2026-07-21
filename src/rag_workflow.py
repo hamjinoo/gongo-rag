@@ -102,6 +102,7 @@ class RAGResponse:
     steps: tuple[str, ...]
     decision_reason: str
     refusal_reason: str | None
+    retrieval_trace: tuple[dict[str, object], ...] = ()
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -114,6 +115,7 @@ class RAGResponse:
             "steps": list(self.steps),
             "decision_reason": self.decision_reason,
             "refusal_reason": self.refusal_reason,
+            "retrieval_trace": [dict(attempt) for attempt in self.retrieval_trace],
         }
 
 
@@ -381,6 +383,10 @@ class RAGWorkflow:
         if not normalized_question:
             raise ValueError("question은 비어 있을 수 없습니다.")
 
+        reset_trace = getattr(self.retriever, "reset_trace", None)
+        if callable(reset_trace):
+            reset_trace()
+
         state = self.graph.invoke(
             {
                 "question": normalized_question,
@@ -400,6 +406,9 @@ class RAGWorkflow:
             steps=tuple(state.get("steps", [])),
             decision_reason=state.get("decision_reason", ""),
             refusal_reason=state.get("refusal_reason"),
+            retrieval_trace=tuple(
+                getattr(self.retriever, "retrieval_trace", ())
+            ),
         )
 
     def _retrieve(self, state: RAGState) -> dict[str, object]:

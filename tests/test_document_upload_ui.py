@@ -20,18 +20,27 @@ def open_app() -> AppTest:
     return app
 
 
+def lab_uploader(app: AppTest):
+    return next(
+        uploader
+        for uploader in app.get("file_uploader")
+        if uploader.label == "PDF, DOCX, 이미지 또는 텍스트 파일을 올려주세요."
+    )
+
+
 def test_upload_screen_renders():
     app = open_app()
 
     assert not app.exception
     assert [tab.label for tab in app.tabs] == [
-        "프로젝트 한눈에",
-        "RAG 데모",
-        "문서 실험실",
-        "평가 결과",
+        "RAG 실행",
+        "평가",
+        "세부 실험",
     ]
-    assert len(app.get("file_uploader")) == 1
+    assert len(app.get("file_uploader")) == 2
+    assert any(uploader.label == "검색할 문서 (선택)" for uploader in app.get("file_uploader"))
     assert any(button.label == "텍스트 추출" for button in app.button)
+    assert any(button.label == "전체 RAG 실행" for button in app.button)
 
 
 def test_saved_rag_response_renders_inside_existing_streamlit_app():
@@ -69,20 +78,10 @@ def test_saved_rag_response_renders_inside_existing_streamlit_app():
     app.run()
 
     assert not app.exception
-    tab_labels = [tab.label for tab in app.tabs]
-    trace_start = tab_labels.index("답변")
-    assert tab_labels[trace_start : trace_start + 4] == [
-        "답변",
-        "실행 과정",
-        "근거 검증",
-        "검색 상세",
-    ]
+    assert [tab.label for tab in app.tabs] == ["RAG 실행", "평가", "세부 실험"]
     assert any("지원사업 공고문.pdf" in block.value for block in app.markdown)
-    metric_values = {metric.label: metric.value for metric in app.metric}
-    assert metric_values["전체 소요"] == "1.23s"
-    assert metric_values["최종 근거"] == "1개"
-    assert metric_values["답변에 인용"] == "1개"
-    assert metric_values["재검색"] == "0회"
+    assert any("같은 질문의 단계별 Top-k" in block.value for block in app.markdown)
+    assert any("BM25" in block.value and "Embedding" in block.value and "RRF" in block.value and "BGE" in block.value for block in app.markdown)
     assert len(app.dataframe) >= 3
     assert build_rank_flow_rows(response)[0]["순위 변화"] == "유지"
 
@@ -91,7 +90,7 @@ def test_text_file_can_be_uploaded_and_previewed():
     app = open_app()
     expected = "지원 대상은 창업 3년 이내 기업입니다."
 
-    app.get("file_uploader")[0].upload(
+    lab_uploader(app).upload(
         "sample.txt",
         expected.encode("utf-8"),
         "text/plain",
@@ -114,18 +113,16 @@ def test_extracted_text_can_be_chunked_and_previewed():
         "지원 금액은 최대 1억원입니다.\n\n"
     ) * 30
 
-    app.get("file_uploader")[0].upload(
+    lab_uploader(app).upload(
         "long-sample.txt",
         text.encode("utf-8"),
         "text/plain",
     ).run()
     next(button for button in app.button if button.label == "텍스트 추출").click().run()
 
-    assert {button.label for button in app.button} == {
-        "텍스트 추출",
-        "Chunk 만들기",
-        "근거를 찾아 답변하기",
-    }
+    assert {"텍스트 추출", "Chunk 만들기", "전체 RAG 실행"}.issubset(
+        {button.label for button in app.button}
+    )
     next(button for button in app.button if button.label == "Chunk 만들기").click().run()
 
     assert not app.exception
@@ -148,7 +145,7 @@ def test_chunked_text_can_be_searched_with_bm25():
         "접수 기간은 7월 31일까지입니다.\n\n"
     ) * 20
 
-    app.get("file_uploader")[0].upload(
+    lab_uploader(app).upload(
         "search-sample.txt",
         text.encode("utf-8"),
         "text/plain",
@@ -222,7 +219,7 @@ def test_chunked_text_can_be_searched_with_chroma_ui():
             "접수 기간은 7월 31일까지입니다.\n\n"
         ) * 20
 
-        app.get("file_uploader")[0].upload(
+        lab_uploader(app).upload(
             "semantic-search-sample.txt",
             text.encode("utf-8"),
             "text/plain",
@@ -301,7 +298,7 @@ def test_chunked_text_can_be_searched_with_rrf_ui():
             "접수 기간은 7월 31일까지입니다.\n\n"
         ) * 20
 
-        app.get("file_uploader")[0].upload(
+        lab_uploader(app).upload(
             "hybrid-search-sample.txt",
             text.encode("utf-8"),
             "text/plain",
@@ -386,7 +383,7 @@ def test_rrf_candidates_can_be_reranked_with_cross_encoder_ui():
             "접수 기간은 7월 31일까지입니다.\n\n"
         ) * 20
 
-        app.get("file_uploader")[0].upload(
+        lab_uploader(app).upload(
             "reranker-sample.txt",
             text.encode("utf-8"),
             "text/plain",

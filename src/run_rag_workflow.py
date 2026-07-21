@@ -9,8 +9,9 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from chunker import ChunkingConfig
+from chunker import ChunkingConfig, DocumentChunk
 from rag_workflow import RAGWorkflow, RAGWorkflowConfig
+from retrieval_trace import TracedReranker, trace_reranker
 from reranker import DEFAULT_RERANKER_MODEL
 from run_retrieval_evaluation import (
     build_retrievers,
@@ -51,13 +52,26 @@ def build_locked_reranker(
     *,
     text_dir: Path,
     persist_directory: Path,
-):
+) -> TracedReranker:
     """dev로 선택하고 test 한 번으로 확인한 검색 설정을 그대로 만든다."""
 
     _, chunks = load_corpus(
         text_dir,
         chunking_config=ChunkingConfig(),
     )
+    return build_locked_reranker_for_chunks(
+        chunks,
+        persist_directory=persist_directory,
+    )
+
+
+def build_locked_reranker_for_chunks(
+    chunks: list[DocumentChunk],
+    *,
+    persist_directory: Path,
+) -> TracedReranker:
+    """업로드 문서 Chunk에도 평가에서 잠근 동일한 검색 설정을 적용한다."""
+
     retrievers = build_retrievers(
         chunks,
         ("reranker",),
@@ -67,7 +81,7 @@ def build_locked_reranker(
         rerank_max_length=512,
         reranker_model=DEFAULT_RERANKER_MODEL,
     )
-    return retrievers["Reranker"]
+    return trace_reranker(retrievers["Reranker"])
 
 
 def main() -> None:

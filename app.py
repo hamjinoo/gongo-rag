@@ -1,4 +1,4 @@
-"""문서 업로드와 LangGraph 근거 기반 답변을 한 화면에서 확인하는 Streamlit 데모."""
+"""문서 입력부터 단계별 Top-k와 근거 답변까지 한 번에 보여주는 Streamlit 앱."""
 
 import os
 import sys
@@ -15,10 +15,8 @@ from document_chunk_ui import render_document_chunking  # noqa: E402
 from document_search_ui import render_bm25_search  # noqa: E402
 from document_upload_ui import render_document_upload  # noqa: E402
 from hybrid_search_ui import render_hybrid_search  # noqa: E402
-from portfolio_ui import (  # noqa: E402
-    render_evaluation_portfolio,
-    render_portfolio_overview,
-)
+from portfolio_ui import render_evaluation_portfolio  # noqa: E402
+from rag_demo import prepare_uploaded_corpus  # noqa: E402
 from rag_workflow import RAGWorkflow, RAGWorkflowConfig  # noqa: E402
 from rag_trace_ui import (  # noqa: E402
     apply_trace_style,
@@ -26,7 +24,10 @@ from rag_trace_ui import (  # noqa: E402
     render_trace_workspace,
 )
 from reranker_ui import render_reranker  # noqa: E402
-from run_rag_workflow import build_locked_reranker  # noqa: E402
+from run_rag_workflow import (  # noqa: E402
+    build_locked_reranker,
+    build_locked_reranker_for_chunks,
+)
 from vector_search_ui import render_vector_search  # noqa: E402
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -34,111 +35,125 @@ TEXT_DIR = PROJECT_ROOT / "docs" / "text"
 load_dotenv()
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def build_answer_workflow() -> RAGWorkflow:
-    """잠근 BGE 검색기와 LangGraph를 한 번만 준비한다."""
+    """평가로 잠근 기본 문서 검색기와 LangGraph를 한 번만 준비한다."""
 
     retriever = build_locked_reranker(
         text_dir=TEXT_DIR,
         persist_directory=PROJECT_ROOT / ".chroma" / "rag-workflow",
     )
-    return RAGWorkflow(
-        retriever,
-        config=RAGWorkflowConfig(top_k=5, max_rewrites=1),
+    return RAGWorkflow(retriever, config=RAGWorkflowConfig(top_k=5, max_rewrites=1))
+
+
+@st.cache_resource(show_spinner=False)
+def build_uploaded_workflow(signature: str, _chunks: tuple[object, ...]) -> RAGWorkflow:
+    """같은 업로드 문서는 다시 embedding하지 않고 준비한 검색기를 재사용한다."""
+
+    retriever = build_locked_reranker_for_chunks(
+        list(_chunks),
+        persist_directory=PROJECT_ROOT / ".chroma" / "rag-demo" / signature,
     )
+    return RAGWorkflow(retriever, config=RAGWorkflowConfig(top_k=5, max_rewrites=1))
 
 
-st.set_page_config(page_title="DocLens Trace · gongo-rag", page_icon="📄", layout="wide")
+st.set_page_config(
+    page_title="DocLens Trace · gongo-rag",
+    page_icon="📄",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
 apply_trace_style()
 
 saved_text_count = len(list(TEXT_DIR.glob("*.txt")))
 render_trace_header(saved_text_count)
-st.sidebar.markdown(
-    "**이 프로젝트의 핵심**\n\n"
-    "- 한국어 문서를 단어와 의미로 함께 검색\n"
-    "- 로컬 BGE로 좋은 근거를 다시 선택\n"
-    "- 근거가 부족하면 재검색하거나 거절\n"
-    "- 답변에서 원문까지 추적"
-)
-st.sidebar.caption(
-    f"현재 문서 {saved_text_count}개 · Dev Hit@1 0.85 · "
-    "Test Hit@1 0.80 · 로컬 BGE"
-)
 
-overview_tab, question_tab, upload_tab, evaluation_tab = st.tabs(
-    ["프로젝트 한눈에", "RAG 데모", "문서 실험실", "평가 결과"]
-)
+run_tab, evaluation_tab, lab_tab = st.tabs(["RAG 실행", "평가", "세부 실험"])
 
-with overview_tab:
-    render_portfolio_overview(saved_text_count)
+with run_tab:
+    st.markdown("## 문서를 넣고 질문하세요")
+    st.caption(
+        "파일을 올리지 않으면 준비된 공고문을 사용합니다. 실행 한 번으로 텍스트 추출, "
+        "Chunk, Chroma 색인, 검색, 재정렬, 답변까지 이어집니다."
+    )
+    uploaded_files = st.file_uploader(
+        "검색할 문서 (선택)",
+        type=["pdf", "docx", "txt", "md", "png", "jpg", "jpeg", "tif", "tiff", "bmp"],
+        accept_multiple_files=True,
+        key="rag_source_files",
+        help="PDF·스캔 PDF·DOCX·이미지·텍스트를 여러 개 올릴 수 있습니다.",
+    )
+    if uploaded_files:
+        st.caption(f"이번 실행: 업로드 문서 {len(uploaded_files)}개")
+    else:
+        st.caption(f"이번 실행: 준비된 공고문 {saved_text_count}개")
 
-with upload_tab:
+    question = st.text_input(
+        "질문",
+        placeholder="예: 신청 대상과 지원 금액은 어떻게 되나요?",
+        key="rag_question",
+    )
+    run_clicked = st.button(
+        "전체 RAG 실행",
+        type="primary",
+        disabled=not question.strip() or (not uploaded_files and saved_text_count == 0),
+    )
+
+    if not os.getenv("OPENAI_API_KEY"):
+        st.caption("답변 생성에는 `.env`의 `OPENAI_API_KEY`가 필요합니다. 검색·재정렬은 로컬에서 실행됩니다.")
+
+    if run_clicked:
+        for key in ("rag_response", "rag_elapsed_seconds", "rag_trace_id", "rag_corpus_label"):
+            st.session_state.pop(key, None)
+        if not os.getenv("OPENAI_API_KEY"):
+            st.error("OPENAI_API_KEY를 설정한 뒤 다시 실행해주세요.")
+        else:
+            with st.spinner(
+                "문서 준비 → BM25·Embedding → RRF → BGE → LangGraph 답변을 실행합니다. "
+                "처음 실행은 로컬 모델을 불러오느라 시간이 걸릴 수 있습니다."
+            ):
+                try:
+                    started_at = time.perf_counter()
+                    if uploaded_files:
+                        prepared = prepare_uploaded_corpus(
+                            [(item.name, item.getvalue()) for item in uploaded_files]
+                        )
+                        workflow = build_uploaded_workflow(prepared.signature, prepared.chunks)
+                        ocr_count = sum(document.used_ocr for document in prepared.documents)
+                        corpus_label = (
+                            f"업로드 {len(prepared.documents)}개 · Chunk {len(prepared.chunks)}개"
+                            + (f" · OCR {ocr_count}개" if ocr_count else "")
+                        )
+                    else:
+                        workflow = build_answer_workflow()
+                        corpus_label = f"기본 공고문 {saved_text_count}개"
+
+                    response = workflow.invoke(question)
+                    st.session_state["rag_elapsed_seconds"] = time.perf_counter() - started_at
+                    st.session_state["rag_trace_id"] = datetime.now().strftime("q_%Y%m%d_%H%M%S")
+                    st.session_state["rag_corpus_label"] = corpus_label
+                    st.session_state["rag_response"] = response
+                except Exception as exc:
+                    st.error(f"RAG 실행에 실패했습니다: {exc}")
+
+    response = st.session_state.get("rag_response")
+    if response is not None:
+        render_trace_workspace(
+            response,
+            elapsed_seconds=st.session_state.get("rag_elapsed_seconds"),
+            trace_id=st.session_state.get("rag_trace_id", "local-run"),
+            corpus_label=st.session_state.get("rag_corpus_label"),
+        )
+
+with evaluation_tab:
+    render_evaluation_portfolio()
+
+with lab_tab:
+    st.markdown("## 단계를 하나씩 확인하는 실험실")
+    st.caption("학습하거나 설정을 비교할 때만 사용합니다. 메인 RAG 실행과 같은 구성 요소입니다.")
     uploaded_documents = render_document_upload()
     uploaded_chunks = render_document_chunking(uploaded_documents)
     render_bm25_search(uploaded_chunks)
     render_vector_search(uploaded_chunks)
     render_hybrid_search(uploaded_chunks)
     render_reranker(uploaded_chunks)
-
-with question_tab:
-    st.subheader("실제 문서에 질문해 보세요")
-    st.caption(
-        "답변과 함께 실제로 사용한 문서 구간을 보여줍니다. 근거가 부족하면 "
-        "질문을 한 번 고쳐 다시 찾고, 그래도 없으면 추측하지 않습니다."
-    )
-
-    if saved_text_count == 0:
-        st.warning("검색할 문서가 없습니다. `docs/text` 폴더에 TXT 파일을 먼저 넣어주세요.")
-    else:
-        question = st.text_input(
-            "질문을 입력하세요",
-            placeholder="예: 신청 자격이 어떻게 되나요?",
-            key="rag_question",
-        )
-        run_clicked = st.button(
-            "근거를 찾아 답변하기",
-            type="primary",
-            disabled=not question.strip(),
-        )
-
-        if not os.getenv("OPENAI_API_KEY"):
-            st.info(
-                "답변·근거 판단에는 OPENAI_API_KEY가 필요합니다. "
-                "`.env.example`을 `.env`로 복사하고 키를 채워주세요."
-            )
-
-        if run_clicked:
-            st.session_state.pop("rag_response", None)
-            st.session_state.pop("rag_elapsed_seconds", None)
-            st.session_state.pop("rag_trace_id", None)
-            response = None
-            if not os.getenv("OPENAI_API_KEY"):
-                st.error("OPENAI_API_KEY를 설정한 뒤 다시 실행해주세요.")
-            else:
-                with st.spinner(
-                    "검색 → 근거 판단 → 필요 시 재검색 → 답변을 실행합니다. "
-                    "첫 실행은 모델을 불러오느라 오래 걸릴 수 있습니다."
-                ):
-                    try:
-                        started_at = time.perf_counter()
-                        response = build_answer_workflow().invoke(question)
-                        st.session_state["rag_elapsed_seconds"] = (
-                            time.perf_counter() - started_at
-                        )
-                        st.session_state["rag_trace_id"] = datetime.now().strftime(
-                            "q_%Y%m%d_%H%M%S"
-                        )
-                        st.session_state["rag_response"] = response
-                    except Exception as exc:
-                        st.error(f"RAG 실행에 실패했습니다: {exc}")
-
-        response = st.session_state.get("rag_response")
-        if response is not None:
-            render_trace_workspace(
-                response,
-                elapsed_seconds=st.session_state.get("rag_elapsed_seconds"),
-                trace_id=st.session_state.get("rag_trace_id", "local-run"),
-            )
-
-with evaluation_tab:
-    render_evaluation_portfolio()
