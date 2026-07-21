@@ -26,14 +26,10 @@ from evaluate import (
 )
 from hybrid_search import DEFAULT_FETCH_K, DEFAULT_RANK_CONSTANT, HybridRRFRetriever
 from reranker import (
-    COHERE_RERANKER_PROVIDER,
     DEFAULT_RERANK_CANDIDATES,
-    DEFAULT_COHERE_RERANKER_MODEL,
     DEFAULT_RERANK_MAX_LENGTH,
     DEFAULT_RERANKER_MODEL,
     LOCAL_RERANKER_PROVIDER,
-    RERANKER_PROVIDERS,
-    CohereRerankScorer,
     CrossEncoderReranker,
     SentenceTransformersCrossEncoderScorer,
     get_reranker_model_spec,
@@ -112,18 +108,9 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_RERANK_CANDIDATES,
     )
     parser.add_argument(
-        "--reranker-provider",
-        choices=RERANKER_PROVIDERS,
-        default=LOCAL_RERANKER_PROVIDER,
-        help="local은 로컬 CrossEncoder, cohere는 외부 Rerank API",
-    )
-    parser.add_argument(
         "--reranker-model",
         default=None,
-        help=(
-            f"생략 시 local={DEFAULT_RERANKER_MODEL}, "
-            f"cohere={DEFAULT_COHERE_RERANKER_MODEL}"
-        ),
+        help=f"생략 시 로컬 모델 {DEFAULT_RERANKER_MODEL}",
     )
     parser.add_argument(
         "--rerank-batch-size",
@@ -220,11 +207,10 @@ def build_retrievers(
     rerank_candidates: int,
     rerank_batch_size: int,
     rerank_max_length: int,
-    reranker_provider: str = LOCAL_RERANKER_PROVIDER,
     reranker_model: str | None = None,
 ) -> dict[str, RankedRetriever]:
     resolved_model = resolve_reranker_model(
-        reranker_provider,
+        LOCAL_RERANKER_PROVIDER,
         reranker_model,
     )
     retrievers: dict[str, RankedRetriever] = {}
@@ -264,18 +250,12 @@ def build_retrievers(
     if "rrf" in systems and hybrid is not None:
         retrievers["RRF"] = hybrid
     if "reranker" in systems and hybrid is not None:
-        if reranker_provider == LOCAL_RERANKER_PROVIDER:
-            scorer = SentenceTransformersCrossEncoderScorer(
-                model_name=resolved_model,
-                batch_size=rerank_batch_size,
-                max_length=rerank_max_length,
-                device="cpu",
-            )
-        else:
-            scorer = CohereRerankScorer(
-                model_name=resolved_model,
-                max_tokens_per_doc=rerank_max_length,
-            )
+        scorer = SentenceTransformersCrossEncoderScorer(
+            model_name=resolved_model,
+            batch_size=rerank_batch_size,
+            max_length=rerank_max_length,
+            device="cpu",
+        )
         retrievers["Reranker"] = CrossEncoderReranker(
             hybrid,
             scorer,
@@ -322,7 +302,7 @@ def build_metadata(
     retrievers: dict[str, RankedRetriever],
 ) -> dict[str, object]:
     reranker_model = resolve_reranker_model(
-        args.reranker_provider,
+        LOCAL_RERANKER_PROVIDER,
         args.reranker_model,
     )
     reranker_runtime: dict[str, object] = {}
@@ -338,42 +318,16 @@ def build_metadata(
             "process_rss_after_load_mb": scorer.process_rss_after_load_mb,
             "peak_process_rss_mb": scorer.peak_process_rss_mb,
         }
-    elif isinstance(reranker, CrossEncoderReranker) and isinstance(
-        reranker.scorer,
-        CohereRerankScorer,
-    ):
-        scorer = reranker.scorer
-        reranker_runtime = {
-            "api_request_count": scorer.api_request_count,
-            "billed_search_units": scorer.search_units,
-        }
-
-    if args.reranker_provider == LOCAL_RERANKER_PROVIDER:
-        reranker_spec = get_reranker_model_spec(reranker_model)
-        reranker_details: dict[str, object] = {
-            "reranker_model_revision": reranker_spec.revision,
-            "reranker_code_revision": reranker_spec.code_revision,
-            "reranker_parameter_count": reranker_spec.parameter_count,
-            "reranker_languages": reranker_spec.languages,
-            "reranker_license": reranker_spec.license_name,
-            "reranker_trust_remote_code": reranker_spec.trust_remote_code,
-            "reranker_external_data_transfer": False,
-        }
-    else:
-        reranker_details = {
-            "reranker_model_revision": None,
-            "reranker_code_revision": None,
-            "reranker_parameter_count": None,
-            "reranker_languages": "multilingual",
-            "reranker_license": "managed API",
-            "reranker_trust_remote_code": None,
-            "reranker_external_data_transfer": True,
-        }
-    reranker_batch_size = (
-        args.rerank_batch_size
-        if args.reranker_provider == LOCAL_RERANKER_PROVIDER
-        else None
-    )
+    reranker_spec = get_reranker_model_spec(reranker_model)
+    reranker_details: dict[str, object] = {
+        "reranker_model_revision": reranker_spec.revision,
+        "reranker_code_revision": reranker_spec.code_revision,
+        "reranker_parameter_count": reranker_spec.parameter_count,
+        "reranker_languages": reranker_spec.languages,
+        "reranker_license": reranker_spec.license_name,
+        "reranker_trust_remote_code": reranker_spec.trust_remote_code,
+        "reranker_external_data_transfer": False,
+    }
 
     return {
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -405,11 +359,11 @@ def build_metadata(
             "embedding_model": DEFAULT_EMBEDDING_MODEL,
             "rrf_rank_constant": DEFAULT_RANK_CONSTANT,
             "rrf_fetch_k": DEFAULT_FETCH_K,
-            "reranker_provider": args.reranker_provider,
+            "reranker_provider": LOCAL_RERANKER_PROVIDER,
             "reranker_model": reranker_model,
             **reranker_details,
             "reranker_candidates": args.rerank_candidates,
-            "reranker_batch_size": reranker_batch_size,
+            "reranker_batch_size": args.rerank_batch_size,
             "reranker_max_length": args.rerank_max_length,
         },
         "reranker_runtime": reranker_runtime,
@@ -443,18 +397,12 @@ def render_full_markdown_report(
         load_seconds = reranker_runtime.get("model_load_seconds")
         rss_delta = reranker_runtime.get("model_rss_delta_mb")
         peak_rss = reranker_runtime.get("peak_process_rss_mb")
-        api_requests = reranker_runtime.get("api_request_count")
-        search_units = reranker_runtime.get("billed_search_units")
         if isinstance(load_seconds, (int, float)):
             runtime_lines.append(f"- 모델 로드: {load_seconds:.2f}초")
         if isinstance(rss_delta, (int, float)):
             runtime_lines.append(f"- 모델 로드 RSS 증가: {rss_delta:.1f}MB")
         if isinstance(peak_rss, (int, float)):
             runtime_lines.append(f"- 평가 중 프로세스 최대 RSS: {peak_rss:.1f}MB")
-        if isinstance(api_requests, int):
-            runtime_lines.append(f"- Cohere API 성공 요청: {api_requests}회")
-        if isinstance(search_units, (int, float)):
-            runtime_lines.append(f"- Cohere 청구 search units: {search_units:g}")
 
     parameter_count = retrieval.get("reranker_parameter_count")
     parameter_label = (
@@ -462,21 +410,15 @@ def render_full_markdown_report(
         if isinstance(parameter_count, (int, float))
         else ""
     )
-    provider_label = retrieval.get("reranker_provider", LOCAL_RERANKER_PROVIDER)
-    external_label = (
-        " · 문서 외부 전송"
-        if retrieval.get("reranker_external_data_transfer") is True
-        else ""
+    provider_label = retrieval.get(
+        "reranker_provider",
+        LOCAL_RERANKER_PROVIDER,
     )
-    if provider_label == COHERE_RERANKER_PROVIDER:
-        inference_label = (
-            f"max tokens/doc {retrieval['reranker_max_length']}"
-        )
-    else:
-        inference_label = (
-            f"batch {retrieval['reranker_batch_size']} · "
-            f"max length {retrieval['reranker_max_length']}"
-        )
+    external_label = ""
+    inference_label = (
+        f"batch {retrieval['reranker_batch_size']} · "
+        f"max length {retrieval['reranker_max_length']}"
+    )
 
     best_hit1 = max(summaries, key=lambda summary: summary.hit_rates.get(1, 0))
     fastest = min(summaries, key=lambda summary: summary.mean_latency_ms)
@@ -626,7 +568,7 @@ def main() -> None:
     systems = parse_systems(args.systems)
     ks = parse_ks(args.ks)
     args.reranker_model = resolve_reranker_model(
-        args.reranker_provider,
+        LOCAL_RERANKER_PROVIDER,
         args.reranker_model,
     )
     validate_run_settings(
@@ -662,7 +604,6 @@ def main() -> None:
         rerank_candidates=args.rerank_candidates,
         rerank_batch_size=args.rerank_batch_size,
         rerank_max_length=args.rerank_max_length,
-        reranker_provider=args.reranker_provider,
         reranker_model=args.reranker_model,
     )
     summaries = evaluate_systems(

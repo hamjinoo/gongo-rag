@@ -11,10 +11,7 @@ from dotenv import load_dotenv
 
 from chunker import ChunkingConfig
 from rag_workflow import RAGWorkflow, RAGWorkflowConfig
-from reranker import (
-    DEFAULT_RERANKER_MODEL,
-    LOCAL_RERANKER_PROVIDER,
-)
+from reranker import DEFAULT_RERANKER_MODEL
 from run_retrieval_evaluation import (
     build_retrievers,
     configure_utf8_console,
@@ -68,7 +65,6 @@ def build_locked_reranker(
         rerank_candidates=7,
         rerank_batch_size=2,
         rerank_max_length=512,
-        reranker_provider=LOCAL_RERANKER_PROVIDER,
         reranker_model=DEFAULT_RERANKER_MODEL,
     )
     return retrievers["Reranker"]

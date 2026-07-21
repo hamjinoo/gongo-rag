@@ -7,7 +7,7 @@
 - dev에서 고른 `local BGE + RRF 후보 7개`를 바꾸지 않고 test에 사용했습니다.
 - test normal 10문항은 이 설정으로 한 번만 실행했습니다.
 - Reranker는 Hit@1 0.80, Hit@3·5 0.90, MRR 0.85를 기록했습니다.
-- Cohere 실제 비교는 API 키가 없어 보류하고 adapter만 유지합니다.
+- 외부 reranker API는 생략하고 로컬 BGE 설정만 유지합니다.
 - 이 test 결과를 보고 후보 수나 모델을 다시 튜닝하지 않습니다. 검색 설정은
   잠그고 다음 LangGraph 답변·재검색·거절 단계로 이동합니다.
 

@@ -510,7 +510,7 @@ chunk_id
 ```
 
 이 기준선을 먼저 완성한 뒤 BM25와 dense 검색을 결합하고, 그다음
-CrossEncoder 또는 Cohere reranker를 비교합니다.
+로컬 CrossEncoder reranker를 비교합니다.
 
 ---
 

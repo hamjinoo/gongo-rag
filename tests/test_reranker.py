@@ -1,11 +1,9 @@
 """RRF 후보를 CrossEncoder로 재정렬하는 테스트."""
 
 import math
-import os
 import sys
 from dataclasses import replace
 from pathlib import Path
-from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 sys.stdout.reconfigure(encoding="utf-8")
@@ -13,13 +11,10 @@ sys.stdout.reconfigure(encoding="utf-8")
 from chunker import DocumentChunk  # noqa: E402
 from hybrid_search import HybridSearchResult  # noqa: E402
 from reranker import (  # noqa: E402
-    COHERE_RERANKER_PROVIDER,
-    DEFAULT_COHERE_RERANKER_MODEL,
     DEFAULT_RERANKER_MODEL,
     LOCAL_RERANKER_PROVIDER,
     RERANKER_MODEL_SPECS,
     SMALL_RERANKER_MODEL,
-    CohereRerankScorer,
     CrossEncoderReranker,
     RerankerCandidateError,
     RerankerModelUnavailableError,
@@ -102,16 +97,6 @@ class FakeCrossEncoderModel:
     def predict(self, pairs, **kwargs):
         self.calls.append((pairs, kwargs))
         return self.scores
-
-
-class FakeCohereClient:
-    def __init__(self, response) -> None:
-        self.response = response
-        self.calls = []
-
-    def rerank(self, **kwargs):
-        self.calls.append(kwargs)
-        return self.response
 
 
 def test_reranker_uses_pair_score_instead_of_rrf_order():
@@ -219,18 +204,6 @@ def test_invalid_settings_are_rejected():
             pass
         else:
             raise AssertionError(f"잘못된 설정을 거부해야 합니다: {kwargs}")
-
-    for kwargs in (
-        {"max_tokens_per_doc": 0},
-        {"timeout_seconds": 0},
-    ):
-        try:
-            CohereRerankScorer(client=FakeCohereClient(None), **kwargs)
-        except ValueError:
-            pass
-        else:
-            raise AssertionError(f"잘못된 Cohere 설정을 거부해야 합니다: {kwargs}")
-
 
 def test_duplicate_chunk_id_is_rejected():
     candidate = make_candidates()[0]
@@ -349,14 +322,8 @@ def test_provider_model_resolution_uses_reviewed_defaults():
         resolve_reranker_model(LOCAL_RERANKER_PROVIDER)
         == DEFAULT_RERANKER_MODEL
     )
-    assert (
-        resolve_reranker_model(COHERE_RERANKER_PROVIDER)
-        == DEFAULT_COHERE_RERANKER_MODEL
-    )
-
     for provider, model in (
         ("unknown", None),
-        (COHERE_RERANKER_PROVIDER, "rerank-future"),
         (LOCAL_RERANKER_PROVIDER, "unknown/local"),
     ):
         try:
@@ -367,68 +334,6 @@ def test_provider_model_resolution_uses_reviewed_defaults():
             raise AssertionError(
                 f"검토하지 않은 provider/model을 거부해야 합니다: {provider}"
             )
-
-
-def test_cohere_adapter_restores_original_candidate_order_and_records_usage():
-    response = SimpleNamespace(
-        results=[
-            SimpleNamespace(index=1, relevance_score=0.91),
-            SimpleNamespace(index=0, relevance_score=0.23),
-        ],
-        meta=SimpleNamespace(
-            billed_units=SimpleNamespace(search_units=1),
-        ),
-    )
-    client = FakeCohereClient(response)
-    scorer = CohereRerankScorer(
-        client=client,
-        max_tokens_per_doc=512,
-    )
-
-    scores = scorer.score_pairs("지원 대상은?", ["첫 문서", "둘째 문서"])
-
-    assert scores == [0.23, 0.91]
-    assert client.calls == [
-        {
-            "model": DEFAULT_COHERE_RERANKER_MODEL,
-            "query": "지원 대상은?",
-            "documents": ["첫 문서", "둘째 문서"],
-            "top_n": 2,
-            "max_tokens_per_doc": 512,
-        }
-    ]
-    assert scorer.api_request_count == 1
-    assert scorer.search_units == 1.0
-
-
-def test_cohere_adapter_requires_key_and_validates_response():
-    previous_key = os.environ.pop("COHERE_API_KEY", None)
-    try:
-        try:
-            CohereRerankScorer()
-        except RerankerModelUnavailableError as exc:
-            assert "COHERE_API_KEY" in str(exc)
-        else:
-            raise AssertionError("Cohere API 키가 없으면 즉시 거부해야 합니다.")
-    finally:
-        if previous_key is not None:
-            os.environ["COHERE_API_KEY"] = previous_key
-
-    invalid_response = SimpleNamespace(
-        results=[
-            SimpleNamespace(index=0, relevance_score=0.9),
-            SimpleNamespace(index=0, relevance_score=0.8),
-        ],
-        meta=None,
-    )
-    scorer = CohereRerankScorer(client=FakeCohereClient(invalid_response))
-    try:
-        scorer.score_pairs("질문", ["첫 문서", "둘째 문서"])
-    except RerankerScoringError as exc:
-        assert "중복" in str(exc)
-    else:
-        raise AssertionError("중복 Cohere index를 거부해야 합니다.")
-
 
 def test_sentence_transformers_adapter_validates_model_output():
     scorer = SentenceTransformersCrossEncoderScorer(
