@@ -15,6 +15,10 @@ from document_chunk_ui import render_document_chunking  # noqa: E402
 from document_search_ui import render_bm25_search  # noqa: E402
 from document_upload_ui import render_document_upload  # noqa: E402
 from hybrid_search_ui import render_hybrid_search  # noqa: E402
+from portfolio_ui import (  # noqa: E402
+    render_evaluation_portfolio,
+    render_portfolio_overview,
+)
 from rag_workflow import RAGWorkflow, RAGWorkflowConfig  # noqa: E402
 from rag_trace_ui import (  # noqa: E402
     apply_trace_style,
@@ -50,18 +54,23 @@ apply_trace_style()
 saved_text_count = len(list(TEXT_DIR.glob("*.txt")))
 render_trace_header(saved_text_count)
 st.sidebar.markdown(
-    "**gongo-rag 파이프라인**\n\n"
-    f"- 저장 문서: {saved_text_count}개\n"
-    "- 검색: BM25 + Chroma → RRF\n"
-    "- 재정렬: 로컬 BGE, 후보 7개\n"
-    "- 제어: LangGraph, 재검색 최대 1회"
+    "**이 프로젝트의 핵심**\n\n"
+    "- 한국어 문서를 단어와 의미로 함께 검색\n"
+    "- 로컬 BGE로 좋은 근거를 다시 선택\n"
+    "- 근거가 부족하면 재검색하거나 거절\n"
+    "- 답변에서 원문까지 추적"
 )
 st.sidebar.caption(
-    "업로드 문서는 첫 번째 탭에서 BM25와 Chroma를 각각 확인하고 "
-    "RRF 통합 순위와 CrossEncoder 재정렬까지 비교할 수 있습니다."
+    f"현재 문서 {saved_text_count}개 · Dev Hit@1 0.85 · "
+    "Test Hit@1 0.80 · 로컬 BGE"
 )
 
-upload_tab, question_tab = st.tabs(["1. 문서 넣기", "2. 질문하기"])
+overview_tab, question_tab, upload_tab, evaluation_tab = st.tabs(
+    ["프로젝트 한눈에", "RAG 데모", "문서 실험실", "평가 결과"]
+)
+
+with overview_tab:
+    render_portfolio_overview(saved_text_count)
 
 with upload_tab:
     uploaded_documents = render_document_upload()
@@ -72,7 +81,7 @@ with upload_tab:
     render_reranker(uploaded_chunks)
 
 with question_tab:
-    st.subheader("문서에 질문해 보세요")
+    st.subheader("실제 문서에 질문해 보세요")
     st.caption(
         "답변과 함께 실제로 사용한 문서 구간을 보여줍니다. 근거가 부족하면 "
         "질문을 한 번 고쳐 다시 찾고, 그래도 없으면 추측하지 않습니다."
@@ -130,3 +139,6 @@ with question_tab:
                 elapsed_seconds=st.session_state.get("rag_elapsed_seconds"),
                 trace_id=st.session_state.get("rag_trace_id", "local-run"),
             )
+
+with evaluation_tab:
+    render_evaluation_portfolio()

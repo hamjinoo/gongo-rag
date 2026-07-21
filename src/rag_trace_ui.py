@@ -44,6 +44,85 @@ APP_STYLE = """
 .trace-brand { color: var(--trace-ink); font-size: 1.55rem; font-weight: 800; }
 .trace-brand span { color: var(--trace-blue); }
 .trace-context { color: var(--trace-muted); font-size: .92rem; }
+.trace-hero {
+  background: #f7f9fd;
+  border: 1px solid #dfe7f4;
+  border-radius: 1rem;
+  padding: 2.2rem 2.3rem;
+  margin: .5rem 0 1.4rem;
+}
+.trace-eyebrow {
+  color: var(--trace-blue);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: .7rem;
+}
+.trace-hero h1 {
+  color: var(--trace-ink);
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  line-height: 1.25;
+  letter-spacing: -.035em;
+  margin: 0 0 .8rem;
+}
+.trace-hero p {
+  color: #596579;
+  font-size: 1.03rem;
+  line-height: 1.75;
+  max-width: 760px;
+  margin: 0;
+}
+.trace-chip-row { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: 1.1rem; }
+.trace-chip {
+  color: #41506a;
+  background: #fff;
+  border: 1px solid #dfe5ee;
+  border-radius: 999px;
+  padding: .28rem .65rem;
+  font-size: .78rem;
+  font-weight: 650;
+}
+.trace-story-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .8rem;
+  margin: .65rem 0 1.4rem;
+}
+.trace-story-card {
+  border: 1px solid var(--trace-line);
+  border-radius: .85rem;
+  padding: 1rem 1.05rem;
+  background: #fff;
+}
+.trace-story-number { color: var(--trace-blue); font-size: .75rem; font-weight: 800; }
+.trace-story-title { color: #263147; font-weight: 800; margin: .38rem 0; }
+.trace-story-copy { color: #6c7789; font-size: .86rem; line-height: 1.6; }
+.trace-architecture {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(105px, 1fr));
+  gap: .5rem;
+  margin: .65rem 0 1.25rem;
+}
+.trace-architecture-stage {
+  position: relative;
+  border: 1px solid #dfe5ee;
+  border-radius: .75rem;
+  padding: .8rem .7rem;
+  background: var(--trace-warm);
+  min-height: 6.5rem;
+}
+.trace-architecture-stage:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  right: -.58rem;
+  top: 2.45rem;
+  color: #a4afc0;
+  z-index: 2;
+}
+.trace-architecture-index { color: var(--trace-blue); font-size: .7rem; font-weight: 800; }
+.trace-architecture-title { color: #2d384d; font-size: .86rem; font-weight: 800; margin: .25rem 0; }
+.trace-architecture-copy { color: #7a8596; font-size: .72rem; line-height: 1.4; }
 .trace-answer {
   color: #384255;
   font-size: 1.12rem;
@@ -121,6 +200,61 @@ APP_STYLE = """
 }
 .trace-pass { color: var(--trace-green); font-weight: 750; }
 .trace-note { color: var(--trace-muted); font-size: .84rem; line-height: 1.55; }
+.trace-stage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  gap: .55rem;
+  margin: .7rem 0 1.15rem;
+}
+.trace-stage {
+  border: 1px solid #e2e6ed;
+  border-radius: .75rem;
+  background: #f8f8f7;
+  padding: .75rem;
+  min-height: 5.3rem;
+}
+.trace-stage.active { border-color: #cbdaf4; background: var(--trace-blue-soft); }
+.trace-stage.pass { border-color: #c9e8d7; background: #f1faf5; }
+.trace-stage.stop { border-color: #efd9b8; background: #fff8ee; }
+.trace-stage-label { color: #2f3a4d; font-size: .84rem; font-weight: 800; }
+.trace-stage-detail { color: #758094; font-size: .73rem; line-height: 1.45; margin-top: .35rem; }
+.trace-decision-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .7rem;
+  margin: .75rem 0 1rem;
+}
+.trace-decision-card {
+  border-left: 3px solid var(--trace-blue);
+  background: #f8faff;
+  padding: .75rem .9rem;
+}
+.trace-decision-label { color: #8993a3; font-size: .72rem; font-weight: 750; }
+.trace-decision-value { color: #354158; font-size: .84rem; line-height: 1.5; margin-top: .25rem; }
+.trace-callout {
+  border: 1px solid #dfe5ee;
+  border-radius: .85rem;
+  background: var(--trace-warm);
+  padding: 1rem 1.1rem;
+  color: #596579;
+  font-size: .88rem;
+  line-height: 1.65;
+  margin: .75rem 0;
+}
+.trace-callout strong { color: #263147; }
+.trace-bar-chart { margin: .75rem 0 1.25rem; }
+.trace-bar-row {
+  display: grid;
+  grid-template-columns: 92px 1fr 54px;
+  gap: .65rem;
+  align-items: center;
+  margin: .55rem 0;
+}
+.trace-bar-label { color: #586478; font-size: .8rem; font-weight: 700; }
+.trace-bar-track { height: .7rem; border-radius: 999px; background: #edf0f4; overflow: hidden; }
+.trace-bar-fill { height: 100%; border-radius: 999px; background: #9aabc6; }
+.trace-bar-fill.selected { background: var(--trace-blue); }
+.trace-bar-value { color: #3d4759; font-size: .78rem; font-weight: 750; text-align: right; }
 [data-testid="stMetric"] {
   border: 1px solid var(--trace-line);
   border-radius: .8rem;
@@ -130,12 +264,20 @@ APP_STYLE = """
 [data-testid="stSidebar"] { border-right: 1px solid var(--trace-line); }
 .stTabs [data-baseweb="tab-list"] { gap: .35rem; }
 .stTabs [data-baseweb="tab"] { border-radius: .55rem .55rem 0 0; }
-.stTabs [data-baseweb="tab"][aria-selected="true"] { color: var(--trace-blue); }
-.stTabs [data-baseweb="tab-highlight"] { background-color: var(--trace-blue); }
+.stTabs [data-baseweb="tab"][aria-selected="true"],
+.stTabs button[role="tab"][aria-selected="true"] {
+  color: var(--trace-blue) !important;
+}
+.stTabs [data-baseweb="tab-highlight"] {
+  background-color: var(--trace-blue) !important;
+}
 @media (max-width: 760px) {
   .block-container { padding-left: 1rem; padding-right: 1rem; }
   .trace-header { align-items: flex-start; flex-direction: column; }
   .trace-card-grid { grid-template-columns: 1fr; }
+  .trace-story-grid, .trace-decision-grid { grid-template-columns: 1fr; }
+  .trace-architecture { grid-template-columns: repeat(2, 1fr); }
+  .trace-architecture-stage:not(:last-child)::after { display: none; }
 }
 </style>
 """
@@ -243,6 +385,145 @@ def _claim_for_citation(answer: str, rank: int) -> str:
 
 def _format_score(value: object) -> str:
     return "—" if value is None else f"{float(value):.4f}"
+
+
+def _format_rank(value: object) -> str:
+    return "—" if value is None else f"{int(value)}위"
+
+
+def build_rank_flow_rows(response: RAGResponse) -> list[dict[str, object]]:
+    """검색기별 순위가 BGE 최종 순위까지 움직인 모습을 표로 만든다."""
+
+    rows: list[dict[str, object]] = []
+    cited = set(citation_numbers(response.answer))
+    for item in response.evidence:
+        rrf_rank = item.get("rrf_rank")
+        final_rank = item["rank"]
+        if rrf_rank is None:
+            change = "—"
+        else:
+            difference = int(rrf_rank) - final_rank
+            if difference > 0:
+                change = f"▲ {difference}"
+            elif difference < 0:
+                change = f"▼ {abs(difference)}"
+            else:
+                change = "유지"
+        rows.append(
+            {
+                "근거": f"{final_rank}",
+                "문서": f"{item['source_filename']} {_page_label(item)}",
+                "BM25": _format_rank(item.get("bm25_rank")),
+                "의미 검색": _format_rank(item.get("vector_rank")),
+                "RRF": _format_rank(rrf_rank),
+                "BGE 최종": f"{final_rank}위",
+                "순위 변화": change,
+                "답변 사용": "인용" if final_rank in cited else "후보",
+            }
+        )
+    return rows
+
+
+def _execution_pipeline_html(response: RAGResponse) -> str:
+    step_counts = {
+        step: response.steps.count(step)
+        for step in set(response.steps)
+    }
+    answered = response.status == "answered"
+    stages = [
+        ("질문", "active", "사용자 질문을 그대로 시작"),
+        (
+            "하이브리드 검색",
+            "active" if step_counts.get("retrieve") else "",
+            f"BM25 + Chroma · {step_counts.get('retrieve', 0)}회",
+        ),
+        (
+            "근거 판단",
+            "active" if step_counts.get("assess_evidence") else "",
+            f"LangGraph · {step_counts.get('assess_evidence', 0)}회",
+        ),
+        (
+            "질문 재작성",
+            "active" if step_counts.get("rewrite_query") else "",
+            "검색어를 고쳐 한 번 더 검색"
+            if step_counts.get("rewrite_query")
+            else "필요할 때만 실행",
+        ),
+        (
+            "답변 생성",
+            "active" if step_counts.get("answer") else "",
+            "검색된 근거만 사용"
+            if step_counts.get("answer")
+            else "근거 부족으로 실행 안 함",
+        ),
+        (
+            "인용 검증",
+            "pass" if answered else ("stop" if step_counts.get("answer") else ""),
+            "인용 번호·숫자 통과"
+            if answered
+            else "통과하지 못한 답변은 숨김",
+        ),
+        (
+            "최종 결과",
+            "pass" if answered else "stop",
+            "근거가 있는 답변" if answered else "정보 없음 · 안전한 거절",
+        ),
+    ]
+    cards = []
+    for label, status, detail in stages:
+        cards.append(
+            f'<div class="trace-stage {status}">'
+            f'<div class="trace-stage-label">{html.escape(label)}</div>'
+            f'<div class="trace-stage-detail">{html.escape(detail)}</div>'
+            "</div>"
+        )
+    return f'<div class="trace-stage-grid">{"".join(cards)}</div>'
+
+
+def _render_execution_view(response: RAGResponse) -> None:
+    st.markdown("### 이번 질문은 이렇게 처리됐습니다")
+    st.caption("색이 들어온 단계만 이번 실행에서 실제로 사용됐습니다.")
+    st.markdown(_execution_pipeline_html(response), unsafe_allow_html=True)
+
+    result_label = "근거가 있는 답변" if response.status == "answered" else "안전한 거절"
+    st.markdown(
+        (
+            '<div class="trace-decision-grid">'
+            '<div class="trace-decision-card">'
+            '<div class="trace-decision-label">원래 질문</div>'
+            f'<div class="trace-decision-value">{html.escape(response.question)}</div>'
+            "</div>"
+            '<div class="trace-decision-card">'
+            '<div class="trace-decision-label">실제로 검색한 질문</div>'
+            f'<div class="trace-decision-value">{html.escape(response.final_query)}</div>'
+            "</div>"
+            '<div class="trace-decision-card">'
+            '<div class="trace-decision-label">LangGraph 결정</div>'
+            f'<div class="trace-decision-value">{html.escape(result_label)}</div>'
+            "</div></div>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### 검색 순위는 어떻게 바뀌었나요?")
+    st.caption(
+        "작은 숫자일수록 질문과 더 관련 있다고 판단한 결과입니다. "
+        "RRF 후보를 BGE가 다시 읽고 최종 순서를 정합니다."
+    )
+    st.dataframe(
+        build_rank_flow_rows(response),
+        hide_index=True,
+        use_container_width=True,
+    )
+    st.markdown(
+        (
+            '<div class="trace-callout"><strong>왜 네 단계를 사용하나요?</strong><br>'
+            "BM25는 정확히 같은 단어에 강하고, Chroma는 표현이 달라도 비슷한 뜻을 "
+            "찾습니다. RRF는 서로 다른 두 순위를 안전하게 합치고, 로컬 BGE는 질문과 "
+            "본문을 함께 읽어 마지막 순서를 결정합니다.</div>"
+        ),
+        unsafe_allow_html=True,
+    )
 
 
 def _render_answer_view(response: RAGResponse) -> None:
@@ -399,11 +680,13 @@ def render_trace_workspace(
 ) -> None:
     """한 RAG 실행 결과를 답변·검증·관리 화면으로 나누어 보여준다."""
 
-    answer_tab, verify_tab, admin_tab = st.tabs(
-        ["답변", "근거 검증", "검색 기록 (관리자)"]
+    answer_tab, execution_tab, verify_tab, admin_tab = st.tabs(
+        ["답변", "실행 과정", "근거 검증", "검색 상세"]
     )
     with answer_tab:
         _render_answer_view(response)
+    with execution_tab:
+        _render_execution_view(response)
     with verify_tab:
         _render_verification_view(response)
     with admin_tab:
@@ -416,6 +699,7 @@ def render_trace_workspace(
 
 __all__ = [
     "apply_trace_style",
+    "build_rank_flow_rows",
     "citation_numbers",
     "render_trace_header",
     "render_trace_workspace",

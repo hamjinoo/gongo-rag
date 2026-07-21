@@ -11,6 +11,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 sys.stdout.reconfigure(encoding="utf-8")
 
 from rag_workflow import RAGResponse  # noqa: E402
+from rag_trace_ui import build_rank_flow_rows  # noqa: E402
 
 
 def open_app() -> AppTest:
@@ -23,7 +24,12 @@ def test_upload_screen_renders():
     app = open_app()
 
     assert not app.exception
-    assert [tab.label for tab in app.tabs] == ["1. 문서 넣기", "2. 질문하기"]
+    assert [tab.label for tab in app.tabs] == [
+        "프로젝트 한눈에",
+        "RAG 데모",
+        "문서 실험실",
+        "평가 결과",
+    ]
     assert len(app.get("file_uploader")) == 1
     assert any(button.label == "텍스트 추출" for button in app.button)
 
@@ -46,7 +52,7 @@ def test_saved_rag_response_renders_inside_existing_streamlit_app():
         "rrf_score": 0.0325,
         "reranker_score": 0.93,
     }
-    app.session_state["rag_response"] = RAGResponse(
+    response = RAGResponse(
         question="지원 금액은 얼마인가요?",
         final_query="지원 금액은 얼마인가요?",
         answer="사업화 지원 금액은 최대 1억원입니다. [근거 1]",
@@ -57,24 +63,28 @@ def test_saved_rag_response_renders_inside_existing_streamlit_app():
         decision_reason="지원 금액이 원문에 직접 있습니다.",
         refusal_reason=None,
     )
+    app.session_state["rag_response"] = response
     app.session_state["rag_elapsed_seconds"] = 1.23
     app.session_state["rag_trace_id"] = "q_test"
     app.run()
 
     assert not app.exception
-    assert [tab.label for tab in app.tabs[-3:]] == [
+    tab_labels = [tab.label for tab in app.tabs]
+    trace_start = tab_labels.index("답변")
+    assert tab_labels[trace_start : trace_start + 4] == [
         "답변",
+        "실행 과정",
         "근거 검증",
-        "검색 기록 (관리자)",
+        "검색 상세",
     ]
     assert any("지원사업 공고문.pdf" in block.value for block in app.markdown)
-    assert [metric.value for metric in app.metric[-4:]] == [
-        "1.23s",
-        "1개",
-        "1개",
-        "0회",
-    ]
-    assert len(app.dataframe) == 1
+    metric_values = {metric.label: metric.value for metric in app.metric}
+    assert metric_values["전체 소요"] == "1.23s"
+    assert metric_values["최종 근거"] == "1개"
+    assert metric_values["답변에 인용"] == "1개"
+    assert metric_values["재검색"] == "0회"
+    assert len(app.dataframe) >= 3
+    assert build_rank_flow_rows(response)[0]["순위 변화"] == "유지"
 
 
 def test_text_file_can_be_uploaded_and_previewed():
@@ -86,11 +96,14 @@ def test_text_file_can_be_uploaded_and_previewed():
         expected.encode("utf-8"),
         "text/plain",
     ).run()
-    app.button[0].click().run()
+    next(button for button in app.button if button.label == "텍스트 추출").click().run()
 
     assert not app.exception
     assert any(expected in area.value for area in app.text_area)
-    assert [metric.value for metric in app.metric] == [str(len(expected)), "1", "미사용"]
+    metric_values = {metric.label: metric.value for metric in app.metric}
+    assert metric_values["글자 수"] == str(len(expected))
+    assert metric_values["구역 수"] == "1"
+    assert metric_values["OCR"] == "미사용"
     assert any(button.label == "추출 텍스트 받기" for button in app.get("download_button"))
 
 
@@ -106,14 +119,14 @@ def test_extracted_text_can_be_chunked_and_previewed():
         text.encode("utf-8"),
         "text/plain",
     ).run()
-    app.button[0].click().run()
+    next(button for button in app.button if button.label == "텍스트 추출").click().run()
 
-    assert [button.label for button in app.button] == [
+    assert {button.label for button in app.button} == {
         "텍스트 추출",
         "Chunk 만들기",
         "근거를 찾아 답변하기",
-    ]
-    app.button[1].click().run()
+    }
+    next(button for button in app.button if button.label == "Chunk 만들기").click().run()
 
     assert not app.exception
     metric_labels = [metric.label for metric in app.metric]
