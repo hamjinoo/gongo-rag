@@ -16,7 +16,9 @@ from rag_workflow import (  # noqa: E402
     EvidenceDecision,
     RAGWorkflow,
     RAGWorkflowConfig,
+    generate_answer_with_llm,
     parse_evidence_decision,
+    rewrite_query_with_llm,
 )
 
 
@@ -96,6 +98,29 @@ def test_answer_path_returns_cited_answer_and_source_metadata():
     assert response.evidence[0]["source_filename"] == "지원사업 공고문.pdf"
     assert response.evidence[0]["page_number"] == 2
     assert retriever.queries == [(question, 5)]
+
+
+def test_judge_draft_is_validated_without_second_llm_call():
+    question = "누가 신청할 수 있나요?"
+    retriever = FakeRetriever(
+        {question: [make_result("target", "예비창업자가 신청할 수 있습니다.")]}
+    )
+    workflow = RAGWorkflow(
+        retriever,
+        judge=lambda _question, _evidence: EvidenceDecision(
+            True,
+            "신청 대상이 직접 있습니다.",
+            "예비창업자가 신청할 수 있습니다. [근거 1]",
+        ),
+        answer_generator=lambda _question, _evidence: (_ for _ in ()).throw(
+            AssertionError("판정과 함께 만든 초안이 있으면 LLM을 다시 호출하면 안 됩니다.")
+        ),
+    )
+
+    response = workflow.invoke(question)
+
+    assert response.status == ANSWERED
+    assert response.answer == "예비창업자가 신청할 수 있습니다. [근거 1]"
 
 
 def test_answer_preserves_search_scores_for_trace_screen():
@@ -263,6 +288,61 @@ def test_malformed_evidence_decision_fails_closed():
     decision = parse_evidence_decision("아마 답할 수 있을 것 같습니다.")
     assert decision.sufficient is False
     assert "안전하게 부족함" in decision.reason
+
+
+def test_structured_evidence_decision_is_parsed_without_reasoning_text():
+    decision = parse_evidence_decision(
+        '{"sufficient": true, "reason": "신청 자격이 근거에 직접 있습니다."}'
+    )
+
+    assert decision == EvidenceDecision(
+        True,
+        "신청 자격이 근거에 직접 있습니다.",
+    )
+
+
+def test_structured_decision_can_carry_answer_draft():
+    decision = parse_evidence_decision(
+        '{"sufficient": true, "reason": "자격이 있습니다.", '
+        '"draft_answer": "예비창업자가 신청할 수 있습니다. [근거 1]"}'
+    )
+
+    assert decision.draft_answer == "예비창업자가 신청할 수 있습니다. [근거 1]"
+
+
+def test_structured_query_rewrite_uses_only_query_field():
+    rewritten = rewrite_query_with_llm(
+        "어떤 사람이 신청 가능해?",
+        [],
+        llm_call=lambda _prompt: '{"query": "스타트업 원스톱 지원센터 신청 자격 지원 대상"}',
+    )
+
+    assert rewritten == "스타트업 원스톱 지원센터 신청 자격 지원 대상"
+
+
+def test_english_reasoning_is_not_used_as_retrieval_query():
+    question = "어떤 사람이 신청 가능해?"
+    rewritten = rewrite_query_with_llm(
+        question,
+        [],
+        llm_call=lambda _prompt: (
+            "Okay, let's tackle this problem. The user wants to know who can apply."
+        ),
+    )
+
+    assert rewritten == question
+
+
+def test_structured_answer_uses_only_answer_field():
+    generated = generate_answer_with_llm(
+        "누가 신청할 수 있나요?",
+        [],
+        llm_call=lambda _prompt: (
+            '{"answer": "예비창업자와 창업기업이 신청할 수 있습니다. [근거 1]"}'
+        ),
+    )
+
+    assert generated == "예비창업자와 창업기업이 신청할 수 있습니다. [근거 1]"
 
 
 def test_empty_question_is_rejected_before_search():

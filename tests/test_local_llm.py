@@ -87,7 +87,16 @@ def test_chat_call_uses_local_non_streaming_api(monkeypatch):
     monkeypatch.setenv("OLLAMA_TIMEOUT_SECONDS", "12")
     monkeypatch.setattr(local_llm.request, "urlopen", fake_urlopen)
 
-    answer = local_llm.call_ollama("근거만 사용하세요.")
+    schema = {
+        "type": "object",
+        "properties": {"answer": {"type": "string"}},
+        "required": ["answer"],
+    }
+    answer = local_llm.call_ollama(
+        "근거만 사용하세요.",
+        response_format=schema,
+        max_tokens=80,
+    )
 
     assert answer == "로컬 답변"
     assert captured["url"] == "http://localhost:11434/api/chat"
@@ -96,4 +105,12 @@ def test_chat_call_uses_local_non_streaming_api(monkeypatch):
     assert body["model"] == "qwen3:4b"
     assert body["stream"] is False
     assert body["think"] is False
-    assert body["messages"] == [{"role": "user", "content": "근거만 사용하세요."}]
+    assert body["format"] == schema
+    assert body["options"]["temperature"] == 0
+    assert body["options"]["num_predict"] == 80
+    assert body["messages"][0]["role"] == "system"
+    assert "/no_think" in body["messages"][0]["content"]
+    assert body["messages"][1] == {
+        "role": "user",
+        "content": "근거만 사용하세요.\n\n/no_think",
+    }

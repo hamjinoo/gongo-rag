@@ -2,13 +2,19 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
 from typing import Any, Callable, Literal, Protocol, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from rag_answer import call_llm, verify_citation
+from rag_answer import (
+    call_answer_llm,
+    call_evidence_judge_llm,
+    call_query_rewrite_llm,
+    verify_citation,
+)
 
 
 ANSWERED = "answered"
@@ -50,6 +56,7 @@ class RAGState(TypedDict, total=False):
     evidence: list[RAGEvidence]
     sufficient: bool
     decision_reason: str
+    draft_answer: str
     rewrite_count: int
     answer: str
     status: Literal["answered", "refused"]
@@ -63,6 +70,7 @@ class EvidenceDecision:
 
     sufficient: bool
     reason: str
+    draft_answer: str | None = None
 
 
 @dataclass(frozen=True)
@@ -131,10 +139,11 @@ EVIDENCE_ASSESSMENT_PROMPT = """당신은 정부 지원사업 RAG의 근거 판�
 1. 질문이 요구한 대상, 조건, 숫자, 날짜가 근거에 직접 있어야 합니다.
 2. 비슷한 사업이나 다른 대상의 내용만 있으면 부족함입니다.
 3. 추측하거나 상식으로 채우지 마세요.
-4. 반드시 아래 두 줄 형식으로만 답하세요.
+4. 충분하면 근거 번호를 붙인 답변 초안을 만들고, 부족하면 "정보 없음"을 쓰세요.
+5. 반드시 아래 JSON 형식으로만 답하세요.
 
-판정: 충분함 또는 부족함
-이유: 한 문장
+출력 형식:
+{{"sufficient": true 또는 false, "reason": "판정 이유 한 문장", "draft_answer": "[근거 N]이 포함된 답변 또는 정보 없음"}}
 
 [원래 질문]
 {question}
@@ -150,8 +159,11 @@ QUERY_REWRITE_PROMPT = """당신은 한국어 정부 공고문 검색어를 고�
 
 규칙:
 1. 새로운 사실을 추가하지 마세요.
-2. 질문 하나만 한 줄로 답하세요.
-3. 설명이나 따옴표를 붙이지 마세요.
+2. 설명이나 추론 과정을 쓰지 마세요.
+3. 반드시 아래 JSON 형식으로만 답하세요.
+
+출력 형식:
+{{"query": "고친 한국어 검색 질문 한 줄"}}
 
 [원래 질문]
 {question}
@@ -159,7 +171,6 @@ QUERY_REWRITE_PROMPT = """당신은 한국어 정부 공고문 검색어를 고�
 [부족했던 검색 근거]
 {context}
 
-고친 질문:
 """
 
 
@@ -171,6 +182,10 @@ ANSWER_PROMPT = """당신은 정부 지원사업 공고문 안내 도우미입�
 2. 근거만으로 답할 수 없으면 정확히 "정보 없음"이라고만 답하세요.
 3. 답할 수 있다면 사용한 근거 번호를 문장 끝에 [근거 1]처럼 표시하세요.
 4. 파일명과 페이지는 근거 표시에 이미 있으므로 새로 만들지 마세요.
+5. 반드시 아래 JSON 형식으로만 답하세요.
+
+출력 형식:
+{{"answer": "근거 번호가 포함된 최종 한국어 답변 또는 정보 없음"}}
 
 [근거]
 {context}
@@ -178,7 +193,6 @@ ANSWER_PROMPT = """당신은 정부 지원사업 공고문 안내 도우미입�
 [질문]
 {question}
 
-답변:
 """
 
 
@@ -206,7 +220,23 @@ def build_evidence_context(evidence: list[RAGEvidence]) -> str:
 
 
 def parse_evidence_decision(raw_response: str) -> EvidenceDecision:
-    """정해진 두 줄 형식만 허용하며 형식 오류는 안전하게 부족함으로 본다."""
+    """JSON 또는 이전 두 줄 응답을 읽고 형식 오류는 부족함으로 본다."""
+
+    payload = _parse_json_object(raw_response)
+    if payload is not None:
+        sufficient = payload.get("sufficient")
+        reason = payload.get("reason")
+        if isinstance(sufficient, bool) and isinstance(reason, str) and reason.strip():
+            draft_answer = payload.get("draft_answer")
+            return EvidenceDecision(
+                sufficient=sufficient,
+                reason=reason.strip(),
+                draft_answer=(
+                    draft_answer.strip()
+                    if isinstance(draft_answer, str) and draft_answer.strip()
+                    else None
+                ),
+            )
 
     decision_match = re.search(
         r"^\s*판정\s*:\s*(충분함|부족함)\s*$",
@@ -233,7 +263,7 @@ def assess_evidence_with_llm(
     question: str,
     evidence: list[RAGEvidence],
     *,
-    llm_call: Callable[[str], str] = call_llm,
+    llm_call: Callable[[str], str] = call_evidence_judge_llm,
 ) -> EvidenceDecision:
     """LLM이 근거 충분성을 판정하되 잘못된 형식은 fail-closed 처리한다."""
 
@@ -250,7 +280,7 @@ def rewrite_query_with_llm(
     question: str,
     evidence: list[RAGEvidence],
     *,
-    llm_call: Callable[[str], str] = call_llm,
+    llm_call: Callable[[str], str] = call_query_rewrite_llm,
 ) -> str:
     """원래 의미를 유지한 한국어 재검색 질문 한 줄을 만든다."""
 
@@ -261,16 +291,32 @@ def rewrite_query_with_llm(
     raw_response = llm_call(prompt).strip()
     if not raw_response:
         return question
-    rewritten = raw_response.splitlines()[0].strip()
-    rewritten = re.sub(r"^(고친\s*질문|질문)\s*:\s*", "", rewritten)
-    return rewritten or question
+    payload = _parse_json_object(raw_response)
+    if payload is not None and isinstance(payload.get("query"), str):
+        rewritten = str(payload["query"]).strip()
+        return rewritten if _is_safe_korean_rewrite(rewritten) else question
+
+    without_thinking = re.sub(
+        r"<think>.*?</think>",
+        "",
+        raw_response,
+        flags=re.DOTALL | re.IGNORECASE,
+    ).strip()
+    labeled = re.search(
+        r"^(?:고친\s*질문|질문)\s*:\s*(.+?)\s*$",
+        without_thinking,
+        flags=re.MULTILINE,
+    )
+    lines = [line.strip() for line in without_thinking.splitlines() if line.strip()]
+    rewritten = labeled.group(1).strip() if labeled else (lines[-1] if lines else "")
+    return rewritten if _is_safe_korean_rewrite(rewritten) else question
 
 
 def generate_answer_with_llm(
     question: str,
     evidence: list[RAGEvidence],
     *,
-    llm_call: Callable[[str], str] = call_llm,
+    llm_call: Callable[[str], str] = call_answer_llm,
 ) -> str:
     """출처 metadata가 포함된 근거로 인용 답변을 생성한다."""
 
@@ -278,7 +324,44 @@ def generate_answer_with_llm(
         question=question,
         context=build_evidence_context(evidence),
     )
-    return llm_call(prompt).strip()
+    raw_response = llm_call(prompt).strip()
+    payload = _parse_json_object(raw_response)
+    if payload is not None and isinstance(payload.get("answer"), str):
+        return str(payload["answer"]).strip()
+    without_thinking = re.sub(
+        r"<think>.*?</think>",
+        "",
+        raw_response,
+        flags=re.DOTALL | re.IGNORECASE,
+    ).strip()
+    return re.sub(r"^답변\s*:\s*", "", without_thinking).strip()
+
+
+def _parse_json_object(raw_response: str) -> dict[str, object] | None:
+    """코드 펜스나 앞뒤 설명이 섞여도 첫 JSON 객체만 보수적으로 읽는다."""
+
+    stripped = raw_response.strip()
+    if stripped.startswith("```"):
+        stripped = re.sub(r"^```(?:json)?\s*", "", stripped, flags=re.IGNORECASE)
+        stripped = re.sub(r"\s*```$", "", stripped)
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start < 0 or end <= start:
+        return None
+    try:
+        payload = json.loads(stripped[start : end + 1])
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _is_safe_korean_rewrite(candidate: str) -> bool:
+    """추론문 전체가 검색어로 들어가는 일을 길이와 한국어 기준으로 차단한다."""
+
+    normalized = candidate.strip()
+    return bool(normalized) and len(normalized) <= 160 and bool(
+        re.search(r"[가-힣]", normalized)
+    )
 
 
 def validate_generated_answer(
@@ -431,6 +514,7 @@ class RAGWorkflow:
         return {
             "sufficient": decision.sufficient,
             "decision_reason": decision.reason,
+            "draft_answer": decision.draft_answer or "",
             "steps": [*state.get("steps", []), "assess_evidence"],
         }
 
@@ -457,7 +541,12 @@ class RAGWorkflow:
 
     def _answer(self, state: RAGState) -> dict[str, object]:
         evidence = state.get("evidence", [])
-        generated = self.answer_generator(state["question"], evidence).strip()
+        draft_answer = state.get("draft_answer", "").strip()
+        generated = (
+            draft_answer
+            if draft_answer
+            else self.answer_generator(state["question"], evidence).strip()
+        )
         if generated == NO_ANSWER:
             return {
                 "answer": NO_ANSWER,

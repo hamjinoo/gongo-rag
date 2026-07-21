@@ -116,28 +116,47 @@ def get_ollama_status(*, timeout_seconds: float = 1.0) -> OllamaStatus:
     )
 
 
-def call_ollama(prompt: str) -> str:
+def call_ollama(
+    prompt: str,
+    *,
+    response_format: str | dict[str, object] | None = None,
+    max_tokens: int = 512,
+) -> str:
     """Qwen의 thinking 출력은 끄고 최종 답변만 동기식으로 받는다."""
 
     if not prompt.strip():
         raise ValueError("prompt는 비어 있을 수 없습니다.")
+    if max_tokens < 1:
+        raise ValueError("max_tokens는 1 이상이어야 합니다.")
 
     model = ollama_model()
+    request_body: dict[str, object] = {
+        "model": model,
+        "messages": [
+            {
+                "role": "system",
+                "content": (
+                    "추론 과정이나 작업 설명을 출력하지 말고 요청한 최종 결과만 "
+                    "한국어로 반환하세요. /no_think"
+                ),
+            },
+            {"role": "user", "content": f"{prompt.rstrip()}\n\n/no_think"},
+        ],
+        "stream": False,
+        "think": False,
+        "keep_alive": "10m",
+        "options": {
+            "temperature": 0,
+            "num_predict": max_tokens,
+        },
+    }
+    if response_format is not None:
+        request_body["format"] = response_format
     payload = _json_request(
         f"{ollama_base_url()}/api/chat",
         method="POST",
         timeout_seconds=ollama_timeout_seconds(),
-        body={
-            "model": model,
-            "messages": [{"role": "user", "content": prompt}],
-            "stream": False,
-            "think": False,
-            "keep_alive": "10m",
-            "options": {
-                "temperature": 0.2,
-                "num_predict": 512,
-            },
-        },
+        body=request_body,
     )
     message = payload.get("message")
     content = message.get("content") if isinstance(message, dict) else None
