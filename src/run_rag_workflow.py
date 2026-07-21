@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 from chunker import ChunkingConfig, DocumentChunk
+from local_llm import get_ollama_status
 from rag_workflow import RAGWorkflow, RAGWorkflowConfig
 from retrieval_trace import TracedReranker, trace_reranker
 from reranker import DEFAULT_RERANKER_MODEL
@@ -88,11 +88,9 @@ def main() -> None:
     configure_utf8_console()
     load_dotenv()
     args = parse_args()
-    if not os.getenv("OPENAI_API_KEY"):
-        raise SystemExit(
-            "OPENAI_API_KEY가 필요합니다. .env.example을 .env로 복사하고 "
-            "OPENAI_API_KEY만 채워주세요."
-        )
+    local_llm_status = get_ollama_status(timeout_seconds=1.0)
+    if not local_llm_status.ready:
+        raise SystemExit(local_llm_status.message)
 
     workflow = RAGWorkflow(
         build_locked_reranker(

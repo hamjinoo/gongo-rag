@@ -5,10 +5,10 @@
 
 import re
 
-# ── LLM 설정 ─────────────────────────────────────────────────
-# 모델명은 바뀌니 공식 문서에서 확인. 저렴한 소형 모델이면 충분하다.
-OPENAI_MODEL = "gpt-5.4-nano"
-TEMPERATURE = 0.2  # 사실 기반 답변이므로 낮게 (02-LLM-기초.md 3번)
+from local_llm import DEFAULT_OLLAMA_MODEL, call_ollama
+
+
+LOCAL_LLM_MODEL = DEFAULT_OLLAMA_MODEL
 
 # ── 단순 답변 프롬프트 템플릿 ────────────────────────────────
 PROMPT_TEMPLATE = """당신은 정부 지원사업 공고문 안내 도우미입니다.
@@ -34,30 +34,9 @@ def build_context(chunks: list[str]) -> str:
 
 
 def call_llm(prompt: str) -> str:
-    """OPENAI_API_KEY 환경 변수를 사용하는 LLM 호출."""
-    from openai import OpenAI
+    """API 키 없이 로컬 Ollama 모델을 호출한다."""
 
-    client = OpenAI()  # 환경변수 OPENAI_API_KEY 사용
-    resp = client.chat.completions.create(
-        model=OPENAI_MODEL,
-        temperature=TEMPERATURE,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return resp.choices[0].message.content.strip()
-
-
-# --- Anthropic(Claude)을 쓰고 싶다면 (pip install anthropic, $env:ANTHROPIC_API_KEY) ---
-# def call_llm(prompt: str) -> str:
-#     import anthropic
-#     client = anthropic.Anthropic()
-#     resp = client.messages.create(
-#         model="claude-haiku-4-5",   # 소형·저렴. 최신 모델명은 공식 문서 확인
-#         max_tokens=1000,
-#         temperature=TEMPERATURE,
-#         messages=[{"role": "user", "content": prompt}],
-#     )
-#     return resp.content[0].text.strip()
-# ---------------------------------------------------------------------------------
+    return call_ollama(prompt)
 
 
 def answer(question: str, retrieved_chunks: list[str]) -> str:
@@ -94,7 +73,7 @@ def verify_citation(answer_text: str, chunks: list[str]) -> dict:
 
 
 __all__ = [
-    "OPENAI_MODEL",
+    "LOCAL_LLM_MODEL",
     "PROMPT_TEMPLATE",
     "answer",
     "build_context",

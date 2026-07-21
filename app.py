@@ -1,6 +1,5 @@
 """문서 입력부터 단계별 Top-k와 근거 답변까지 한 번에 보여주는 Streamlit 앱."""
 
-import os
 import sys
 import time
 from datetime import datetime
@@ -15,6 +14,7 @@ from document_chunk_ui import render_document_chunking  # noqa: E402
 from document_search_ui import render_bm25_search  # noqa: E402
 from document_upload_ui import render_document_upload  # noqa: E402
 from hybrid_search_ui import render_hybrid_search  # noqa: E402
+from local_llm import OllamaStatus, get_ollama_status  # noqa: E402
 from portfolio_ui import render_evaluation_portfolio  # noqa: E402
 from rag_demo import prepare_uploaded_corpus  # noqa: E402
 from rag_workflow import RAGWorkflow, RAGWorkflowConfig  # noqa: E402
@@ -55,6 +55,13 @@ def build_uploaded_workflow(signature: str, _chunks: tuple[object, ...]) -> RAGW
         persist_directory=PROJECT_ROOT / ".chroma" / "rag-demo" / signature,
     )
     return RAGWorkflow(retriever, config=RAGWorkflowConfig(top_k=5, max_rewrites=1))
+
+
+@st.cache_data(ttl=5, show_spinner=False)
+def load_local_llm_status() -> OllamaStatus:
+    """화면을 느리게 하지 않도록 Ollama 상태를 잠깐 캐시한다."""
+
+    return get_ollama_status(timeout_seconds=0.5)
 
 
 st.set_page_config(
@@ -99,14 +106,28 @@ with run_tab:
         disabled=not question.strip() or (not uploaded_files and saved_text_count == 0),
     )
 
-    if not os.getenv("OPENAI_API_KEY"):
-        st.caption("답변 생성에는 `.env`의 `OPENAI_API_KEY`가 필요합니다. 검색·재정렬은 로컬에서 실행됩니다.")
+    local_llm_status = load_local_llm_status()
+    if local_llm_status.ready:
+        st.caption(f"🟢 {local_llm_status.message} · 문서와 질문을 외부 API로 보내지 않습니다.")
+    else:
+        st.caption(f"🟠 {local_llm_status.message}")
+        with st.expander("로컬 LLM 준비 방법", expanded=False):
+            st.write("Ollama를 설치·실행한 뒤 모델을 한 번 내려받습니다.")
+            st.code(f"ollama pull {local_llm_status.model}", language="powershell")
 
     if run_clicked:
-        for key in ("rag_response", "rag_elapsed_seconds", "rag_trace_id", "rag_corpus_label"):
+        for key in (
+            "rag_response",
+            "rag_elapsed_seconds",
+            "rag_trace_id",
+            "rag_corpus_label",
+            "rag_llm_label",
+        ):
             st.session_state.pop(key, None)
-        if not os.getenv("OPENAI_API_KEY"):
-            st.error("OPENAI_API_KEY를 설정한 뒤 다시 실행해주세요.")
+        load_local_llm_status.clear()
+        run_llm_status = get_ollama_status(timeout_seconds=1.0)
+        if not run_llm_status.ready:
+            st.error(run_llm_status.message)
         else:
             with st.spinner(
                 "문서 준비 → BM25·Embedding → RRF → BGE → LangGraph 답변을 실행합니다. "
@@ -132,6 +153,7 @@ with run_tab:
                     st.session_state["rag_elapsed_seconds"] = time.perf_counter() - started_at
                     st.session_state["rag_trace_id"] = datetime.now().strftime("q_%Y%m%d_%H%M%S")
                     st.session_state["rag_corpus_label"] = corpus_label
+                    st.session_state["rag_llm_label"] = f"로컬 LLM {run_llm_status.model}"
                     st.session_state["rag_response"] = response
                 except Exception as exc:
                     st.error(f"RAG 실행에 실패했습니다: {exc}")
@@ -143,6 +165,7 @@ with run_tab:
             elapsed_seconds=st.session_state.get("rag_elapsed_seconds"),
             trace_id=st.session_state.get("rag_trace_id", "local-run"),
             corpus_label=st.session_state.get("rag_corpus_label"),
+            llm_label=st.session_state.get("rag_llm_label"),
         )
 
 with evaluation_tab:

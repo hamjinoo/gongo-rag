@@ -44,7 +44,7 @@ flowchart TD
     F --> G["6. Reranker가 후보 7개 다시 읽기"]
     G --> H["가장 좋은 근거 Top 5"]
     H --> I{"9. LangGraph: 근거가 충분한가?"}
-    I -- "충분함" --> J["근거를 인용한 답변"]
+    I -- "충분함" --> J["Ollama 로컬 LLM의 근거 인용 답변"]
     I -- "부족함" --> K["질문을 고쳐 한 번 더 검색"]
     K --> L{"그래도 부족한가?"}
     L -- "아니요" --> J
@@ -254,14 +254,16 @@ START
 구현 파일:
 
 - `src/rag_workflow.py`: State, node, conditional edge, 답변 검증
+- `src/local_llm.py`: Ollama 상태 확인과 로컬 Qwen3 호출
 - `src/run_rag_workflow.py`: 잠근 BGE 검색기와 그래프를 연결하는 CLI
 - `app.py`: 실행 경로·재작성 질문·근거 출처를 보여주는 Streamlit 화면
 - `tests/test_rag_workflow.py`: 성공·재검색·거절·잘못된 인용 차단 테스트
 
-현재 로컬 `.env`에는 OpenAI API 키가 없어 실제 LLM 호출은 실행하지 않았습니다.
-대신 외부 API 대신 결과가 정해진 가짜 객체를 넣을 수 있게 만들어 그래프 분기 자체를
-자동 테스트했습니다. 실제 답변 품질과 no-answer 거절률은 다음 평가 단계에서
-측정하며, 아직 좋다고 가정하지 않습니다.
+외부 LLM API 대신 Ollama의 로컬 HTTP API를 사용합니다. 기본 모델은 한국어를
+포함한 다국어 지시를 처리하는 `qwen3:4b`이며 `.env`에서 교체할 수 있습니다.
+서버 중단·모델 미설치·정상 답변은 가짜 HTTP 응답으로 자동 테스트했고, 그래프
+분기는 결과가 정해진 가짜 LLM을 주입해 검증했습니다. 실제 로컬 모델의 답변 품질과
+no-answer 거절률은 다음 평가 단계에서 측정하며, 아직 좋다고 가정하지 않습니다.
 
 완료 기준:
 
@@ -271,6 +273,7 @@ START
 - [x] 근거 인용 답변 node
 - [x] 정보 없음 node
 - [x] 성공·재검색·거절 경로 테스트
+- [x] Ollama 연결·모델 설치 상태·호출 형식 테스트
 - [ ] 실제 LLM normal·no-answer 품질 평가 — 다음 Ragas 단계
 
 ---

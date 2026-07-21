@@ -313,7 +313,7 @@ embed_documents(list[str]) → 문서 벡터 여러 개
 embed_query(str)            → 질문 벡터 한 개
 ```
 
-현재는 `HuggingFaceEmbeddings`를 사용하지만 나중에 OpenAI 또는
+현재는 `HuggingFaceEmbeddings`를 사용하지만 나중에 다른 로컬 모델 또는
 사내 embedding endpoint로 교체해도 Chroma 검색 계층의 인터페이스는
 유지할 수 있습니다.
 

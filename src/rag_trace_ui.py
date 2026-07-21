@@ -266,7 +266,7 @@ def render_trace_header(saved_text_count: int) -> None:
             '<div class="trace-header">'
             '<div class="trace-brand">DocLens <span>Trace</span></div>'
             '<div class="trace-context">'
-            f'문서 → 질문 → BM25 · Embedding · RRF · BGE Top-k → 근거 답변 · 기본 문서 {saved_text_count}개'
+            f'문서 → BM25 · Embedding · RRF · BGE → Ollama 근거 답변 · 기본 문서 {saved_text_count}개'
             "</div></div>"
         ),
         unsafe_allow_html=True,
@@ -565,6 +565,7 @@ def render_trace_workspace(
     elapsed_seconds: float | None,
     trace_id: str,
     corpus_label: str | None = None,
+    llm_label: str | None = None,
 ) -> None:
     """답변과 BM25→Embedding→RRF→BGE Top-k를 한 화면에 이어서 보여준다."""
 
@@ -586,13 +587,15 @@ def render_trace_workspace(
         attempt = attempts[0]
 
     elapsed_label = f"{elapsed_seconds:.2f}s" if elapsed_seconds is not None else "측정 안 됨"
-    summary_values = (
+    summary_values = [
         corpus_label or "기본 공고문",
         f"검색 {len(attempts)}회",
         f"최종 Top-{len(response.evidence)}",
         f"답변 인용 {len(cited)}개",
         f"전체 {elapsed_label}",
-    )
+    ]
+    if llm_label:
+        summary_values.append(llm_label)
     st.markdown(
         '<div class="trace-run-summary">'
         + "".join(f'<span class="trace-summary-chip">{html.escape(value)}</span>' for value in summary_values)
