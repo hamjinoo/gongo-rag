@@ -10,6 +10,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 sys.stdout.reconfigure(encoding="utf-8")
 
+from rag_workflow import RAGResponse  # noqa: E402
+
 
 def open_app() -> AppTest:
     app = AppTest.from_file(PROJECT_ROOT / "app.py", default_timeout=20)
@@ -24,6 +26,55 @@ def test_upload_screen_renders():
     assert [tab.label for tab in app.tabs] == ["1. 문서 넣기", "2. 질문하기"]
     assert len(app.get("file_uploader")) == 1
     assert any(button.label == "텍스트 추출" for button in app.button)
+
+
+def test_saved_rag_response_renders_inside_existing_streamlit_app():
+    app = open_app()
+    evidence = {
+        "rank": 1,
+        "chunk_id": "chunk-demo-1",
+        "text": "사업화 지원 금액은 최대 1억원입니다.",
+        "source_filename": "지원사업 공고문.pdf",
+        "page_number": 3,
+        "page_label": "페이지 3",
+        "score": 0.93,
+        "bm25_rank": 2,
+        "bm25_score": 8.1,
+        "vector_rank": 1,
+        "vector_similarity": 0.88,
+        "rrf_rank": 1,
+        "rrf_score": 0.0325,
+        "reranker_score": 0.93,
+    }
+    app.session_state["rag_response"] = RAGResponse(
+        question="지원 금액은 얼마인가요?",
+        final_query="지원 금액은 얼마인가요?",
+        answer="사업화 지원 금액은 최대 1억원입니다. [근거 1]",
+        status="answered",
+        evidence=(evidence,),
+        rewrite_count=0,
+        steps=("retrieve", "assess_evidence", "answer"),
+        decision_reason="지원 금액이 원문에 직접 있습니다.",
+        refusal_reason=None,
+    )
+    app.session_state["rag_elapsed_seconds"] = 1.23
+    app.session_state["rag_trace_id"] = "q_test"
+    app.run()
+
+    assert not app.exception
+    assert [tab.label for tab in app.tabs[-3:]] == [
+        "답변",
+        "근거 검증",
+        "검색 기록 (관리자)",
+    ]
+    assert any("지원사업 공고문.pdf" in block.value for block in app.markdown)
+    assert [metric.value for metric in app.metric[-4:]] == [
+        "1.23s",
+        "1개",
+        "1개",
+        "0회",
+    ]
+    assert len(app.dataframe) == 1
 
 
 def test_text_file_can_be_uploaded_and_previewed():

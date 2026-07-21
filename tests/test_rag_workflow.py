@@ -98,6 +98,39 @@ def test_answer_path_returns_cited_answer_and_source_metadata():
     assert retriever.queries == [(question, 5)]
 
 
+def test_answer_preserves_search_scores_for_trace_screen():
+    question = "지원 금액은 얼마인가요?"
+    result = make_result("money", "지원 금액은 최대 1억원입니다.")
+    result.reranker_score = 0.93
+    result.rrf_rank = 2
+    result.rrf_result = SimpleNamespace(
+        rank=2,
+        rrf_score=0.031,
+        bm25_rank=1,
+        bm25_score=8.1,
+        vector_rank=3,
+        vector_similarity=0.88,
+    )
+    workflow = RAGWorkflow(
+        FakeRetriever({question: [result]}),
+        judge=lambda _question, _evidence: EvidenceDecision(True, "금액이 있습니다."),
+        rewriter=lambda original, _evidence: original,
+        answer_generator=lambda _question, _evidence: (
+            "지원 금액은 최대 1억원입니다. [근거 1]"
+        ),
+    )
+
+    evidence = workflow.invoke(question).evidence[0]
+
+    assert evidence["bm25_rank"] == 1
+    assert evidence["bm25_score"] == 8.1
+    assert evidence["vector_rank"] == 3
+    assert evidence["vector_similarity"] == 0.88
+    assert evidence["rrf_rank"] == 2
+    assert evidence["rrf_score"] == 0.031
+    assert evidence["reranker_score"] == 0.93
+
+
 def test_rewrite_path_searches_once_more_then_answers_original_question():
     question = "접수는 언제 끝나요?"
     rewritten = "지원사업 신청 접수 마감일 제출기간"

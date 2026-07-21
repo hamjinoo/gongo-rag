@@ -33,6 +33,13 @@ class RAGEvidence(TypedDict):
     page_number: int
     page_label: str
     score: float | None
+    bm25_rank: int | None
+    bm25_score: float | None
+    vector_rank: int | None
+    vector_similarity: float | None
+    rrf_rank: int | None
+    rrf_score: float | None
+    reranker_score: float | None
 
 
 class RAGState(TypedDict, total=False):
@@ -494,6 +501,7 @@ def _results_to_evidence(results: list[Any]) -> list[RAGEvidence]:
         seen_ids.add(chunk_id)
 
         score = _result_score(result)
+        rrf_result = getattr(result, "rrf_result", None)
         evidence.append(
             {
                 "rank": int(getattr(result, "rank", fallback_rank)),
@@ -507,9 +515,40 @@ def _results_to_evidence(results: list[Any]) -> list[RAGEvidence]:
                     getattr(chunk, "page_label", "페이지 정보 없음")
                 ),
                 "score": score,
+                "bm25_rank": _optional_int(
+                    getattr(rrf_result, "bm25_rank", None)
+                ),
+                "bm25_score": _optional_float(
+                    getattr(rrf_result, "bm25_score", None)
+                ),
+                "vector_rank": _optional_int(
+                    getattr(rrf_result, "vector_rank", None)
+                ),
+                "vector_similarity": _optional_float(
+                    getattr(rrf_result, "vector_similarity", None)
+                ),
+                "rrf_rank": _optional_int(
+                    getattr(result, "rrf_rank", None)
+                    or getattr(rrf_result, "rank", None)
+                ),
+                "rrf_score": _optional_float(
+                    getattr(rrf_result, "rrf_score", None)
+                    or getattr(result, "rrf_score", None)
+                ),
+                "reranker_score": _optional_float(
+                    getattr(result, "reranker_score", None)
+                ),
             }
         )
     return evidence
+
+
+def _optional_float(value: object) -> float | None:
+    return None if value is None else float(value)
+
+
+def _optional_int(value: object) -> int | None:
+    return None if value is None else int(value)
 
 
 def _result_score(result: Any) -> float | None:

@@ -2,6 +2,8 @@
 
 import os
 import sys
+import time
+from datetime import datetime
 from pathlib import Path
 
 import streamlit as st
@@ -14,6 +16,11 @@ from document_search_ui import render_bm25_search  # noqa: E402
 from document_upload_ui import render_document_upload  # noqa: E402
 from hybrid_search_ui import render_hybrid_search  # noqa: E402
 from rag_workflow import RAGWorkflow, RAGWorkflowConfig  # noqa: E402
+from rag_trace_ui import (  # noqa: E402
+    apply_trace_style,
+    render_trace_header,
+    render_trace_workspace,
+)
 from reranker_ui import render_reranker  # noqa: E402
 from run_rag_workflow import build_locked_reranker  # noqa: E402
 from vector_search_ui import render_vector_search  # noqa: E402
@@ -37,13 +44,13 @@ def build_answer_workflow() -> RAGWorkflow:
     )
 
 
-st.set_page_config(page_title="gongo-rag", page_icon="📄", layout="wide")
-st.title("📄 gongo-rag")
-st.caption("문서를 글자로 바꾸고, 근거를 찾아 재검색하거나 안전하게 거절하는 한국어 RAG")
+st.set_page_config(page_title="DocLens Trace · gongo-rag", page_icon="📄", layout="wide")
+apply_trace_style()
 
 saved_text_count = len(list(TEXT_DIR.glob("*.txt")))
+render_trace_header(saved_text_count)
 st.sidebar.markdown(
-    "**답변 파이프라인**\n\n"
+    "**gongo-rag 파이프라인**\n\n"
     f"- 저장 문서: {saved_text_count}개\n"
     "- 검색: BM25 + Chroma → RRF\n"
     "- 재정렬: 로컬 BGE, 후보 7개\n"
@@ -65,10 +72,10 @@ with upload_tab:
     render_reranker(uploaded_chunks)
 
 with question_tab:
-    st.subheader("LangGraph로 저장된 문서에 질문하기")
+    st.subheader("문서에 질문해 보세요")
     st.caption(
-        "근거가 충분하면 답하고, 부족하면 질문을 한 번 고쳐 재검색한 뒤 "
-        "그래도 없으면 `정보 없음`으로 끝냅니다."
+        "답변과 함께 실제로 사용한 문서 구간을 보여줍니다. 근거가 부족하면 "
+        "질문을 한 번 고쳐 다시 찾고, 그래도 없으면 추측하지 않습니다."
     )
 
     if saved_text_count == 0:
@@ -77,6 +84,7 @@ with question_tab:
         question = st.text_input(
             "질문을 입력하세요",
             placeholder="예: 신청 자격이 어떻게 되나요?",
+            key="rag_question",
         )
         run_clicked = st.button(
             "근거를 찾아 답변하기",
@@ -91,6 +99,9 @@ with question_tab:
             )
 
         if run_clicked:
+            st.session_state.pop("rag_response", None)
+            st.session_state.pop("rag_elapsed_seconds", None)
+            st.session_state.pop("rag_trace_id", None)
             response = None
             if not os.getenv("OPENAI_API_KEY"):
                 st.error("OPENAI_API_KEY를 설정한 뒤 다시 실행해주세요.")
@@ -100,37 +111,22 @@ with question_tab:
                     "첫 실행은 모델을 불러오느라 오래 걸릴 수 있습니다."
                 ):
                     try:
+                        started_at = time.perf_counter()
                         response = build_answer_workflow().invoke(question)
+                        st.session_state["rag_elapsed_seconds"] = (
+                            time.perf_counter() - started_at
+                        )
+                        st.session_state["rag_trace_id"] = datetime.now().strftime(
+                            "q_%Y%m%d_%H%M%S"
+                        )
+                        st.session_state["rag_response"] = response
                     except Exception as exc:
                         st.error(f"RAG 실행에 실패했습니다: {exc}")
 
-            if response is not None:
-                if response.status == "answered":
-                    st.success("근거가 충분해 답변했습니다.")
-                else:
-                    st.warning("충분한 근거를 찾지 못해 안전하게 거절했습니다.")
-
-                st.subheader("답변")
-                st.write(response.answer)
-
-                st.caption(f"실행 경로: {' → '.join(response.steps)}")
-                st.caption(f"근거 판단: {response.decision_reason}")
-                if response.final_query != response.question:
-                    st.caption(f"재작성 질문: {response.final_query}")
-                if response.refusal_reason:
-                    st.caption(f"거절 이유: {response.refusal_reason}")
-
-                st.subheader("최종 근거")
-                for item in response.evidence:
-                    score_label = (
-                        f"{item['score']:.4f}"
-                        if item["score"] is not None
-                        else "-"
-                    )
-                    title = (
-                        f"[근거 {item['rank']}] {item['source_filename']} · "
-                        f"{item['page_label']} · score {score_label}"
-                    )
-                    with st.expander(title):
-                        st.caption(f"chunk ID: {item['chunk_id']}")
-                        st.text(item["text"])
+        response = st.session_state.get("rag_response")
+        if response is not None:
+            render_trace_workspace(
+                response,
+                elapsed_seconds=st.session_state.get("rag_elapsed_seconds"),
+                trace_id=st.session_state.get("rag_trace_id", "local-run"),
+            )
