@@ -240,7 +240,7 @@ Chunking 공부가 끝난 뒤 다음 순서로 진행합니다.
 → BM25와 embedding 결과를 RRF로 합치기 ✓
 → CrossEncoder reranker 추가 ✓
 → 고정 질문으로 단계별 검색 평가 ✓
-→ 작은 reranker 비교 완료, Cohere 비교 여부 결정 (다음)
+→ 작은 reranker 비교·Cohere 연결 완료, API dev 비교 (다음)
 ```
 
 각 단계의 자세한 내용은 [BM25 검색](BM25.md), [Chroma 벡터 검색](VECTOR_SEARCH.md),
