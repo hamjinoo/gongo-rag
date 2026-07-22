@@ -344,7 +344,8 @@ CrossEncoder 점수는 `0.998472`였습니다.
 - [x] 후보 10·7·5개 품질·속도 비교 후 기본값 7개 선택
 - [x] BGE와 작은 MiniLM의 품질·속도·메모리 비교
 - [x] Cohere Rerank API adapter와 응답 검증 테스트
-- [ ] Cohere와 BGE의 실제 dev 품질·비용·속도 비교
+- [x] Cohere 실제 비교 보류 이유 기록: API 키 부재, 로컬 BGE로 완성 가능
+- [x] 로컬 BGE·후보 7개 고정 후 test 검색 평가 1회
 - [ ] 최종 LLM 답변과 인용에 연결
 
 ---
@@ -386,9 +387,10 @@ vs CrossEncoder
 MiniLM은 평균 약 9.8배 빨랐지만 Hit@1이 0.85에서 0.70으로 떨어져 BGE를
 기본값으로 유지했습니다. 전체 결과는
 [작은 로컬 reranker 비교](../experiments/reranker-model-comparison-dev.md)에
-있습니다. 관리형 API와 로컬 운영의 차이를 보여주기 위해 Cohere 비교도 진행하기로
-결정했고, 같은 `PairScorer` 인터페이스에 연결했습니다. 현재 API 키가 없어 실제
-dev 호출만 남았습니다.
+있습니다. 관리형 API와 로컬 운영의 차이를 보여주기 위해 Cohere도 같은
+`PairScorer` 인터페이스에 연결했습니다. 실제 비교는 API 키 부재로 보류하고 로컬
+BGE·후보 7개를 최종 검색 설정으로 선택했습니다. 이 설정으로 test normal 10문항을
+한 번 실행해 Hit@1 0.80, MRR 0.85를 확인했으며 사후 재튜닝은 하지 않습니다.
 
 ---
 
@@ -648,10 +650,11 @@ opt-out이 있지만, zero data retention은 별도 승인을 받은 enterprise 
 조건입니다. 민감한 문서는 로컬 BGE, private deployment 또는 조직이 승인한
 cloud 배포를 사용합니다.
 
-### 실제 비교 실행
+### 선택적 실제 비교 실행
 
-현재 `COHERE_API_KEY`가 설정되지 않아 외부 호출은 하지 않았습니다. 키가 준비되면
-다음 명령으로 **dev normal 20개만** 비교합니다.
+현재 `COHERE_API_KEY`가 없어 외부 호출은 하지 않았고, 포트폴리오의 필수 다음
+작업에서도 제외했습니다. 나중에 관리형 API 운영 비교가 필요하면 기존 test가 아닌
+**dev normal 20개만** 다음 명령으로 비교합니다.
 
 ```powershell
 Copy-Item .env.example .env
@@ -709,8 +712,9 @@ retrieve node
 > 놓쳤습니다. 그래서 품질 우선 기본값은 BGE로 유지하고, 작은 모델은 속도 우선
 > 선택지로만 남겼습니다. 마지막으로 같은 `PairScorer` 인터페이스에 Cohere
 > `rerank-v4.0-pro`를 연결해 로컬과 관리형 API를 같은 골든셋으로 비교할 수 있게
-> 했습니다. API 경로는 후보 본문이 외부로 전송되므로 공개 문서 실험에만 사용하고,
-> 실제 dev 수치는 키가 준비된 뒤 기록합니다.
+> 했습니다. 실제 비교는 API 키가 없어 보류했고 로컬 BGE·후보 7개로 test를 한 번
+> 실행했습니다. test Hit@1은 0.80, MRR은 0.85였으며 이 결과로 다시 튜닝하지
+> 않고 LangGraph 답변 단계로 이동합니다.
 
 ---
 
@@ -778,10 +782,9 @@ rewrite로 다시 검색해야 합니다.
 
 ### Q12. 다음 단계는 무엇인가요?
 
-후보 수는 7개로 선택했고 작은 로컬 모델 비교도 마쳤습니다. Cohere adapter도
-연결했으므로 API 키가 준비되면 같은 dev 질문으로 실제 품질·지연·search unit을
-측정합니다. BGE 또는 Cohere를 선택해 설정을 잠근 뒤 test를 한 번만 실행하고,
-LangGraph 답변·재검색·거절 흐름에 연결합니다.
+후보 7개와 로컬 BGE로 검색 설정을 잠그고 test도 한 번 실행했습니다. 다음은 이
+검색 결과를 LangGraph에 연결해 근거가 충분하면 출처와 함께 답하고, 부족하면 질문을
+한 번 고쳐 재검색한 뒤 그래도 없으면 `정보 없음`으로 거절하는 흐름을 구현합니다.
 
 ---
 

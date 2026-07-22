@@ -19,24 +19,27 @@
 |---|---|---|
 | 문서 처리 | PDF·DOCX·이미지 추출, 문단 우선 chunking, LangChain Document 변환 | 색인 수명 관리 |
 | 검색 | Kiwi BM25 + E5/Chroma + chunk ID 기반 RRF 통합 검색 | 검색 실패 유형 확장 |
-| 재정렬 | BGE 기본값·소형 모델 비교·Cohere API adapter | API 키로 Cohere dev 비교 |
+| 재정렬 | BGE + 후보 7개 최종 선택, Cohere adapter 선택 제공 | LangGraph 연결 |
 | 답변 | LLM prompt, 숫자 근거 일치 검사, `정보 없음` 처리 | LangGraph 재검색·거절 흐름 |
-| 평가 | 골든셋 36문항, dev/test 분리, Hit@k·MRR·nDCG·지연 리포트 | 모델 선택 후 test 1회 + Ragas |
+| 평가 | dev로 설정 선택·test 1회 완료, Hit@k·MRR·nDCG·지연 리포트 | Ragas + 사람 답변 평가 |
 | 서비스 | Streamlit 문서 업로드·추출·질문 데모 | FastAPI + Docker |
 
 최초 후보 10개 기준 reranker는 dev normal 20문항에서 Hit@1 0.80, MRR 0.90,
 CPU 평균 약 6.28초였습니다. 후보 7개는 Hit@1 0.85, MRR 0.925를 기록하면서
-평균 지연을 약 4.20초로 33.1% 줄였습니다. 작은 dev 결과이므로 최종 성능으로
-일반화하지 않으며, 모델 선택이 끝난 뒤 test normal 10문항을 한 번만 확인합니다.
+평균 지연을 약 4.20초로 33.1% 줄였습니다.
 
 같은 후보 7개로 568M BGE와 118M MiniLM을 다시 비교하자 MiniLM은 약 9.8배
 빨랐지만 Hit@1이 0.85에서 0.70으로 떨어졌습니다. 따라서 품질 우선 기본값은
 BGE로 유지하고 MiniLM은 속도 우선 선택지로만 기록했습니다.
 
 Cohere `rerank-v4.0-pro`도 같은 평가기에 연결했습니다. Cohere를 선택하면 질문과
-RRF 후보 본문 7개가 외부 API로 전송되며 API 키가 필요합니다. 현재는 키가 없어
-가짜 응답으로 연결·오류 처리를 검증했고, 실제 dev 품질·지연·search unit 비교는
-아직 실행하지 않았습니다.
+RRF 후보 본문 7개가 외부 API로 전송되며 API 키가 필요합니다. 키가 없어 실제
+비교는 보류했고, 현재 포트폴리오의 최종 검색 설정은 로컬 BGE로 잠갔습니다.
+
+잠가 둔 test normal 10문항을 한 번 실행한 결과 BGE reranker는 Hit@1 0.80,
+Hit@3·5 0.90, MRR 0.85였습니다. `q026`은 자동 평가에서 실패했지만 BM25 검색
+1위에 같은 제출 마감일이 있어 사람이 보면 답할 수 있는 false negative였습니다.
+수치는 사후 수정하지 않고 그대로 보존합니다.
 
 ## 현재 아키텍처
 
@@ -129,6 +132,8 @@ dev 결과는 [7번 작업: 같은 시험지로 검색기 성적 비교하기](d
 모델 선택 근거는
 [작은 로컬 reranker 비교](experiments/reranker-model-comparison-dev.md)에
 남겼습니다.
+최종 test 결과와 `q026` 수동 검토는
+[test 검색 평가 리포트](experiments/retrieval-evaluation-test.md)에 남겼습니다.
 
 ```powershell
 python src\run_retrieval_evaluation.py --split dev
@@ -168,7 +173,7 @@ streamlit run app.py
 ## 평가 원칙
 
 - 골든셋은 실험 도중 정답을 맞추기 위해 수정하지 않습니다.
-- 설정을 고르는 동안 dev만 사용하고 test 결과는 반복해서 보지 않습니다.
+- 설정은 dev로 골랐고 test는 한 번 실행했습니다. 이제 test에 맞춰 다시 튜닝하지 않습니다.
 - chunk 크기, tokenizer, 검색기처럼 **한 번에 하나의 변수만** 바꿉니다.
 - Hit@1·3·5·10, MRR, nDCG와 지연 시간을 함께 봅니다.
 - 검색 실패, 답변 실패, 원문 데이터 문제를 따로 기록합니다.
@@ -194,9 +199,7 @@ gongo-rag/
 
 ## 다음 마일스톤
 
-1. API 키로 Cohere Rerank를 후보 7개·dev 20문항에서 한 번 비교하기
-2. BGE 또는 Cohere를 선택하고 검색 설정을 고정하기
-3. 고정한 설정으로 test split을 한 번 실행하기
-4. LangGraph 재검색·거절 흐름 구현하기
-5. Ragas·수동 검토를 포함한 답변 평가표 작성하기
-6. FastAPI·Docker와 재현 가능한 실행 환경 제공하기
+1. LangGraph 재검색·근거 인용·안전한 거절 흐름 구현하기
+2. Ragas·수동 검토를 포함한 답변 평가표 작성하기
+3. FastAPI·Docker와 재현 가능한 실행 환경 제공하기
+4. 최종 포트폴리오 README와 데모 화면 정리하기

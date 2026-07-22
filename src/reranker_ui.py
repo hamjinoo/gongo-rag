@@ -290,10 +290,9 @@ def render_reranker(
         key=f"{key_prefix}_download_{query_key}",
     )
     st.info(
-        "dev에서 후보 7개가 Hit@1 0.85를 유지하면서 CPU 평균 지연을 약 "
-        "6.28초에서 4.20초로 줄였습니다. MiniLM은 약 9.8배 빨랐지만 "
-        "Hit@1이 0.70으로 떨어져 BGE를 유지했습니다. Cohere 비교 경로는 "
-        "준비됐고 실제 dev 호출은 API 키가 필요합니다."
+        "로컬 BGE + 후보 7개로 검색 설정을 잠갔습니다. test에서는 Hit@1 "
+        "0.80, MRR 0.85를 확인했고 이 결과로 다시 튜닝하지 않습니다. "
+        "다음 단계는 LangGraph 답변·재검색·거절 흐름입니다."
     )
     return results
 

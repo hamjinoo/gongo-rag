@@ -1,0 +1,1415 @@
+{
+  "metadata": {
+    "generated_at_utc": "2026-07-20T18:36:48.497576+00:00",
+    "split": "test",
+    "systems": [
+      "bm25",
+      "chroma",
+      "rrf",
+      "reranker"
+    ],
+    "ks": [
+      1,
+      3,
+      5
+    ],
+    "golden_path": "data\\golden_set.jsonl",
+    "golden_sha256": "040454e92e3bf4e10544f3a0c2688e37aa851d4edfcad8dbe5c823183f047e8f",
+    "question_counts": {
+      "total": 13,
+      "normal": 10,
+      "no_answer": 3
+    },
+    "documents": [
+      {
+        "filename": "2026년 글로벌 IP스타기업 육성 사업 공고문.txt",
+        "sha256": "0bc7ebd932e460daaae6ab281a7d8a34915f85458a0303733b6ce81badd6d9cb"
+      },
+      {
+        "filename": "2026년 중소기업AI훈련확산센터 추가모집 공고문.txt",
+        "sha256": "e91c0bd83ff8d8c3f2711f437f2dd4a641768e77392caa2b3cca62e539804919"
+      },
+      {
+        "filename": "붙임 1. 2026년 글로벌화 사전검증 지원사업 참여기업 모집 공고.txt",
+        "sha256": "3fa2ee4d25faa54dba3b4a4c533fb51b94f6faa91f78321bf4bdaccc7527af0b"
+      }
+    ],
+    "chunking": {
+      "strategy": "paragraph",
+      "chunk_size": 700,
+      "overlap": 120,
+      "chunk_count": 38
+    },
+    "retrieval": {
+      "bm25_tokenizer": "kiwi",
+      "embedding_model": "intfloat/multilingual-e5-small",
+      "rrf_rank_constant": 60,
+      "rrf_fetch_k": 20,
+      "reranker_provider": "local",
+      "reranker_model": "BAAI/bge-reranker-v2-m3",
+      "reranker_model_revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+      "reranker_code_revision": null,
+      "reranker_parameter_count": 567755777,
+      "reranker_languages": "multilingual",
+      "reranker_license": "Apache-2.0",
+      "reranker_trust_remote_code": false,
+      "reranker_external_data_transfer": false,
+      "reranker_candidates": 7,
+      "reranker_batch_size": 2,
+      "reranker_max_length": 512
+    },
+    "reranker_runtime": {
+      "model_load_seconds": 3.9279152000090107,
+      "model_rss_delta_mb": 297.66796875,
+      "process_rss_after_load_mb": 1690.9140625,
+      "peak_process_rss_mb": 3038.31640625
+    },
+    "note": "검색 평가는 normal 문항만 사용합니다. no_answer는 최종 답변의 거절 평가에서 별도로 사용합니다."
+  },
+  "systems": [
+    {
+      "system_name": "BM25",
+      "split": "test",
+      "question_count": 10,
+      "ks": [
+        1,
+        3,
+        5
+      ],
+      "hit_rates": {
+        "hit@1": 0.8,
+        "hit@3": 0.9,
+        "hit@5": 0.9
+      },
+      "mrr": 0.8333333333333334,
+      "ndcg": {
+        "ndcg@1": 0.8,
+        "ndcg@3": 0.85,
+        "ndcg@5": 0.85
+      },
+      "mean_latency_ms": 0.7032800000160933,
+      "p95_latency_ms": 1.1842000531032681,
+      "misses@5": [
+        "q026"
+      ],
+      "cases": [
+        {
+          "question_id": "q003",
+          "question": "영어가 어려운 기업을 위해 프로그램에서 통역을 제공하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c0",
+            "e91c0bd83ff8-p1-c15",
+            "e91c0bd83ff8-p1-c14"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 1.1842000531032681,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q006",
+          "question": "글로벌화 사전검증 사업 신청 마감은 언제인가요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c0",
+            "3fa2ee4d25fa-p1-c6"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c4"
+          ],
+          "relevant_ranks": [
+            3
+          ],
+          "first_relevant_rank": 3,
+          "reciprocal_rank": 0.3333333333333333,
+          "latency_ms": 0.7788999937474728,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.5,
+            "ndcg@5": 0.5
+          }
+        },
+        {
+          "question_id": "q009",
+          "question": "시장성 검토에서는 기업의 어떤 역량을 평가하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c0",
+            "e91c0bd83ff8-p1-c18",
+            "e91c0bd83ff8-p1-c17"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c5"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 0.610999995842576,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q015",
+          "question": "글로벌 IP스타기업 신청은 언제까지 해야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c6",
+            "3fa2ee4d25fa-p1-c2"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c0"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 0.6684000254608691,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q018",
+          "question": "한 번 선정되면 3년 동안 자동으로 계속 지원되나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c4",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c6",
+            "0bc7ebd932e4-p1-c2"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 0.6082999752834439,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q021",
+          "question": "공고문에서 IP는 어떤 영어 표현의 약자라고 설명하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c2"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 0.6369000184349716,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q026",
+          "question": "AI훈련확산센터 제안서는 언제까지 내야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c1"
+          ],
+          "relevant_ranks": [],
+          "first_relevant_rank": null,
+          "reciprocal_rank": 0.0,
+          "latency_ms": 0.6659000064246356,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": false
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.0
+          }
+        },
+        {
+          "question_id": "q029",
+          "question": "선정 기관은 전담 인력을 최소 몇 명 지정해야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c3",
+            "3fa2ee4d25fa-p1-c6",
+            "e91c0bd83ff8-p1-c17",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c5"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c3"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 0.7030999986454844,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q032",
+          "question": "상시근로자가 20명보다 적은 스타트업도 AI 훈련 지원을 받을 수 있나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c5",
+            "0bc7ebd932e4-p1-c3",
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c6"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 0.6445999606512487,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q034",
+          "question": "AI훈련코치 교육은 기초와 심화를 각각 몇 번 운영하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c17"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c11"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 0.5314999725669622,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "system_name": "Chroma",
+      "split": "test",
+      "question_count": 10,
+      "ks": [
+        1,
+        3,
+        5
+      ],
+      "hit_rates": {
+        "hit@1": 0.5,
+        "hit@3": 0.7,
+        "hit@5": 0.9
+      },
+      "mrr": 0.6333333333333333,
+      "ndcg": {
+        "ndcg@1": 0.5,
+        "ndcg@3": 0.6130929753571458,
+        "ndcg@5": 0.6992282869718244
+      },
+      "mean_latency_ms": 20.057429984444752,
+      "p95_latency_ms": 40.39879998890683,
+      "misses@5": [
+        "q026"
+      ],
+      "cases": [
+        {
+          "question_id": "q003",
+          "question": "영어가 어려운 기업을 위해 프로그램에서 통역을 제공하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c9",
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c8"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 40.39879998890683,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q006",
+          "question": "글로벌화 사전검증 사업 신청 마감은 언제인가요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c4"
+          ],
+          "relevant_ranks": [
+            4
+          ],
+          "first_relevant_rank": 4,
+          "reciprocal_rank": 0.25,
+          "latency_ms": 17.40889996290207,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.43067655807339306
+          }
+        },
+        {
+          "question_id": "q009",
+          "question": "시장성 검토에서는 기업의 어떤 역량을 평가하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c6",
+            "3fa2ee4d25fa-p1-c3",
+            "e91c0bd83ff8-p1-c9",
+            "e91c0bd83ff8-p1-c16"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c5"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 19.19590000761673,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q015",
+          "question": "글로벌 IP스타기업 신청은 언제까지 해야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c5"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c0"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 17.541299981530756,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q018",
+          "question": "한 번 선정되면 3년 동안 자동으로 계속 지원되나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c3",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_ranks": [
+            3
+          ],
+          "first_relevant_rank": 3,
+          "reciprocal_rank": 0.3333333333333333,
+          "latency_ms": 18.12750002136454,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.5,
+            "ndcg@5": 0.5
+          }
+        },
+        {
+          "question_id": "q021",
+          "question": "공고문에서 IP는 어떤 영어 표현의 약자라고 설명하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c0",
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c4"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c2"
+          ],
+          "relevant_ranks": [
+            2
+          ],
+          "first_relevant_rank": 2,
+          "reciprocal_rank": 0.5,
+          "latency_ms": 18.37950001936406,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.6309297535714575,
+            "ndcg@5": 0.6309297535714575
+          }
+        },
+        {
+          "question_id": "q026",
+          "question": "AI훈련확산센터 제안서는 언제까지 내야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c15",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c18",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c16"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c1"
+          ],
+          "relevant_ranks": [],
+          "first_relevant_rank": null,
+          "reciprocal_rank": 0.0,
+          "latency_ms": 17.14929996524006,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": false
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.0
+          }
+        },
+        {
+          "question_id": "q029",
+          "question": "선정 기관은 전담 인력을 최소 몇 명 지정해야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c2",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c16"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c3"
+          ],
+          "relevant_ranks": [
+            4
+          ],
+          "first_relevant_rank": 4,
+          "reciprocal_rank": 0.25,
+          "latency_ms": 16.658199951052666,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.43067655807339306
+          }
+        },
+        {
+          "question_id": "q032",
+          "question": "상시근로자가 20명보다 적은 스타트업도 AI 훈련 지원을 받을 수 있나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c3"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c6"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 18.440899963025004,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q034",
+          "question": "AI훈련코치 교육은 기초와 심화를 각각 몇 번 운영하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c16"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c11"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 17.27399998344481,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "system_name": "RRF",
+      "split": "test",
+      "question_count": 10,
+      "ks": [
+        1,
+        3,
+        5
+      ],
+      "hit_rates": {
+        "hit@1": 0.8,
+        "hit@3": 0.9,
+        "hit@5": 0.9
+      },
+      "mrr": 0.8333333333333334,
+      "ndcg": {
+        "ndcg@1": 0.8,
+        "ndcg@3": 0.85,
+        "ndcg@5": 0.85
+      },
+      "mean_latency_ms": 17.189109994797036,
+      "p95_latency_ms": 18.47419998375699,
+      "misses@5": [
+        "q026"
+      ],
+      "cases": [
+        {
+          "question_id": "q003",
+          "question": "영어가 어려운 기업을 위해 프로그램에서 통역을 제공하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c3",
+            "e91c0bd83ff8-p1-c6",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c9"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 17.77629996649921,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q006",
+          "question": "글로벌화 사전검증 사업 신청 마감은 언제인가요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c0"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c4"
+          ],
+          "relevant_ranks": [
+            3
+          ],
+          "first_relevant_rank": 3,
+          "reciprocal_rank": 0.3333333333333333,
+          "latency_ms": 16.914699983317405,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.5,
+            "ndcg@5": 0.5
+          }
+        },
+        {
+          "question_id": "q009",
+          "question": "시장성 검토에서는 기업의 어떤 역량을 평가하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c6",
+            "e91c0bd83ff8-p1-c7",
+            "3fa2ee4d25fa-p1-c0"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c5"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 18.47419998375699,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q015",
+          "question": "글로벌 IP스타기업 신청은 언제까지 해야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c6"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c0"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 17.557600047439337,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q018",
+          "question": "한 번 선정되면 3년 동안 자동으로 계속 지원되나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c1",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c6",
+            "3fa2ee4d25fa-p1-c6",
+            "e91c0bd83ff8-p1-c5"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 17.400700016878545,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q021",
+          "question": "공고문에서 IP는 어떤 영어 표현의 약자라고 설명하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c0",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c2"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 16.79990004049614,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q026",
+          "question": "AI훈련확산센터 제안서는 언제까지 내야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c15"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c1"
+          ],
+          "relevant_ranks": [],
+          "first_relevant_rank": null,
+          "reciprocal_rank": 0.0,
+          "latency_ms": 16.673300007823855,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": false
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.0
+          }
+        },
+        {
+          "question_id": "q029",
+          "question": "선정 기관은 전담 인력을 최소 몇 명 지정해야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c14",
+            "3fa2ee4d25fa-p1-c6",
+            "e91c0bd83ff8-p1-c18"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c3"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 16.11669996054843,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q032",
+          "question": "상시근로자가 20명보다 적은 스타트업도 AI 훈련 지원을 받을 수 있나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c4"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c6"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 17.099599994253367,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q034",
+          "question": "AI훈련코치 교육은 기초와 심화를 각각 몇 번 운영하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c11"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 17.07809994695708,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "system_name": "Reranker",
+      "split": "test",
+      "question_count": 10,
+      "ks": [
+        1,
+        3,
+        5
+      ],
+      "hit_rates": {
+        "hit@1": 0.8,
+        "hit@3": 0.9,
+        "hit@5": 0.9
+      },
+      "mrr": 0.85,
+      "ndcg": {
+        "ndcg@1": 0.8,
+        "ndcg@3": 0.8630929753571458,
+        "ndcg@5": 0.8630929753571458
+      },
+      "mean_latency_ms": 4324.793710006634,
+      "p95_latency_ms": 4853.849500010256,
+      "misses@5": [
+        "q026"
+      ],
+      "cases": [
+        {
+          "question_id": "q003",
+          "question": "영어가 어려운 기업을 위해 프로그램에서 통역을 제공하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c5",
+            "e91c0bd83ff8-p1-c14",
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 4853.849500010256,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q006",
+          "question": "글로벌화 사전검증 사업 신청 마감은 언제인가요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c0"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c4"
+          ],
+          "relevant_ranks": [
+            2
+          ],
+          "first_relevant_rank": 2,
+          "reciprocal_rank": 0.5,
+          "latency_ms": 4283.647200034466,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.6309297535714575,
+            "ndcg@5": 0.6309297535714575
+          }
+        },
+        {
+          "question_id": "q009",
+          "question": "시장성 검토에서는 기업의 어떤 역량을 평가하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c6",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c6"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c5"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 4405.343400023412,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q015",
+          "question": "글로벌 IP스타기업 신청은 언제까지 해야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c5"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c0"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 4274.839600024279,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q018",
+          "question": "한 번 선정되면 3년 동안 자동으로 계속 지원되나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c6",
+            "3fa2ee4d25fa-p1-c3",
+            "e91c0bd83ff8-p1-c5"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 4304.903799958993,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q021",
+          "question": "공고문에서 IP는 어떤 영어 표현의 약자라고 설명하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c7",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c2"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 4378.155299986247,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q026",
+          "question": "AI훈련확산센터 제안서는 언제까지 내야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c15",
+            "e91c0bd83ff8-p1-c16"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c1"
+          ],
+          "relevant_ranks": [],
+          "first_relevant_rank": null,
+          "reciprocal_rank": 0.0,
+          "latency_ms": 4014.5749000366777,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": false
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.0
+          }
+        },
+        {
+          "question_id": "q029",
+          "question": "선정 기관은 전담 인력을 최소 몇 명 지정해야 하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c1",
+            "e91c0bd83ff8-p1-c18",
+            "3fa2ee4d25fa-p1-c6"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c3"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 4061.97640002938,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q032",
+          "question": "상시근로자가 20명보다 적은 스타트업도 AI 훈련 지원을 받을 수 있나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c16"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c6"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 4503.953300009016,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        },
+        {
+          "question_id": "q034",
+          "question": "AI훈련코치 교육은 기초와 심화를 각각 몇 번 운영하나요?",
+          "split": "test",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c10"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c11"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 4166.693699953612,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0
+          }
+        }
+      ]
+    }
+  ]
+}
