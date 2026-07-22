@@ -1,6 +1,5 @@
 # 02-gongo-rag 의존성
 # 설치: pip install -r requirements.txt
-# (아래 주석 처리된 것들은 해당 주차에 주석 풀고 다시 설치)
 
 # --- 문서 입력 ---
 PyMuPDF>=1.26,<2            # 일반 PDF 텍스트 추출 + 스캔 페이지 이미지 변환
@@ -8,12 +7,18 @@ python-docx>=1.2,<2         # DOCX 문단·표 추출
 Pillow>=11,<13              # 이미지 읽기
 pytesseract>=0.3.13,<1     # Tesseract OCR 연결 (실행 엔진은 별도 설치)
 
-# --- Week 1부터 ---
-numpy>=1.26
+# --- 기본 연산 ---
+numpy>=2.1,<3
 
-# --- Week 4부터 (임베딩 검색) ---
-sentence-transformers>=3.0   # 문장 임베딩. 최초 실행 시 모델 ~400MB 자동 다운로드
-openai>=1.40                 # LLM 답변 생성용 (또는 anthropic — rag_answer.py 주석 참고)
+# --- 한국어 의미 검색 ---
+sentence-transformers>=5.6,<6  # 로컬 embedding 모델 실행
+langchain-core>=1.4,<2         # Document와 Embeddings 표준 인터페이스
+langchain-huggingface>=1.2,<2  # HuggingFaceEmbeddings 연결
+langchain-chroma>=1.1,<2       # LangChain용 Chroma vector store
+chromadb>=1.5,<2               # 로컬 vector DB
+
+# --- 답변 생성 ---
+openai>=1.40                   # LLM 답변 생성용 (또는 anthropic — rag_answer.py 주석 참고)
 
 # --- 한국어 BM25 ---
 kiwipiepy>=0.23,<1          # 조사·어미를 분리하는 한국어 형태소 분석

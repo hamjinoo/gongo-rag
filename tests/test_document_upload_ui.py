@@ -7,6 +7,7 @@ from streamlit.testing.v1 import AppTest
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
 sys.stdout.reconfigure(encoding="utf-8")
 
 
@@ -114,6 +115,82 @@ def test_chunked_text_can_be_searched_with_bm25():
         button.label == "BM25 검색 결과 JSON 받기"
         for button in app.get("download_button")
     )
+
+
+def test_chunked_text_can_be_searched_with_chroma_ui():
+    import vector_search_ui
+    from vector_search import VectorSearchResult
+
+    class FakeVectorRetriever:
+        collection_name = "gongo-ui-test"
+
+        def __init__(self, chunks):
+            self.chunks = list(chunks)
+            self.index_size = len(self.chunks)
+
+        def search(self, query: str, k: int):
+            matching_chunk = next(
+                chunk for chunk in self.chunks if "최대 1억원" in chunk.text
+            )
+            return [
+                VectorSearchResult(
+                    rank=1,
+                    similarity=0.91,
+                    distance=0.09,
+                    chunk=matching_chunk,
+                    model_name="test-model",
+                )
+            ]
+
+    original_builder = vector_search_ui._build_vector_retriever
+    vector_search_ui._build_vector_retriever = (
+        lambda chunks, model_name, persist_directory: FakeVectorRetriever(chunks)
+    )
+    try:
+        app = open_app()
+        text = (
+            "신청 자격은 창업 3년 이내 기업입니다.\n\n"
+            "사업화 지원 금액은 최대 1억원입니다.\n\n"
+            "접수 기간은 7월 31일까지입니다.\n\n"
+        ) * 20
+
+        app.get("file_uploader")[0].upload(
+            "semantic-search-sample.txt",
+            text.encode("utf-8"),
+            "text/plain",
+        ).run()
+        next(
+            button for button in app.button if button.label == "텍스트 추출"
+        ).click().run()
+        next(
+            button for button in app.button if button.label == "Chunk 만들기"
+        ).click().run()
+
+        query = next(
+            text_input
+            for text_input in app.text_input
+            if text_input.label == "의미 검색 질문"
+        )
+        query.set_value("돈을 얼마나 받을 수 있나요?").run()
+        next(
+            button for button in app.button if button.label == "Chroma 의미 검색"
+        ).click().run()
+
+        assert not app.exception
+        assert any(
+            area.label == "의미 검색된 Chunk" and "최대 1억원" in area.value
+            for area in app.text_area
+        )
+        assert any(
+            "gongo-ui-test" in caption.value
+            for caption in app.caption
+        )
+        assert any(
+            button.label == "Chroma 검색 결과 JSON 받기"
+            for button in app.get("download_button")
+        )
+    finally:
+        vector_search_ui._build_vector_retriever = original_builder
 
 
 if __name__ == "__main__":

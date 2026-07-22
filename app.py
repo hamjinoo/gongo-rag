@@ -13,6 +13,7 @@ from document_chunk_ui import render_document_chunking  # noqa: E402
 from document_search_ui import render_bm25_search  # noqa: E402
 from document_upload_ui import render_document_upload  # noqa: E402
 import rag_answer  # noqa: E402
+from vector_search_ui import render_vector_search  # noqa: E402
 
 TEXT_DIR = Path(__file__).resolve().parent / "docs" / "text"
 
@@ -35,8 +36,8 @@ st.caption("문서를 글자로 바꾸고, 그 글에서 근거를 찾아 답하
 chunks, bm25 = build_index()
 st.sidebar.markdown(f"**색인 현황**\n\n- chunk 수: {len(chunks)}\n- 검색: BM25 (top-3)")
 st.sidebar.caption(
-    "업로드 문서는 첫 번째 탭의 BM25에서 메모리 검색할 수 있지만 "
-    "ChromaDB에는 아직 저장되지 않습니다."
+    "업로드 문서는 첫 번째 탭에서 BM25와 Chroma 의미 검색을 "
+    "각각 실행하고 비교할 수 있습니다."
 )
 
 upload_tab, question_tab = st.tabs(["1. 문서 넣기", "2. 질문하기"])
@@ -45,6 +46,7 @@ with upload_tab:
     uploaded_documents = render_document_upload()
     uploaded_chunks = render_document_chunking(uploaded_documents)
     render_bm25_search(uploaded_chunks)
+    render_vector_search(uploaded_chunks)
 
 with question_tab:
     st.subheader("저장된 문서에 질문하기")
