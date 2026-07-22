@@ -15,15 +15,16 @@
 | 영역 | 현재 구현 | 다음 단계 |
 |---|---|---|
 | 문서 처리 | PDF·DOCX·이미지 추출, 문단 우선 chunking, LangChain Document 변환 | 색인 수명 관리 |
-| 검색 | Kiwi BM25 + E5/Chroma + chunk ID 기반 RRF 통합 검색 | 고정 질문으로 단계별 품질 비교 |
+| 검색 | Kiwi BM25 + E5/Chroma + chunk ID 기반 RRF 통합 검색 | dev 실패 질문 분석과 후보 설정 개선 |
 | 재정렬 | `BAAI/bge-reranker-v2-m3` 로컬 CrossEncoder | Cohere와 품질·속도·비용 비교 |
 | 답변 | LLM prompt, 숫자 근거 일치 검사, `정보 없음` 처리 | LangGraph 재검색·거절 흐름 |
-| 평가 | 골든셋 36문항, Hit@k, no-answer 평가 | dev/test 분리 + Ragas |
+| 평가 | 골든셋 36문항, dev/test 분리, Hit@k·MRR·nDCG·지연 리포트 | reranker 최적화 후 test 1회 + Ragas |
 | 서비스 | Streamlit 문서 업로드·추출·질문 데모 | FastAPI + Docker |
 
-기존 v0 BM25의 Hit@3 탐색 결과는 일반 질문 기준 **16/30(53.3%)**입니다.
-골든셋을 dev/test로 나누기 전 수치이고 새 Kiwi BM25·Chroma를 같은 조건으로
-아직 비교하지 않았으므로 최종 성능으로 사용하지 않습니다.
+현재 dev normal 20문항의 Hit@1은 BM25 0.70, Chroma 0.60, RRF 0.60,
+reranker 0.80입니다. reranker MRR은 0.90으로 가장 높았지만 CPU 평균 지연은
+약 6.28초였습니다. 작은 dev 결과이므로 최종 성능으로 일반화하지 않으며, 설정 선택이
+끝난 뒤 test normal 10문항을 한 번만 확인합니다.
 
 ## 현재 아키텍처
 
@@ -41,11 +42,11 @@ flowchart LR
     U --> R["다국어 CrossEncoder 재정렬"]
     R --> V["최종 Top-k + 출처"]
     V -. "다음: LangGraph 연결" .-> G["LLM 답변 + 인용"]
-    H["골든셋"] --> I["Hit@k / no-answer 평가"]
+    H["dev/test 골든셋"] --> I["Hit@k / MRR / nDCG / 지연 시간"]
     D --> I
-    E -. "다음 동일 조건 비교" .-> I
-    F -.-> I
-    R -.-> I
+    E --> I
+    F --> I
+    R --> I
 ```
 
 목표 구조는 `LangChain → BM25/Chroma → RRF → reranker → LangGraph → Ragas`입니다. 각 도구를 추가하기 전에 현재 기준선을 보존하고, 같은 평가셋으로 개선 여부를 확인합니다.
@@ -66,6 +67,7 @@ python tests\test_vector_search.py
 python tests\test_hybrid_search.py
 python tests\test_reranker.py
 python tests\test_evaluate.py
+python tests\test_retrieval_evaluation.py
 python tests\test_rag_answer.py
 python tests\test_document_ingestion.py
 python tests\test_document_chunking.py
@@ -103,6 +105,15 @@ RRF 상위 후보는 한국어를 포함한 다국어 CrossEncoder가 질문과 
 읽고 다시 정렬합니다. 실제 한국어 PDF의 개선·실패 사례와 면접 대비 내용은
 [6번 작업: 질문과 후보를 함께 읽어 다시 정렬하기](docs/RERANKER.md)에
 정리했습니다.
+실제 공고문 3개에서 만든 고정 질문으로 네 검색기를 같은 조건에서 비교하는 방법과
+dev 결과는 [7번 작업: 같은 시험지로 검색기 성적 비교하기](docs/EVALUATION.md)에
+정리했습니다. 사람이 읽는 실제 결과는
+[dev 검색 평가 리포트](experiments/retrieval-evaluation-dev.md)에서 바로 볼 수
+있습니다.
+
+```powershell
+python src\run_retrieval_evaluation.py --split dev
+```
 
 ```powershell
 python src\rag_answer.py "신청 자격이 어떻게 되나요?"
@@ -118,8 +129,9 @@ streamlit run app.py
 ## 평가 원칙
 
 - 골든셋은 실험 도중 정답을 맞추기 위해 수정하지 않습니다.
+- 설정을 고르는 동안 dev만 사용하고 test 결과는 반복해서 보지 않습니다.
 - chunk 크기, tokenizer, 검색기처럼 **한 번에 하나의 변수만** 바꿉니다.
-- Hit@1·3·5와 후보 Hit@20으로 검색을 먼저 평가합니다.
+- Hit@1·3·5·10, MRR, nDCG와 지연 시간을 함께 봅니다.
 - 검색 실패, 답변 실패, 원문 데이터 문제를 따로 기록합니다.
 - Ragas 점수만 믿지 않고 한국어 질문·근거·답변을 사람이 함께 확인합니다.
 
@@ -142,8 +154,8 @@ gongo-rag/
 
 ## 다음 마일스톤
 
-1. 고정 질문으로 BM25·Chroma·RRF·reranker 품질과 지연 비교하기
-2. 로컬 CrossEncoder와 Cohere Rerank 비교하기
+1. 후보 수·최적화 모델과 Cohere Rerank를 dev에서 비교하기
+2. 선택한 설정을 고정하고 test split을 한 번 실행하기
 3. LangGraph 재검색·거절 흐름 구현하기
 4. Ragas·수동 검토를 포함한 답변 평가표 작성하기
 5. FastAPI·Docker와 재현 가능한 실행 환경 제공하기
