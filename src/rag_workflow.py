@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
+import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from time import perf_counter
 from typing import Any, Callable, Literal, Protocol, TypedDict
 
 from langgraph.graph import END, START, StateGraph
 
-from rag_answer import call_llm, verify_citation
+from rag_answer import (
+    call_answer_llm,
+    call_evidence_judge_llm,
+    call_query_rewrite_llm,
+    verify_citation,
+)
 
 
 ANSWERED = "answered"
@@ -33,6 +40,13 @@ class RAGEvidence(TypedDict):
     page_number: int
     page_label: str
     score: float | None
+    bm25_rank: int | None
+    bm25_score: float | None
+    vector_rank: int | None
+    vector_similarity: float | None
+    rrf_rank: int | None
+    rrf_score: float | None
+    reranker_score: float | None
 
 
 class RAGState(TypedDict, total=False):
@@ -43,7 +57,10 @@ class RAGState(TypedDict, total=False):
     evidence: list[RAGEvidence]
     sufficient: bool
     decision_reason: str
+    draft_answer: str
     rewrite_count: int
+    rewrite_changed: bool
+    timings_ms: dict[str, float]
     answer: str
     status: Literal["answered", "refused"]
     refusal_reason: str | None
@@ -56,6 +73,7 @@ class EvidenceDecision:
 
     sufficient: bool
     reason: str
+    draft_answer: str | None = None
 
 
 @dataclass(frozen=True)
@@ -95,6 +113,8 @@ class RAGResponse:
     steps: tuple[str, ...]
     decision_reason: str
     refusal_reason: str | None
+    retrieval_trace: tuple[dict[str, object], ...] = ()
+    timings_ms: dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -107,6 +127,8 @@ class RAGResponse:
             "steps": list(self.steps),
             "decision_reason": self.decision_reason,
             "refusal_reason": self.refusal_reason,
+            "retrieval_trace": [dict(attempt) for attempt in self.retrieval_trace],
+            "timings_ms": dict(self.timings_ms),
         }
 
 
@@ -122,10 +144,11 @@ EVIDENCE_ASSESSMENT_PROMPT = """당신은 정부 지원사업 RAG의 근거 판�
 1. 질문이 요구한 대상, 조건, 숫자, 날짜가 근거에 직접 있어야 합니다.
 2. 비슷한 사업이나 다른 대상의 내용만 있으면 부족함입니다.
 3. 추측하거나 상식으로 채우지 마세요.
-4. 반드시 아래 두 줄 형식으로만 답하세요.
+4. 충분하면 근거 번호를 붙인 답변 초안을 만들고, 부족하면 "정보 없음"을 쓰세요.
+5. 반드시 아래 JSON 형식으로만 답하세요.
 
-판정: 충분함 또는 부족함
-이유: 한 문장
+출력 형식:
+{{"sufficient": true 또는 false, "reason": "판정 이유 한 문장", "draft_answer": "[근거 N]이 포함된 답변 또는 정보 없음"}}
 
 [원래 질문]
 {question}
@@ -141,8 +164,11 @@ QUERY_REWRITE_PROMPT = """당신은 한국어 정부 공고문 검색어를 고�
 
 규칙:
 1. 새로운 사실을 추가하지 마세요.
-2. 질문 하나만 한 줄로 답하세요.
-3. 설명이나 따옴표를 붙이지 마세요.
+2. 설명이나 추론 과정을 쓰지 마세요.
+3. 반드시 아래 JSON 형식으로만 답하세요.
+
+출력 형식:
+{{"query": "고친 한국어 검색 질문 한 줄"}}
 
 [원래 질문]
 {question}
@@ -150,7 +176,6 @@ QUERY_REWRITE_PROMPT = """당신은 한국어 정부 공고문 검색어를 고�
 [부족했던 검색 근거]
 {context}
 
-고친 질문:
 """
 
 
@@ -162,6 +187,10 @@ ANSWER_PROMPT = """당신은 정부 지원사업 공고문 안내 도우미입�
 2. 근거만으로 답할 수 없으면 정확히 "정보 없음"이라고만 답하세요.
 3. 답할 수 있다면 사용한 근거 번호를 문장 끝에 [근거 1]처럼 표시하세요.
 4. 파일명과 페이지는 근거 표시에 이미 있으므로 새로 만들지 마세요.
+5. 반드시 아래 JSON 형식으로만 답하세요.
+
+출력 형식:
+{{"answer": "근거 번호가 포함된 최종 한국어 답변 또는 정보 없음"}}
 
 [근거]
 {context}
@@ -169,7 +198,6 @@ ANSWER_PROMPT = """당신은 정부 지원사업 공고문 안내 도우미입�
 [질문]
 {question}
 
-답변:
 """
 
 
@@ -197,7 +225,23 @@ def build_evidence_context(evidence: list[RAGEvidence]) -> str:
 
 
 def parse_evidence_decision(raw_response: str) -> EvidenceDecision:
-    """정해진 두 줄 형식만 허용하며 형식 오류는 안전하게 부족함으로 본다."""
+    """JSON 또는 이전 두 줄 응답을 읽고 형식 오류는 부족함으로 본다."""
+
+    payload = _parse_json_object(raw_response)
+    if payload is not None:
+        sufficient = payload.get("sufficient")
+        reason = payload.get("reason")
+        if isinstance(sufficient, bool) and isinstance(reason, str) and reason.strip():
+            draft_answer = payload.get("draft_answer")
+            return EvidenceDecision(
+                sufficient=sufficient,
+                reason=reason.strip(),
+                draft_answer=(
+                    draft_answer.strip()
+                    if isinstance(draft_answer, str) and draft_answer.strip()
+                    else None
+                ),
+            )
 
     decision_match = re.search(
         r"^\s*판정\s*:\s*(충분함|부족함)\s*$",
@@ -224,24 +268,47 @@ def assess_evidence_with_llm(
     question: str,
     evidence: list[RAGEvidence],
     *,
-    llm_call: Callable[[str], str] = call_llm,
+    llm_call: Callable[[str], str] = call_evidence_judge_llm,
 ) -> EvidenceDecision:
-    """LLM이 근거 충분성을 판정하되 잘못된 형식은 fail-closed 처리한다."""
+    """LLM 판정이 실패하면 상위 근거만으로 한 번 더 보수적으로 확인한다."""
 
     if not evidence:
         return EvidenceDecision(False, "검색 결과가 없습니다.")
+
     prompt = EVIDENCE_ASSESSMENT_PROMPT.format(
         question=question,
         context=build_evidence_context(evidence),
     )
-    return parse_evidence_decision(llm_call(prompt))
+    decision = parse_evidence_decision(llm_call(prompt))
+    if decision.sufficient or len(evidence) <= 3:
+        return decision
+
+    focused_evidence = evidence[:3]
+    focused_prompt = EVIDENCE_ASSESSMENT_PROMPT.format(
+        question=question,
+        context=build_evidence_context(focused_evidence),
+    )
+    focused_decision = parse_evidence_decision(llm_call(focused_prompt))
+    if focused_decision.sufficient:
+        return EvidenceDecision(
+            sufficient=True,
+            reason=f"상위 3개 근거로 재확인: {focused_decision.reason}",
+            draft_answer=focused_decision.draft_answer,
+        )
+    return EvidenceDecision(
+        sufficient=False,
+        reason=(
+            f"전체 근거 판정: {decision.reason} "
+            f"상위 3개 재확인: {focused_decision.reason}"
+        ),
+    )
 
 
 def rewrite_query_with_llm(
     question: str,
     evidence: list[RAGEvidence],
     *,
-    llm_call: Callable[[str], str] = call_llm,
+    llm_call: Callable[[str], str] = call_query_rewrite_llm,
 ) -> str:
     """원래 의미를 유지한 한국어 재검색 질문 한 줄을 만든다."""
 
@@ -252,16 +319,32 @@ def rewrite_query_with_llm(
     raw_response = llm_call(prompt).strip()
     if not raw_response:
         return question
-    rewritten = raw_response.splitlines()[0].strip()
-    rewritten = re.sub(r"^(고친\s*질문|질문)\s*:\s*", "", rewritten)
-    return rewritten or question
+    payload = _parse_json_object(raw_response)
+    if payload is not None and isinstance(payload.get("query"), str):
+        rewritten = str(payload["query"]).strip()
+        return rewritten if _is_safe_korean_rewrite(rewritten) else question
+
+    without_thinking = re.sub(
+        r"<think>.*?</think>",
+        "",
+        raw_response,
+        flags=re.DOTALL | re.IGNORECASE,
+    ).strip()
+    labeled = re.search(
+        r"^(?:고친\s*질문|질문)\s*:\s*(.+?)\s*$",
+        without_thinking,
+        flags=re.MULTILINE,
+    )
+    lines = [line.strip() for line in without_thinking.splitlines() if line.strip()]
+    rewritten = labeled.group(1).strip() if labeled else (lines[-1] if lines else "")
+    return rewritten if _is_safe_korean_rewrite(rewritten) else question
 
 
 def generate_answer_with_llm(
     question: str,
     evidence: list[RAGEvidence],
     *,
-    llm_call: Callable[[str], str] = call_llm,
+    llm_call: Callable[[str], str] = call_answer_llm,
 ) -> str:
     """출처 metadata가 포함된 근거로 인용 답변을 생성한다."""
 
@@ -269,7 +352,44 @@ def generate_answer_with_llm(
         question=question,
         context=build_evidence_context(evidence),
     )
-    return llm_call(prompt).strip()
+    raw_response = llm_call(prompt).strip()
+    payload = _parse_json_object(raw_response)
+    if payload is not None and isinstance(payload.get("answer"), str):
+        return str(payload["answer"]).strip()
+    without_thinking = re.sub(
+        r"<think>.*?</think>",
+        "",
+        raw_response,
+        flags=re.DOTALL | re.IGNORECASE,
+    ).strip()
+    return re.sub(r"^답변\s*:\s*", "", without_thinking).strip()
+
+
+def _parse_json_object(raw_response: str) -> dict[str, object] | None:
+    """코드 펜스나 앞뒤 설명이 섞여도 첫 JSON 객체만 보수적으로 읽는다."""
+
+    stripped = raw_response.strip()
+    if stripped.startswith("```"):
+        stripped = re.sub(r"^```(?:json)?\s*", "", stripped, flags=re.IGNORECASE)
+        stripped = re.sub(r"\s*```$", "", stripped)
+    start = stripped.find("{")
+    end = stripped.rfind("}")
+    if start < 0 or end <= start:
+        return None
+    try:
+        payload = json.loads(stripped[start : end + 1])
+    except json.JSONDecodeError:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _is_safe_korean_rewrite(candidate: str) -> bool:
+    """추론문 전체가 검색어로 들어가는 일을 길이와 한국어 기준으로 차단한다."""
+
+    normalized = candidate.strip()
+    return bool(normalized) and len(normalized) <= 160 and bool(
+        re.search(r"[가-힣]", normalized)
+    )
 
 
 def validate_generated_answer(
@@ -326,6 +446,14 @@ def validate_generated_answer(
     )
 
 
+def _add_timing(state: RAGState, key: str, elapsed_ms: float) -> dict[str, float]:
+    """반복 node의 시간을 기존 값에 더해 응답 trace에 보존한다."""
+
+    timings = dict(state.get("timings_ms", {}))
+    timings[key] = timings.get(key, 0.0) + elapsed_ms
+    return timings
+
+
 class RAGWorkflow:
     """의존성을 주입할 수 있는 LangGraph RAG workflow."""
 
@@ -364,7 +492,14 @@ class RAGWorkflow:
                 "refuse": "refuse",
             },
         )
-        builder.add_edge("rewrite_query", "retrieve")
+        builder.add_conditional_edges(
+            "rewrite_query",
+            self._route_after_rewrite,
+            {
+                "retrieve": "retrieve",
+                "refuse": "refuse",
+            },
+        )
         builder.add_edge("answer", END)
         builder.add_edge("refuse", END)
         return builder.compile()
@@ -374,12 +509,17 @@ class RAGWorkflow:
         if not normalized_question:
             raise ValueError("question은 비어 있을 수 없습니다.")
 
+        reset_trace = getattr(self.retriever, "reset_trace", None)
+        if callable(reset_trace):
+            reset_trace()
+
         state = self.graph.invoke(
             {
                 "question": normalized_question,
                 "active_query": normalized_question,
                 "evidence": [],
                 "rewrite_count": 0,
+                "timings_ms": {},
                 "steps": [],
             }
         )
@@ -393,19 +533,30 @@ class RAGWorkflow:
             steps=tuple(state.get("steps", [])),
             decision_reason=state.get("decision_reason", ""),
             refusal_reason=state.get("refusal_reason"),
+            retrieval_trace=tuple(
+                getattr(self.retriever, "retrieval_trace", ())
+            ),
+            timings_ms=dict(state.get("timings_ms", {})),
         )
 
     def _retrieve(self, state: RAGState) -> dict[str, object]:
+        started_at = perf_counter()
         query = state.get("active_query") or state["question"]
         results = self.retriever.search(query, k=self.config.top_k)
         evidence = _results_to_evidence(results)
         return {
             "active_query": query,
             "evidence": evidence,
+            "timings_ms": _add_timing(
+                state,
+                "retrieval",
+                (perf_counter() - started_at) * 1000,
+            ),
             "steps": [*state.get("steps", []), "retrieve"],
         }
 
     def _assess_evidence(self, state: RAGState) -> dict[str, object]:
+        started_at = perf_counter()
         evidence = state.get("evidence", [])
         decision = (
             self.judge(state["question"], evidence)
@@ -415,6 +566,12 @@ class RAGWorkflow:
         return {
             "sufficient": decision.sufficient,
             "decision_reason": decision.reason,
+            "draft_answer": decision.draft_answer or "",
+            "timings_ms": _add_timing(
+                state,
+                "generation",
+                (perf_counter() - started_at) * 1000,
+            ),
             "steps": [*state.get("steps", []), "assess_evidence"],
         }
 
@@ -429,39 +586,73 @@ class RAGWorkflow:
         return "refuse"
 
     def _rewrite_query(self, state: RAGState) -> dict[str, object]:
+        started_at = perf_counter()
         rewritten = self.rewriter(
             state["question"],
             state.get("evidence", []),
         ).strip()
+        next_query = rewritten or state["question"]
         return {
-            "active_query": rewritten or state["question"],
+            "active_query": next_query,
             "rewrite_count": state.get("rewrite_count", 0) + 1,
+            "rewrite_changed": next_query != state.get("active_query", state["question"]),
+            "timings_ms": _add_timing(
+                state,
+                "generation",
+                (perf_counter() - started_at) * 1000,
+            ),
             "steps": [*state.get("steps", []), "rewrite_query"],
         }
 
+    @staticmethod
+    def _route_after_rewrite(state: RAGState) -> Literal["retrieve", "refuse"]:
+        """질문이 달라졌을 때만 같은 비용의 검색을 다시 실행한다."""
+
+        return "retrieve" if state.get("rewrite_changed", False) else "refuse"
+
     def _answer(self, state: RAGState) -> dict[str, object]:
         evidence = state.get("evidence", [])
-        generated = self.answer_generator(state["question"], evidence).strip()
+        draft_answer = state.get("draft_answer", "").strip()
+        timings = dict(state.get("timings_ms", {}))
+        if draft_answer:
+            generated = draft_answer
+        else:
+            generation_started_at = perf_counter()
+            generated = self.answer_generator(state["question"], evidence).strip()
+            timings["generation"] = timings.get("generation", 0.0) + (
+                perf_counter() - generation_started_at
+            ) * 1000
+
+        validation_started_at = perf_counter()
         if generated == NO_ANSWER:
+            timings["validation"] = timings.get("validation", 0.0) + (
+                perf_counter() - validation_started_at
+            ) * 1000
             return {
                 "answer": NO_ANSWER,
                 "status": REFUSED,
                 "refusal_reason": "답변 생성기가 근거 부족으로 정보 없음을 반환했습니다.",
+                "timings_ms": timings,
                 "steps": [*state.get("steps", []), "answer", "refuse"],
             }
 
         validation = validate_generated_answer(generated, evidence)
+        timings["validation"] = timings.get("validation", 0.0) + (
+            perf_counter() - validation_started_at
+        ) * 1000
         if not validation.grounded:
             return {
                 "answer": NO_ANSWER,
                 "status": REFUSED,
                 "refusal_reason": f"답변 근거 검증 실패: {validation.reason}",
+                "timings_ms": timings,
                 "steps": [*state.get("steps", []), "answer", "refuse"],
             }
         return {
             "answer": generated,
             "status": ANSWERED,
             "refusal_reason": None,
+            "timings_ms": timings,
             "steps": [*state.get("steps", []), "answer"],
         }
 
@@ -494,6 +685,7 @@ def _results_to_evidence(results: list[Any]) -> list[RAGEvidence]:
         seen_ids.add(chunk_id)
 
         score = _result_score(result)
+        rrf_result = getattr(result, "rrf_result", None)
         evidence.append(
             {
                 "rank": int(getattr(result, "rank", fallback_rank)),
@@ -507,9 +699,40 @@ def _results_to_evidence(results: list[Any]) -> list[RAGEvidence]:
                     getattr(chunk, "page_label", "페이지 정보 없음")
                 ),
                 "score": score,
+                "bm25_rank": _optional_int(
+                    getattr(rrf_result, "bm25_rank", None)
+                ),
+                "bm25_score": _optional_float(
+                    getattr(rrf_result, "bm25_score", None)
+                ),
+                "vector_rank": _optional_int(
+                    getattr(rrf_result, "vector_rank", None)
+                ),
+                "vector_similarity": _optional_float(
+                    getattr(rrf_result, "vector_similarity", None)
+                ),
+                "rrf_rank": _optional_int(
+                    getattr(result, "rrf_rank", None)
+                    or getattr(rrf_result, "rank", None)
+                ),
+                "rrf_score": _optional_float(
+                    getattr(rrf_result, "rrf_score", None)
+                    or getattr(result, "rrf_score", None)
+                ),
+                "reranker_score": _optional_float(
+                    getattr(result, "reranker_score", None)
+                ),
             }
         )
     return evidence
+
+
+def _optional_float(value: object) -> float | None:
+    return None if value is None else float(value)
+
+
+def _optional_int(value: object) -> int | None:
+    return None if value is None else int(value)
 
 
 def _result_score(result: Any) -> float | None:

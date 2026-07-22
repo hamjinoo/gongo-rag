@@ -153,7 +153,7 @@ similarity = 1 - distance
 
 ## 화면에서 사용하는 방법
 
-1. `1. 문서 넣기` 탭에서 파일을 올립니다.
+1. `세부 실험` 탭에서 파일을 올립니다.
 2. `텍스트 추출`을 누릅니다.
 3. `2. 글자 나누기`에서 `Chunk 만들기`를 누릅니다.
 4. 먼저 `3. BM25 키워드 검색`으로 질문합니다.
@@ -313,7 +313,7 @@ embed_documents(list[str]) → 문서 벡터 여러 개
 embed_query(str)            → 질문 벡터 한 개
 ```
 
-현재는 `HuggingFaceEmbeddings`를 사용하지만 나중에 OpenAI, Cohere 또는
+현재는 `HuggingFaceEmbeddings`를 사용하지만 나중에 다른 로컬 모델 또는
 사내 embedding endpoint로 교체해도 Chroma 검색 계층의 인터페이스는
 유지할 수 있습니다.
 

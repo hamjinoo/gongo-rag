@@ -1,9 +1,8 @@
-"""RRF 후보를 로컬 CrossEncoder 또는 Cohere API로 다시 정렬한다."""
+"""RRF 후보를 로컬 CrossEncoder로 다시 정렬한다."""
 
 from __future__ import annotations
 
 import math
-import os
 import time
 from dataclasses import dataclass
 from functools import lru_cache
@@ -17,17 +16,8 @@ from hybrid_search import HybridSearchResult
 
 DEFAULT_RERANKER_MODEL = "BAAI/bge-reranker-v2-m3"
 SMALL_RERANKER_MODEL = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
-DEFAULT_COHERE_RERANKER_MODEL = "rerank-v4.0-pro"
-COHERE_RERANKER_MODELS = (
-    DEFAULT_COHERE_RERANKER_MODEL,
-    "rerank-v4.0-fast",
-)
 LOCAL_RERANKER_PROVIDER = "local"
-COHERE_RERANKER_PROVIDER = "cohere"
-RERANKER_PROVIDERS = (
-    LOCAL_RERANKER_PROVIDER,
-    COHERE_RERANKER_PROVIDER,
-)
+RERANKER_PROVIDERS = (LOCAL_RERANKER_PROVIDER,)
 DEFAULT_RERANK_CANDIDATES = 7
 DEFAULT_RERANK_BATCH_SIZE = 4
 DEFAULT_RERANK_MAX_LENGTH = 512
@@ -110,15 +100,6 @@ def resolve_reranker_model(
     if provider == LOCAL_RERANKER_PROVIDER:
         resolved = model_name or DEFAULT_RERANKER_MODEL
         get_reranker_model_spec(resolved)
-        return resolved
-    if provider == COHERE_RERANKER_PROVIDER:
-        resolved = model_name or DEFAULT_COHERE_RERANKER_MODEL
-        if resolved not in COHERE_RERANKER_MODELS:
-            supported = ", ".join(COHERE_RERANKER_MODELS)
-            raise RerankerModelUnavailableError(
-                f"허용되지 않은 Cohere reranker 모델입니다: {resolved}. "
-                f"지원 모델: {supported}"
-            )
         return resolved
     raise RerankerModelUnavailableError(
         f"지원하지 않는 reranker provider입니다: {provider}. "
@@ -307,136 +288,6 @@ class SentenceTransformersCrossEncoderScorer:
                 "CrossEncoder가 NaN 또는 무한대 점수를 반환했습니다."
             )
         return [float(score) for score in scores]
-
-
-class CohereRerankScorer:
-    """Cohere Rerank API를 PairScorer 인터페이스로 감싼다."""
-
-    def __init__(
-        self,
-        *,
-        model_name: str = DEFAULT_COHERE_RERANKER_MODEL,
-        client: Any | None = None,
-        api_key: str | None = None,
-        max_tokens_per_doc: int = DEFAULT_RERANK_MAX_LENGTH,
-        timeout_seconds: float = 30.0,
-    ) -> None:
-        if max_tokens_per_doc < 1:
-            raise ValueError("max_tokens_per_doc는 1 이상이어야 합니다.")
-        if timeout_seconds <= 0:
-            raise ValueError("timeout_seconds는 0보다 커야 합니다.")
-
-        self.model_name = resolve_reranker_model(
-            COHERE_RERANKER_PROVIDER,
-            model_name,
-        )
-        self.max_tokens_per_doc = max_tokens_per_doc
-        self.api_request_count = 0
-        self.search_units = 0.0
-
-        if client is not None:
-            self.client = client
-            return
-
-        resolved_api_key = api_key or os.getenv("COHERE_API_KEY")
-        if not resolved_api_key:
-            raise RerankerModelUnavailableError(
-                "Cohere 비교에는 COHERE_API_KEY 환경 변수가 필요합니다. "
-                "키를 코드나 결과 파일에 저장하지 마세요."
-            )
-        try:
-            import cohere
-        except ImportError as exc:
-            raise RerankerDependencyError(
-                "cohere SDK가 없습니다. requirements.txt를 설치해주세요."
-            ) from exc
-        try:
-            self.client = cohere.ClientV2(
-                api_key=resolved_api_key,
-                timeout=timeout_seconds,
-                client_name="gongo-rag-evaluation",
-            )
-        except Exception as exc:
-            raise RerankerModelUnavailableError(
-                "Cohere client를 만들지 못했습니다. API 키와 네트워크 설정을 "
-                "확인해주세요."
-            ) from exc
-
-    def score_pairs(self, query: str, passages: list[str]) -> list[float]:
-        if not passages:
-            return []
-        if not query.strip():
-            raise ValueError("query는 비어 있을 수 없습니다.")
-
-        try:
-            response = self.client.rerank(
-                model=self.model_name,
-                query=query,
-                documents=passages,
-                top_n=len(passages),
-                max_tokens_per_doc=self.max_tokens_per_doc,
-            )
-        except Exception as exc:
-            raise RerankerScoringError(
-                "Cohere Rerank API 호출에 실패했습니다. 키, rate limit, "
-                "네트워크 상태를 확인해주세요."
-            ) from exc
-
-        self.api_request_count += 1
-        billed_units = getattr(
-            getattr(response, "meta", None),
-            "billed_units",
-            None,
-        )
-        raw_search_units = getattr(billed_units, "search_units", None)
-        if isinstance(raw_search_units, (int, float)) and math.isfinite(
-            float(raw_search_units)
-        ):
-            self.search_units += float(raw_search_units)
-
-        try:
-            results = list(response.results)
-        except (AttributeError, TypeError) as exc:
-            raise RerankerScoringError(
-                "Cohere 응답에 rerank 결과 목록이 없습니다."
-            ) from exc
-        if len(results) != len(passages):
-            raise RerankerScoringError(
-                "Cohere가 후보 수와 다른 개수의 점수를 반환했습니다."
-            )
-
-        ordered_scores: list[float | None] = [None] * len(passages)
-        for result in results:
-            index = getattr(result, "index", None)
-            if isinstance(index, bool) or not isinstance(index, int):
-                raise RerankerScoringError(
-                    "Cohere가 올바르지 않은 문서 index를 반환했습니다."
-                )
-            if (
-                index < 0
-                or index >= len(passages)
-                or ordered_scores[index] is not None
-            ):
-                raise RerankerScoringError(
-                    "Cohere가 범위를 벗어나거나 중복된 문서 index를 반환했습니다."
-                )
-            try:
-                score = float(result.relevance_score)
-            except (AttributeError, TypeError, ValueError) as exc:
-                raise RerankerScoringError(
-                    "Cohere relevance score를 숫자로 변환할 수 없습니다."
-                ) from exc
-            if not math.isfinite(score):
-                raise RerankerScoringError(
-                    "Cohere가 NaN 또는 무한대 점수를 반환했습니다."
-                )
-            ordered_scores[index] = score
-
-        if any(score is None for score in ordered_scores):
-            raise RerankerScoringError(
-                "Cohere 응답에 일부 후보의 점수가 없습니다."
-            )
-        return [float(score) for score in ordered_scores]
 
 
 class CrossEncoderReranker:

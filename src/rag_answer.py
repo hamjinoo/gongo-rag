@@ -3,12 +3,38 @@
 검색·재검색·거절 전체 흐름은 ``rag_workflow.py``에서 이 함수를 사용한다.
 """
 
+import json
 import re
 
-# ── LLM 설정 ─────────────────────────────────────────────────
-# 모델명은 바뀌니 공식 문서에서 확인. 저렴한 소형 모델이면 충분하다.
-OPENAI_MODEL = "gpt-5.4-nano"
-TEMPERATURE = 0.2  # 사실 기반 답변이므로 낮게 (02-LLM-기초.md 3번)
+from local_llm import DEFAULT_OLLAMA_MODEL, call_ollama
+
+
+LOCAL_LLM_MODEL = DEFAULT_OLLAMA_MODEL
+
+EVIDENCE_DECISION_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "properties": {
+        "sufficient": {"type": "boolean"},
+        "reason": {"type": "string"},
+        "draft_answer": {"type": "string"},
+    },
+    "required": ["sufficient", "reason", "draft_answer"],
+    "additionalProperties": False,
+}
+
+QUERY_REWRITE_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "properties": {"query": {"type": "string"}},
+    "required": ["query"],
+    "additionalProperties": False,
+}
+
+ANSWER_SCHEMA: dict[str, object] = {
+    "type": "object",
+    "properties": {"answer": {"type": "string"}},
+    "required": ["answer"],
+    "additionalProperties": False,
+}
 
 # ── 단순 답변 프롬프트 템플릿 ────────────────────────────────
 PROMPT_TEMPLATE = """당신은 정부 지원사업 공고문 안내 도우미입니다.
@@ -34,30 +60,39 @@ def build_context(chunks: list[str]) -> str:
 
 
 def call_llm(prompt: str) -> str:
-    """OPENAI_API_KEY 환경 변수를 사용하는 LLM 호출."""
-    from openai import OpenAI
+    """API 키 없이 로컬 Ollama 모델을 호출한다."""
 
-    client = OpenAI()  # 환경변수 OPENAI_API_KEY 사용
-    resp = client.chat.completions.create(
-        model=OPENAI_MODEL,
-        temperature=TEMPERATURE,
-        messages=[{"role": "user", "content": prompt}],
+    return call_ollama(prompt)
+
+
+def call_evidence_judge_llm(prompt: str) -> str:
+    """근거 판정만 담긴 짧은 JSON을 생성한다."""
+
+    return call_ollama(
+        prompt,
+        response_format=EVIDENCE_DECISION_SCHEMA,
+        max_tokens=256,
     )
-    return resp.choices[0].message.content.strip()
 
 
-# --- Anthropic(Claude)을 쓰고 싶다면 (pip install anthropic, $env:ANTHROPIC_API_KEY) ---
-# def call_llm(prompt: str) -> str:
-#     import anthropic
-#     client = anthropic.Anthropic()
-#     resp = client.messages.create(
-#         model="claude-haiku-4-5",   # 소형·저렴. 최신 모델명은 공식 문서 확인
-#         max_tokens=1000,
-#         temperature=TEMPERATURE,
-#         messages=[{"role": "user", "content": prompt}],
-#     )
-#     return resp.content[0].text.strip()
-# ---------------------------------------------------------------------------------
+def call_query_rewrite_llm(prompt: str) -> str:
+    """재검색 질문 한 줄만 담긴 JSON을 생성한다."""
+
+    return call_ollama(
+        prompt,
+        response_format=QUERY_REWRITE_SCHEMA,
+        max_tokens=96,
+    )
+
+
+def call_answer_llm(prompt: str) -> str:
+    """근거 인용 답변만 담긴 JSON을 생성한다."""
+
+    return call_ollama(
+        prompt,
+        response_format=ANSWER_SCHEMA,
+        max_tokens=384,
+    )
 
 
 def answer(question: str, retrieved_chunks: list[str]) -> str:
@@ -65,7 +100,13 @@ def answer(question: str, retrieved_chunks: list[str]) -> str:
     prompt = PROMPT_TEMPLATE.format(
         context=build_context(retrieved_chunks), question=question
     )
-    return call_llm(prompt)
+    raw_response = call_answer_llm(prompt)
+    try:
+        payload = json.loads(raw_response)
+    except json.JSONDecodeError:
+        return raw_response.strip()
+    value = payload.get("answer") if isinstance(payload, dict) else None
+    return value.strip() if isinstance(value, str) else raw_response.strip()
 
 
 # ──────────────────────────────────────────────────────────────
@@ -94,10 +135,16 @@ def verify_citation(answer_text: str, chunks: list[str]) -> dict:
 
 
 __all__ = [
-    "OPENAI_MODEL",
+    "ANSWER_SCHEMA",
+    "EVIDENCE_DECISION_SCHEMA",
+    "LOCAL_LLM_MODEL",
     "PROMPT_TEMPLATE",
+    "QUERY_REWRITE_SCHEMA",
     "answer",
     "build_context",
+    "call_answer_llm",
+    "call_evidence_judge_llm",
     "call_llm",
+    "call_query_rewrite_llm",
     "verify_citation",
 ]

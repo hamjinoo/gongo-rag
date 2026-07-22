@@ -10,6 +10,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 sys.stdout.reconfigure(encoding="utf-8")
 
+from rag_workflow import RAGResponse  # noqa: E402
+from rag_trace_ui import build_rank_flow_rows  # noqa: E402
+
 
 def open_app() -> AppTest:
     app = AppTest.from_file(PROJECT_ROOT / "app.py", default_timeout=20)
@@ -17,29 +20,132 @@ def open_app() -> AppTest:
     return app
 
 
+def lab_uploader(app: AppTest):
+    return next(
+        uploader
+        for uploader in app.get("file_uploader")
+        if uploader.label == "PDF, DOCX, 이미지 또는 텍스트 파일을 올려주세요."
+    )
+
+
 def test_upload_screen_renders():
     app = open_app()
 
     assert not app.exception
-    assert [tab.label for tab in app.tabs] == ["1. 문서 넣기", "2. 질문하기"]
-    assert len(app.get("file_uploader")) == 1
+    assert [tab.label for tab in app.tabs] == [
+        "RAG 실행",
+        "평가",
+        "세부 실험",
+    ]
+    assert len(app.get("file_uploader")) == 2
+    assert any(uploader.label == "검색할 문서 (선택)" for uploader in app.get("file_uploader"))
     assert any(button.label == "텍스트 추출" for button in app.button)
+    run_button = next(button for button in app.button if button.label == "전체 RAG 실행")
+    assert run_button.disabled is True
+
+
+def test_saved_rag_response_renders_inside_existing_streamlit_app():
+    app = open_app()
+    evidence = {
+        "rank": 1,
+        "chunk_id": "chunk-demo-1",
+        "text": "사업화 지원 금액은 최대 1억원입니다.",
+        "source_filename": "지원사업 공고문.pdf",
+        "page_number": 3,
+        "page_label": "페이지 3",
+        "score": 0.93,
+        "bm25_rank": 2,
+        "bm25_score": 8.1,
+        "vector_rank": 1,
+        "vector_similarity": 0.88,
+        "rrf_rank": 1,
+        "rrf_score": 0.0325,
+        "reranker_score": 0.93,
+    }
+    response = RAGResponse(
+        question="지원 금액은 얼마인가요?",
+        final_query="지원 금액은 얼마인가요?",
+        answer="사업화 지원 금액은 최대 1억원입니다. [근거 1]",
+        status="answered",
+        evidence=(evidence,),
+        rewrite_count=0,
+        steps=("retrieve", "assess_evidence", "answer"),
+        decision_reason="지원 금액이 원문에 직접 있습니다.",
+        refusal_reason=None,
+    )
+    app.session_state["rag_response"] = response
+    app.session_state["rag_elapsed_seconds"] = 1.23
+    app.session_state["rag_trace_id"] = "q_test"
+    app.session_state["rag_document_prep_ms"] = 120.0
+    app.session_state["rag_document_count"] = 1
+    app.session_state["rag_chunk_count"] = 20
+    app.session_state["rag_document_summaries"] = [
+        {
+            "filename": "지원사업 공고문.pdf",
+            "file_type": "pdf",
+            "pages": 12,
+            "chunks": 20,
+            "ocr": False,
+        }
+    ]
+    app.run()
+
+    assert not app.exception
+    assert [tab.label for tab in app.tabs] == ["RAG 실행", "평가", "세부 실험"]
+    assert any("지원사업 공고문.pdf" in block.value for block in app.markdown)
+    assert any("최종 답변과 직접 근거" in block.value for block in app.markdown)
+    result_card = next(
+        block.value
+        for block in app.markdown
+        if '<div class="trace-result-card">' in block.value
+    )
+    assert '<span class="trace-question-label">질문</span>' in result_card
+    assert "지원 금액은 얼마인가요?" in result_card
+    assert any("이 근거가 선택된 이유" in block.value for block in app.markdown)
+    assert any("실행 시간 분석" in block.value for block in app.markdown)
+    assert any(expander.label == "실행 추적 · 전체 단계별 Top-k" for expander in app.expander)
+    assert any("BM25" in block.value and "Embedding" in block.value and "RRF" in block.value and "BGE" in block.value for block in app.markdown)
+    assert any("각 단계를 가리키면 Top-3 미리보기" in block.value for block in app.caption)
+    assert any("지원사업 공고문.pdf" in block.value and "Chunk 20개" in block.value for block in app.markdown)
+    assert any(
+        ".trace-pipeline-stage:hover > .trace-pipeline-popover" in block.value
+        for block in app.markdown
+    )
+    assert any(
+        '<div class="trace-pipeline-stage"><details class="trace-pipeline-toggle"'
+        in block.value
+        for block in app.markdown
+    )
+    pipeline_block = next(
+        block.value
+        for block in app.markdown
+        if "trace-pipeline-stage" in block.value and "답변·검증" in block.value
+    )
+    assert pipeline_block.count('<div class="trace-pipeline-stage">') == 6
+    assert "문서 처리" in pipeline_block
+    assert "근거 1개 · PASS" in pipeline_block
+    assert any("trace-timing-panel" in block.value for block in app.markdown)
+    assert len(app.dataframe) >= 3
+    assert build_rank_flow_rows(response)[0]["순위 변화"] == "유지"
 
 
 def test_text_file_can_be_uploaded_and_previewed():
     app = open_app()
     expected = "지원 대상은 창업 3년 이내 기업입니다."
 
-    app.get("file_uploader")[0].upload(
+    lab_uploader(app).upload(
         "sample.txt",
         expected.encode("utf-8"),
         "text/plain",
     ).run()
-    app.button[0].click().run()
+    next(button for button in app.button if button.label == "텍스트 추출").click().run()
 
     assert not app.exception
     assert any(expected in area.value for area in app.text_area)
-    assert [metric.value for metric in app.metric] == [str(len(expected)), "1", "미사용"]
+    metric_values = {metric.label: metric.value for metric in app.metric}
+    assert metric_values["글자 수"] == str(len(expected))
+    assert metric_values["구역 수"] == "1"
+    assert metric_values["OCR"] == "미사용"
     assert any(button.label == "추출 텍스트 받기" for button in app.get("download_button"))
 
 
@@ -50,19 +156,17 @@ def test_extracted_text_can_be_chunked_and_previewed():
         "지원 금액은 최대 1억원입니다.\n\n"
     ) * 30
 
-    app.get("file_uploader")[0].upload(
+    lab_uploader(app).upload(
         "long-sample.txt",
         text.encode("utf-8"),
         "text/plain",
     ).run()
-    app.button[0].click().run()
+    next(button for button in app.button if button.label == "텍스트 추출").click().run()
 
-    assert [button.label for button in app.button] == [
-        "텍스트 추출",
-        "Chunk 만들기",
-        "근거를 찾아 답변하기",
-    ]
-    app.button[1].click().run()
+    assert {"텍스트 추출", "Chunk 만들기", "전체 RAG 실행"}.issubset(
+        {button.label for button in app.button}
+    )
+    next(button for button in app.button if button.label == "Chunk 만들기").click().run()
 
     assert not app.exception
     metric_labels = [metric.label for metric in app.metric]
@@ -84,7 +188,7 @@ def test_chunked_text_can_be_searched_with_bm25():
         "접수 기간은 7월 31일까지입니다.\n\n"
     ) * 20
 
-    app.get("file_uploader")[0].upload(
+    lab_uploader(app).upload(
         "search-sample.txt",
         text.encode("utf-8"),
         "text/plain",
@@ -158,7 +262,7 @@ def test_chunked_text_can_be_searched_with_chroma_ui():
             "접수 기간은 7월 31일까지입니다.\n\n"
         ) * 20
 
-        app.get("file_uploader")[0].upload(
+        lab_uploader(app).upload(
             "semantic-search-sample.txt",
             text.encode("utf-8"),
             "text/plain",
@@ -237,7 +341,7 @@ def test_chunked_text_can_be_searched_with_rrf_ui():
             "접수 기간은 7월 31일까지입니다.\n\n"
         ) * 20
 
-        app.get("file_uploader")[0].upload(
+        lab_uploader(app).upload(
             "hybrid-search-sample.txt",
             text.encode("utf-8"),
             "text/plain",
@@ -322,7 +426,7 @@ def test_rrf_candidates_can_be_reranked_with_cross_encoder_ui():
             "접수 기간은 7월 31일까지입니다.\n\n"
         ) * 20
 
-        app.get("file_uploader")[0].upload(
+        lab_uploader(app).upload(
             "reranker-sample.txt",
             text.encode("utf-8"),
             "text/plain",
