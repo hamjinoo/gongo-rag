@@ -89,6 +89,7 @@ with run_tab:
             document_prep_ms=st.session_state.get("rag_document_prep_ms"),
             document_count=st.session_state.get("rag_document_count"),
             chunk_count=st.session_state.get("rag_chunk_count"),
+            document_summaries=st.session_state.get("rag_document_summaries"),
         )
         control_container = st.expander(
             "새 문서나 질문으로 다시 실행",
@@ -154,6 +155,7 @@ with run_tab:
                 "rag_document_prep_ms",
                 "rag_document_count",
                 "rag_chunk_count",
+                "rag_document_summaries",
             ):
                 st.session_state.pop(key, None)
             load_local_llm_status.clear()
@@ -186,11 +188,56 @@ with run_tab:
                             )
                             document_count = len(prepared.documents)
                             chunk_count = len(prepared.chunks)
+                            chunk_counts: dict[str, int] = {}
+                            for chunk in prepared.chunks:
+                                chunk_counts[chunk.source_filename] = (
+                                    chunk_counts.get(chunk.source_filename, 0) + 1
+                                )
+                            document_summaries = [
+                                {
+                                    "filename": document.filename,
+                                    "file_type": document.file_type,
+                                    "pages": len(document.pages),
+                                    "chunks": chunk_counts.get(document.filename, 0),
+                                    "ocr": document.used_ocr,
+                                }
+                                for document in prepared.documents
+                            ]
                         else:
                             workflow = build_answer_workflow()
                             corpus_label = f"기본 공고문 {saved_text_count}개"
-                            document_count = saved_text_count
-                            chunk_count = None
+                            default_chunks = tuple(
+                                getattr(workflow.retriever, "source_chunks", ())
+                            )
+                            chunk_count = len(default_chunks) or None
+                            summaries_by_filename: dict[str, dict[str, object]] = {}
+                            for chunk in default_chunks:
+                                summary = summaries_by_filename.setdefault(
+                                    chunk.source_filename,
+                                    {
+                                        "filename": chunk.source_filename,
+                                        "file_type": Path(chunk.source_filename)
+                                        .suffix.lstrip("."),
+                                        "pages": 0,
+                                        "chunks": 0,
+                                        "ocr": False,
+                                    },
+                                )
+                                summary["pages"] = max(
+                                    int(summary["pages"]), chunk.page_number
+                                )
+                                summary["chunks"] = int(summary["chunks"]) + 1
+                            document_summaries = list(summaries_by_filename.values())
+                            if not document_summaries:
+                                document_summaries = [
+                                    {
+                                        "filename": path.name,
+                                        "file_type": path.suffix.lstrip("."),
+                                        "pages": 0,
+                                    }
+                                    for path in sorted(TEXT_DIR.glob("*.txt"))
+                                ]
+                            document_count = len(document_summaries) or saved_text_count
 
                         document_prep_ms = (
                             time.perf_counter() - document_prep_started_at
@@ -209,6 +256,7 @@ with run_tab:
                         st.session_state["rag_document_prep_ms"] = document_prep_ms
                         st.session_state["rag_document_count"] = document_count
                         st.session_state["rag_chunk_count"] = chunk_count
+                        st.session_state["rag_document_summaries"] = document_summaries
                         st.session_state["rag_response"] = response
                         st.rerun()
                     except Exception as exc:

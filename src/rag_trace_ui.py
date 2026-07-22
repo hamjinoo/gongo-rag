@@ -123,15 +123,19 @@ APP_STYLE = """
   margin-bottom: .9rem;
 }
 .trace-pipeline {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(105px, 1fr));
   align-items: stretch;
-  gap: .35rem;
+  gap: .68rem;
   margin: .65rem 0 1.15rem;
-  overflow-x: auto;
+  overflow: visible;
   padding-bottom: .2rem;
 }
 .trace-pipeline-node {
-  flex: 1 0 128px;
+  position: relative;
+  display: block;
+  height: 100%;
+  box-sizing: border-box;
   border: 1px solid var(--trace-line);
   border-radius: .7rem;
   background: #fff;
@@ -140,11 +144,71 @@ APP_STYLE = """
   color: #69758a;
   font-size: .7rem;
   line-height: 1.45;
+  cursor: pointer;
+  list-style: none;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.trace-pipeline-node::-webkit-details-marker { display: none; }
+.trace-pipeline-node:hover,
+.trace-pipeline-stage[open] > .trace-pipeline-node {
+  border-color: #b8c9e8;
+  box-shadow: 0 8px 22px rgba(43, 66, 105, .10);
+  transform: translateY(-1px);
 }
 .trace-pipeline-node strong { display: block; color: #2d384d; font-size: .85rem; margin-top: .12rem; }
 .trace-pipeline-node.selected { border-color: #bfd2f3; background: #f4f8ff; }
 .trace-pipeline-node.verified { border-color: #cfe9d8; background: #f2faf5; }
-.trace-pipeline-arrow { color: #a5afbf; display: flex; align-items: center; font-weight: 900; }
+.trace-pipeline-stage { position: relative; min-width: 0; }
+.trace-pipeline-stage:not(:last-child) > .trace-pipeline-node::after {
+  content: "→";
+  position: absolute;
+  right: -.57rem;
+  top: 50%;
+  color: #a5afbf;
+  font-weight: 900;
+  transform: translate(50%, -50%);
+  z-index: 2;
+}
+.trace-pipeline-popover {
+  position: absolute;
+  top: calc(100% + .5rem);
+  left: 0;
+  z-index: 50;
+  width: min(360px, 82vw);
+  max-height: 430px;
+  overflow-y: auto;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity .14s ease, transform .14s ease, visibility .14s;
+  border: 1px solid #d9e1ed;
+  border-radius: .8rem;
+  background: #fff;
+  box-shadow: 0 16px 38px rgba(28, 43, 70, .16);
+  padding: .85rem;
+  text-align: left;
+}
+.trace-pipeline-stage:nth-last-child(-n+3) > .trace-pipeline-popover { left: auto; right: 0; }
+.trace-pipeline-stage:hover > .trace-pipeline-popover,
+.trace-pipeline-stage[open] > .trace-pipeline-popover {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.trace-popover-title { color: #29364c; font-size: .82rem; font-weight: 850; }
+.trace-popover-caption { color: #7a8699; font-size: .68rem; line-height: 1.45; margin: .18rem 0 .62rem; }
+.trace-popover-item { border-top: 1px solid #edf0f5; padding: .58rem 0; }
+.trace-popover-item:first-of-type { border-top: 0; padding-top: .15rem; }
+.trace-popover-top { display: flex; gap: .38rem; align-items: baseline; }
+.trace-popover-rank { color: var(--trace-blue); font-size: .72rem; font-weight: 850; white-space: nowrap; }
+.trace-popover-source { min-width: 0; color: #3b485e; font-size: .72rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trace-popover-copy { color: #6a7588; font-size: .69rem; line-height: 1.5; margin-top: .25rem; }
+.trace-popover-meta { color: #50617d; font-size: .65rem; font-weight: 750; margin-top: .25rem; }
+.trace-popover-empty { color: #7a8699; font-size: .72rem; padding: .5rem 0; }
+.trace-popover-check { color: #227849; background: #eef9f2; border-radius: .45rem; padding: .48rem .55rem; margin-top: .35rem; font-size: .7rem; font-weight: 750; }
+.trace-popover-check.stop { color: #9a592d; background: #fff4e8; }
 .trace-search-pair { display: grid; grid-template-columns: 1fr 1fr; gap: .28rem; margin-top: .2rem; }
 .trace-search-pair span { background: #f4f6f9; border-radius: .35rem; padding: .25rem; color: #445168; font-weight: 750; }
 .trace-rank-card {
@@ -314,12 +378,19 @@ APP_STYLE = """
 .stTabs [data-baseweb="tab"][aria-selected="true"],
 .stTabs button[role="tab"][aria-selected="true"] { color: var(--trace-blue) !important; }
 .stTabs [data-baseweb="tab-highlight"] { background-color: var(--trace-blue) !important; }
-@media (max-width: 1180px) { .trace-topk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1180px) {
+  .trace-topk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .trace-pipeline { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
+  .trace-pipeline-stage:nth-child(4n) > .trace-pipeline-popover { left: auto; right: 0; }
+}
 @media (max-width: 760px) {
   .block-container { padding-left: 1rem; padding-right: 1rem; }
   .trace-header { align-items: flex-start; flex-direction: column; }
   .trace-topk-grid, .trace-story-grid, .trace-result-layout { grid-template-columns: 1fr; }
   .trace-timing-grid { grid-template-columns: repeat(2, 1fr); }
+  .trace-pipeline { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+  .trace-pipeline-stage:nth-child(even) > .trace-pipeline-popover { left: auto; right: 0; }
+  .trace-pipeline-stage > .trace-pipeline-node::after { display: none; }
 }
 </style>
 """
@@ -434,46 +505,272 @@ def _stage_count(attempt: dict[str, object], stage_key: str) -> int:
     return int(stage.get("candidate_count", len(stage.get("results", []))))
 
 
+def _stage_payload(attempt: dict[str, object], stage_key: str) -> dict[str, object]:
+    stages = attempt.get("stages", {})
+    if not isinstance(stages, dict):
+        return {}
+    stage = stages.get(stage_key, {})
+    return stage if isinstance(stage, dict) else {}
+
+
+def _document_summaries_from_trace(
+    attempt: dict[str, object],
+) -> list[dict[str, object]]:
+    """이전 저장 응답은 검색 후보에서 문서 이름과 확인된 페이지를 복원한다."""
+
+    documents: dict[str, dict[str, object]] = {}
+    stages = attempt.get("stages", {})
+    if not isinstance(stages, dict):
+        return []
+    for stage in stages.values():
+        if not isinstance(stage, dict):
+            continue
+        for result in stage.get("results", []):
+            filename = str(result.get("source_filename", "")).strip()
+            if not filename:
+                continue
+            page_number = int(result.get("page_number", 0) or 0)
+            summary = documents.setdefault(
+                filename,
+                {"filename": filename, "file_type": "", "pages": 0},
+            )
+            summary["pages"] = max(int(summary.get("pages", 0)), page_number)
+    return list(documents.values())
+
+
+def _document_popover_html(
+    attempt: dict[str, object],
+    document_summaries: list[dict[str, object]] | None,
+    document_count: int | None,
+) -> str:
+    summaries = document_summaries or _document_summaries_from_trace(attempt)
+    items: list[str] = []
+    for item in summaries[:8]:
+        filename = str(item.get("filename", "알 수 없는 문서"))
+        file_type = str(item.get("file_type", "")).upper()
+        pages = int(item.get("pages", 0) or 0)
+        chunks = item.get("chunks")
+        details = [value for value in (file_type, f"{pages}쪽" if pages else "") if value]
+        if chunks is not None:
+            details.append(f"Chunk {int(chunks)}개")
+        if item.get("ocr"):
+            details.append("OCR 사용")
+        items.append(
+            '<div class="trace-popover-item">'
+            f'<div class="trace-popover-source" title="{html.escape(filename)}">{html.escape(filename)}</div>'
+            f'<div class="trace-popover-meta">{html.escape(" · ".join(details) or "입력 문서")}</div>'
+            "</div>"
+        )
+    if not items:
+        items.append('<div class="trace-popover-empty">저장된 문서 상세 정보가 없습니다.</div>')
+    remaining = max((document_count or len(summaries)) - len(items), 0)
+    footer = (
+        f'<div class="trace-popover-caption">외 {remaining}개 문서</div>' if remaining else ""
+    )
+    return (
+        '<div class="trace-popover-title">검색에 넣은 문서</div>'
+        '<div class="trace-popover-caption">파일 형식·페이지·Chunk 수를 확인합니다.</div>'
+        f'{"".join(items)}{footer}'
+    )
+
+
+def _chunk_popover_html(
+    attempt: dict[str, object],
+    document_summaries: list[dict[str, object]] | None,
+    chunk_count: int | None,
+) -> str:
+    summaries = document_summaries or _document_summaries_from_trace(attempt)
+    items: list[str] = []
+    for item in summaries:
+        chunks = item.get("chunks")
+        if chunks is None:
+            continue
+        filename = str(item.get("filename", "알 수 없는 문서"))
+        items.append(
+            '<div class="trace-popover-item">'
+            f'<div class="trace-popover-source" title="{html.escape(filename)}">{html.escape(filename)}</div>'
+            f'<div class="trace-popover-meta">Chunk {int(chunks)}개</div>'
+            "</div>"
+        )
+    if not items:
+        items.append(
+            '<div class="trace-popover-empty">전체 Chunk 목록은 실행 당시 저장하지 않았습니다. '
+            '아래 검색 단계에서 실제 후보 Chunk를 확인할 수 있습니다.</div>'
+        )
+    total = "—" if chunk_count is None else f"{chunk_count}개"
+    return (
+        f'<div class="trace-popover-title">만들어진 Chunk · {total}</div>'
+        '<div class="trace-popover-caption">문서별로 검색 가능한 글 조각을 몇 개 만들었는지 보여줍니다.</div>'
+        f'{"".join(items)}'
+    )
+
+
+def _result_popover_html(
+    attempt: dict[str, object],
+    stage_key: str,
+    title: str,
+    description: str,
+) -> str:
+    stage = _stage_payload(attempt, stage_key)
+    results = list(stage.get("results", []))[:3]
+    candidate_count = int(stage.get("candidate_count", len(results)))
+    elapsed_ms = float(stage.get("elapsed_ms", 0.0))
+    items: list[str] = []
+    for result in results:
+        source = f"{result.get('source_filename', '')} {_page_label(result)}".strip()
+        score_label, score = _stage_score(stage_key, result)
+        detail = re.sub(r"<[^>]+>", "", _rank_detail(stage_key, result))
+        meta = f"{score_label} {_format_score(score)}"
+        if detail:
+            meta += f" · {detail}"
+        items.append(
+            '<div class="trace-popover-item">'
+            '<div class="trace-popover-top">'
+            f'<span class="trace-popover-rank">#{int(result.get("rank", 0))}</span>'
+            f'<span class="trace-popover-source" title="{html.escape(source)}">{html.escape(source)}</span>'
+            "</div>"
+            f'<div class="trace-popover-copy">{html.escape(_excerpt(str(result.get("text", "")), 92))}</div>'
+            f'<div class="trace-popover-meta">{html.escape(meta)}</div>'
+            "</div>"
+        )
+    if not items:
+        items.append('<div class="trace-popover-empty">이 단계에 저장된 후보가 없습니다.</div>')
+    return (
+        f'<div class="trace-popover-title">{html.escape(title)} 후보 Chunk Top-{len(results)}</div>'
+        f'<div class="trace-popover-caption">{html.escape(description)} · '
+        f'전체 {candidate_count}개 · {elapsed_ms:.0f}ms</div>'
+        f'{"".join(items)}'
+    )
+
+
+def _evidence_popover_html(response: RAGResponse) -> str:
+    items: list[str] = []
+    for item in _cited_evidence(response):
+        claim = _claim_for_citation(response.answer, item["rank"])
+        source = f"{item['source_filename']} · {_page_label(item)}"
+        items.append(
+            '<div class="trace-popover-item">'
+            '<div class="trace-popover-top">'
+            f'<span class="trace-popover-rank">근거 {item["rank"]}</span>'
+            f'<span class="trace-popover-source" title="{html.escape(source)}">{html.escape(source)}</span>'
+            "</div>"
+            f'<div class="trace-popover-copy">“{html.escape(_supporting_excerpt(claim, item["text"], 150))}”</div>'
+            "</div>"
+        )
+    if not items:
+        items.append('<div class="trace-popover-empty">답변에 사용된 인용 근거가 없습니다.</div>')
+    return (
+        '<div class="trace-popover-title">최종 답변에 사용한 근거</div>'
+        '<div class="trace-popover-caption">BGE 상위 후보 중 답변이 실제로 인용한 Chunk입니다.</div>'
+        f'{"".join(items)}'
+    )
+
+
+def _verification_popover_html(response: RAGResponse) -> str:
+    cited_items = _cited_evidence(response)
+    cited_claims = [
+        _claim_for_citation(response.answer, item["rank"]) for item in cited_items
+    ]
+    numeric_checks = [
+        verify_citation(claim, [item["text"]])
+        for claim, item in zip(cited_claims, cited_items, strict=True)
+    ]
+    has_numeric_claim = any(re.search(r"\d", claim) for claim in cited_claims)
+    if not cited_items:
+        numeric_label = "숫자를 검증할 인용 근거가 없음"
+    elif has_numeric_claim:
+        numeric_label = "답변의 숫자가 인용 원문과 일치"
+    else:
+        numeric_label = "별도로 검증할 숫자 주장이 없음"
+    checks = [
+        (bool(cited_items), "인용 번호가 실제 검색 결과에 존재"),
+        (
+            bool(cited_items) and all(check["grounded"] for check in numeric_checks),
+            numeric_label,
+        ),
+        (response.status == "answered" and bool(cited_items), "로컬 LLM의 의미 근거 판정 통과"),
+    ]
+    rows = "".join(
+        f'<div class="trace-popover-check{"" if passed else " stop"}">'
+        f'{"✓" if passed else "!"} {html.escape(label)}</div>'
+        for passed, label in checks
+    )
+    return (
+        '<div class="trace-popover-title">근거 검증 결과</div>'
+        '<div class="trace-popover-caption">인용·숫자는 코드로, 의미 충분성은 로컬 LLM으로 구분해 확인합니다.</div>'
+        f"{rows}"
+    )
+
+
+def _pipeline_stage_html(label: str, value: str, body: str, css_class: str = "") -> str:
+    return (
+        '<details class="trace-pipeline-stage" name="trace-pipeline-stage">'
+        f'<summary class="trace-pipeline-node {css_class}">{html.escape(label)}'
+        f'<strong>{html.escape(value)}</strong></summary>'
+        f'<div class="trace-pipeline-popover">{body}</div>'
+        "</details>"
+    )
+
+
 def _pipeline_html(
     response: RAGResponse,
     attempt: dict[str, object],
     *,
     document_count: int | None,
     chunk_count: int | None,
+    document_summaries: list[dict[str, object]] | None,
 ) -> str:
     document_value = "—" if document_count is None else f"{document_count}개"
     chunk_value = "—" if chunk_count is None else f"{chunk_count}개"
     cited_count = len(citation_numbers(response.answer))
     verification = "PASS" if response.status == "answered" and cited_count else "STOP"
     verification_class = "verified" if verification == "PASS" else ""
-    search_pair = (
-        '<div class="trace-search-pair">'
-        f'<span>BM25 {_stage_count(attempt, "bm25")}</span>'
-        f'<span>Embedding {_stage_count(attempt, "vector")}</span>'
-        "</div>"
-    )
     nodes = [
-        f'<div class="trace-pipeline-node">입력 문서<strong>{document_value}</strong></div>',
-        f'<div class="trace-pipeline-node">Chunk<strong>{chunk_value}</strong></div>',
-        f'<div class="trace-pipeline-node">후보 검색{search_pair}</div>',
-        (
-            '<div class="trace-pipeline-node">순위 결합'
-            f'<strong>RRF {_stage_count(attempt, "rrf")}개</strong></div>'
+        _pipeline_stage_html(
+            "입력 문서",
+            document_value,
+            _document_popover_html(attempt, document_summaries, document_count),
         ),
-        (
-            '<div class="trace-pipeline-node selected">재정렬'
-            f'<strong>BGE {_stage_count(attempt, "reranker")}개</strong></div>'
+        _pipeline_stage_html(
+            "Chunk",
+            chunk_value,
+            _chunk_popover_html(attempt, document_summaries, chunk_count),
         ),
-        (
-            '<div class="trace-pipeline-node selected">답변 근거'
-            f'<strong>{cited_count}개</strong></div>'
+        _pipeline_stage_html(
+            "같은 단어",
+            f"BM25 {_stage_count(attempt, 'bm25')}개",
+            _result_popover_html(attempt, "bm25", "BM25", "질문과 같은 단어를 찾음"),
         ),
-        (
-            f'<div class="trace-pipeline-node {verification_class}">근거 검증'
-            f'<strong>{verification}</strong></div>'
+        _pipeline_stage_html(
+            "비슷한 뜻",
+            f"Embedding {_stage_count(attempt, 'vector')}개",
+            _result_popover_html(attempt, "vector", "Embedding", "질문과 의미가 비슷한 글을 찾음"),
+        ),
+        _pipeline_stage_html(
+            "순위 결합",
+            f"RRF {_stage_count(attempt, 'rrf')}개",
+            _result_popover_html(attempt, "rrf", "RRF", "두 검색 순위를 점수가 아닌 순위로 합침"),
+        ),
+        _pipeline_stage_html(
+            "재정렬",
+            f"BGE {_stage_count(attempt, 'reranker')}개",
+            _result_popover_html(attempt, "reranker", "BGE", "질문과 후보를 함께 읽고 다시 정렬"),
+            "selected",
+        ),
+        _pipeline_stage_html(
+            "답변 근거",
+            f"{cited_count}개",
+            _evidence_popover_html(response),
+            "selected",
+        ),
+        _pipeline_stage_html(
+            "근거 검증",
+            verification,
+            _verification_popover_html(response),
+            verification_class,
         ),
     ]
-    return '<div class="trace-pipeline">' + '<span class="trace-pipeline-arrow">→</span>'.join(nodes) + "</div>"
+    return '<div class="trace-pipeline">' + "".join(nodes) + "</div>"
 
 
 def _rank_insight(item: RAGEvidence) -> str:
@@ -894,6 +1191,7 @@ def render_trace_workspace(
     document_prep_ms: float | None = None,
     document_count: int | None = None,
     chunk_count: int | None = None,
+    document_summaries: list[dict[str, object]] | None = None,
 ) -> None:
     """답변·직접 근거를 먼저, 전체 검색 trace를 그 다음 계층에 보여준다."""
 
@@ -924,9 +1222,11 @@ def render_trace_workspace(
             final_attempt,
             document_count=document_count,
             chunk_count=chunk_count,
+            document_summaries=document_summaries,
         ),
         unsafe_allow_html=True,
     )
+    st.caption("각 단계를 가리키면 Top-3 미리보기가 열리고, 클릭하면 고정됩니다. 전체 후보는 아래 실행 추적에서 확인합니다.")
 
     cited_journey = _rank_journey_html(response)
     if cited_journey:

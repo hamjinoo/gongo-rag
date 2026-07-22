@@ -46,6 +46,7 @@ class TracedReranker:
         self.vector = vector
         self.hybrid = hybrid
         self.attempts: list[dict[str, object]] = []
+        self.source_chunks: tuple[Any, ...] = ()
 
     def reset_trace(self) -> None:
         self.attempts.clear()

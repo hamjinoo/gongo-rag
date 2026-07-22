@@ -81,7 +81,9 @@ def build_locked_reranker_for_chunks(
         rerank_max_length=512,
         reranker_model=DEFAULT_RERANKER_MODEL,
     )
-    return trace_reranker(retrievers["Reranker"])
+    traced = trace_reranker(retrievers["Reranker"])
+    traced.source_chunks = tuple(chunks)
+    return traced
 
 
 def main() -> None:
