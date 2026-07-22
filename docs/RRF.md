@@ -263,7 +263,7 @@ RRF가 좋아졌나, 나빠졌나:
 - `rank_constant=60`, 후보 20개도 평가 전 시작값입니다.
 - 자연어 질문에서 한국어 BM25의 흔한 단어가 잡음이 될 수 있습니다.
 - 고정 질문셋으로 BM25·Chroma·RRF를 아직 공정 비교하지 않았습니다.
-- reranker와 LLM 답변에는 아직 연결하지 않았습니다.
+- RRF 후보는 현재 CrossEncoder reranker에 연결했지만 LLM 답변에는 아직 연결하지 않았습니다.
 
 ## 5번 작업의 완료 상태
 
@@ -280,13 +280,13 @@ RRF가 좋아졌나, 나빠졌나:
 - [x] BM25·Chroma 원점수와 RRF 기여 표시
 - [x] RRF 결과 JSON 다운로드
 - [x] 자동 테스트와 실제 한국어 PDF 성공·실패 사례 확인
-- [ ] reranker 추가
-- [ ] 고정 질문셋에서 세 검색기 비교
+- [x] reranker 추가
+- [ ] 고정 질문셋에서 BM25·Chroma·RRF·reranker 비교
 
-## 다음 작업
+## 이후 작업
 
-다음은 RRF가 모은 후보를 질문과 함께 직접 읽고 순서를 다시 정하는
-reranker입니다.
+RRF가 모은 후보를 질문과 함께 직접 읽고 순서를 다시 정하는 reranker까지
+구현했습니다.
 
 ```text
 BM25 + Chroma
@@ -294,6 +294,10 @@ BM25 + Chroma
 → CrossEncoder reranker
 → 최종 근거 5개
 ```
+
+구현 내용과 실제 한국어 PDF 결과는
+[6번 작업: RRF 후보를 질문에 더 잘 맞는 순서로 다시 세우기](RERANKER.md)에서
+이어집니다. 다음은 고정 질문으로 RRF 전후 품질과 지연을 비교하는 평가입니다.
 
 RRF는 순위표만 보지만 reranker는 `질문 + chunk 본문`을 한꺼번에 읽습니다.
 따라서 자연스러운 질문에서 RRF 4위로 내려간 지원대상 chunk를 다시 올릴

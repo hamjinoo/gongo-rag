@@ -221,8 +221,8 @@ Chroma에서 정답 chunk 순위:
 - CPU에서 첫 모델 로딩과 많은 문서의 embedding은 느릴 수 있습니다.
 - OCR 오류나 잘못 나눈 chunk는 embedding으로도 완전히 고칠 수 없습니다.
 - `.chroma`에 사용하지 않는 collection을 정리하는 관리 기능은 아직 없습니다.
-- BM25와 Chroma 결과는 RRF로 합칠 수 있지만 아직 reranker를 사용하지 않습니다.
-- reranker와 답변 생성에는 아직 연결하지 않습니다.
+- BM25와 Chroma 결과는 RRF로 합치고 CrossEncoder로 재정렬합니다.
+- 재정렬 결과는 아직 최종 답변 생성에 연결하지 않았습니다.
 
 ## 4번 작업의 완료 상태
 
@@ -239,11 +239,11 @@ Chroma에서 정답 chunk 순위:
 - [x] 검색 결과 JSON 다운로드
 - [x] 자동 테스트와 실제 한국어 PDF 확인
 - [x] BM25와 Chroma 순위를 RRF로 결합
-- [ ] reranker 추가
+- [x] reranker 추가
 
-## 다음 작업
+## 이후 작업
 
-다음 단계에서 지금 있는 두 검색 결과를 다음처럼 합쳤습니다.
+현재는 두 검색 결과를 다음처럼 합치고 재정렬합니다.
 
 ```text
 질문
