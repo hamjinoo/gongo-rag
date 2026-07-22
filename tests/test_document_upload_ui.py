@@ -93,9 +93,9 @@ def test_saved_rag_response_renders_inside_existing_streamlit_app():
     assert not app.exception
     assert [tab.label for tab in app.tabs] == ["RAG 실행", "평가", "세부 실험"]
     assert any("지원사업 공고문.pdf" in block.value for block in app.markdown)
-    assert any("답변과 직접 근거" in block.value for block in app.markdown)
-    assert any("최종 근거가 선택된 이유" in block.value for block in app.markdown)
-    assert any("어디에서 시간이 걸렸나" in block.value for block in app.markdown)
+    assert any("최종 답변과 직접 근거" in block.value for block in app.markdown)
+    assert any("이 근거가 선택된 이유" in block.value for block in app.markdown)
+    assert any("실행 시간 분석" in block.value for block in app.markdown)
     assert any(expander.label == "실행 추적 · 전체 단계별 Top-k" for expander in app.expander)
     assert any("BM25" in block.value and "Embedding" in block.value and "RRF" in block.value and "BGE" in block.value for block in app.markdown)
     assert any("각 단계를 가리키면 Top-3 미리보기" in block.value for block in app.caption)
@@ -109,6 +109,15 @@ def test_saved_rag_response_renders_inside_existing_streamlit_app():
         in block.value
         for block in app.markdown
     )
+    pipeline_block = next(
+        block.value
+        for block in app.markdown
+        if "trace-pipeline-stage" in block.value and "답변·검증" in block.value
+    )
+    assert pipeline_block.count('<div class="trace-pipeline-stage">') == 6
+    assert "문서 처리" in pipeline_block
+    assert "근거 1개 · PASS" in pipeline_block
+    assert any("trace-timing-panel" in block.value for block in app.markdown)
     assert len(app.dataframe) >= 3
     assert build_rank_flow_rows(response)[0]["순위 변화"] == "유지"
 

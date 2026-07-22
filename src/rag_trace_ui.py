@@ -65,11 +65,18 @@ APP_STYLE = """
   font-size: .78rem;
   font-weight: 700;
 }
-.trace-answer-box {
+.trace-result-card {
   border: 1px solid #d8e2f3;
-  border-radius: .9rem;
-  background: #f8faff;
-  padding: 1.15rem 1.25rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 72%);
+  overflow: hidden;
+  margin: .65rem 0 1.1rem;
+}
+.trace-answer-box {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 1.2rem 1.3rem;
   margin: 0;
   min-height: 100%;
 }
@@ -78,14 +85,15 @@ APP_STYLE = """
 .trace-result-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
-  gap: .85rem;
-  margin: .65rem 0 1.1rem;
+  gap: 0;
+  margin: 0;
 }
 .trace-evidence-panel {
-  border: 1px solid var(--trace-line);
-  border-radius: .9rem;
-  background: #fff;
-  padding: 1rem 1.1rem;
+  border: 0;
+  border-left: 1px solid #e1e7f0;
+  border-radius: 0;
+  background: rgba(255,255,255,.72);
+  padding: 1.15rem 1.2rem;
 }
 .trace-evidence-label { color: #3e4a60; font-size: .75rem; font-weight: 850; margin-bottom: .5rem; }
 .trace-evidence-card { border-left: 3px solid var(--trace-blue); padding: .1rem 0 .1rem .75rem; margin: .55rem 0; }
@@ -124,7 +132,7 @@ APP_STYLE = """
 }
 .trace-pipeline {
   display: grid;
-  grid-template-columns: repeat(8, minmax(105px, 1fr));
+  grid-template-columns: repeat(6, minmax(125px, 1fr));
   align-items: stretch;
   gap: .68rem;
   margin: .65rem 0 1.15rem;
@@ -155,7 +163,7 @@ APP_STYLE = """
   box-shadow: 0 8px 22px rgba(43, 66, 105, .10);
   transform: translateY(-1px);
 }
-.trace-pipeline-node strong { display: block; color: #2d384d; font-size: .85rem; margin-top: .12rem; }
+.trace-pipeline-node strong { display: block; color: #26344c; font-size: 1.02rem; margin-top: .16rem; }
 .trace-pipeline-node.selected { border-color: #bfd2f3; background: #f4f8ff; }
 .trace-pipeline-node.verified { border-color: #cfe9d8; background: #f2faf5; }
 .trace-pipeline-stage { position: relative; min-width: 0; }
@@ -190,7 +198,7 @@ APP_STYLE = """
   padding: .85rem;
   text-align: left;
 }
-.trace-pipeline-stage:nth-last-child(-n+3) > .trace-pipeline-popover { left: auto; right: 0; }
+.trace-pipeline-stage:nth-last-child(-n+2) > .trace-pipeline-popover { left: auto; right: 0; }
 .trace-pipeline-stage:hover > .trace-pipeline-popover,
 .trace-pipeline-toggle[open] + .trace-pipeline-popover {
   visibility: visible;
@@ -210,6 +218,7 @@ APP_STYLE = """
 .trace-popover-empty { color: #7a8699; font-size: .72rem; padding: .5rem 0; }
 .trace-popover-check { color: #227849; background: #eef9f2; border-radius: .45rem; padding: .48rem .55rem; margin-top: .35rem; font-size: .7rem; font-weight: 750; }
 .trace-popover-check.stop { color: #9a592d; background: #fff4e8; }
+.trace-popover-divider { height: 1px; background: #e8edf4; margin: .8rem 0; }
 .trace-search-pair { display: grid; grid-template-columns: 1fr 1fr; gap: .28rem; margin-top: .2rem; }
 .trace-search-pair span { background: #f4f6f9; border-radius: .35rem; padding: .25rem; color: #445168; font-weight: 750; }
 .trace-rank-card {
@@ -227,10 +236,12 @@ APP_STYLE = """
 .trace-rank-step.cited { color: #227849; background: #eaf7ef; }
 .trace-rank-arrow { color: #a4afbf; font-size: .8rem; }
 .trace-insight { color: #526078; font-size: .8rem; line-height: 1.55; }
-.trace-timing-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: .55rem; margin: .6rem 0 1rem; }
-.trace-timing-card { border: 1px solid var(--trace-line); border-radius: .7rem; background: #fff; padding: .68rem .75rem; }
-.trace-timing-label { color: #7a8698; font-size: .68rem; }
-.trace-timing-value { color: #2d384d; font-size: .92rem; font-weight: 850; margin-top: .18rem; }
+.trace-timing-panel { border: 1px solid var(--trace-line); border-radius: .85rem; background: #fff; padding: .9rem 1rem; margin: .6rem 0 1rem; }
+.trace-timing-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; border-bottom: 1px solid #edf0f4; padding-bottom: .7rem; }
+.trace-timing-total-label { color: #788498; font-size: .7rem; font-weight: 750; }
+.trace-timing-total { color: #26344c; font-size: 1.28rem; font-weight: 900; margin-top: .12rem; }
+.trace-timing-bottleneck { color: #59677d; font-size: .75rem; text-align: right; }
+.trace-timing-bottleneck strong { color: var(--trace-blue); }
 .trace-topk-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -366,8 +377,8 @@ APP_STYLE = """
 .trace-story-number { color: var(--trace-blue); font-size: .73rem; font-weight: 800; }
 .trace-story-title { color: #263147; font-weight: 800; margin: .35rem 0; }
 .trace-story-copy { color: #6c7789; font-size: .84rem; line-height: 1.55; }
-.trace-bar-chart { margin: .7rem 0 1.1rem; }
-.trace-bar-row { display: grid; grid-template-columns: 92px 1fr 54px; gap: .6rem; align-items: center; margin: .5rem 0; }
+.trace-bar-chart { margin: .7rem 0 .15rem; }
+.trace-bar-row { display: grid; grid-template-columns: 112px 1fr 58px; gap: .65rem; align-items: center; margin: .56rem 0; }
 .trace-bar-label { color: #586478; font-size: .78rem; font-weight: 700; }
 .trace-bar-track { height: .68rem; border-radius: 999px; background: #edf0f4; overflow: hidden; }
 .trace-bar-fill { height: 100%; border-radius: 999px; background: #9aabc6; }
@@ -381,14 +392,17 @@ APP_STYLE = """
 .stTabs [data-baseweb="tab-highlight"] { background-color: var(--trace-blue) !important; }
 @media (max-width: 1180px) {
   .trace-topk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .trace-pipeline { grid-template-columns: repeat(4, minmax(120px, 1fr)); }
-  .trace-pipeline-stage:nth-child(4n) > .trace-pipeline-popover { left: auto; right: 0; }
+  .trace-pipeline { grid-template-columns: repeat(3, minmax(125px, 1fr)); }
+  .trace-pipeline-stage:nth-child(3n) > .trace-pipeline-popover { left: auto; right: 0; }
 }
 @media (max-width: 760px) {
   .block-container { padding-left: 1rem; padding-right: 1rem; }
   .trace-header { align-items: flex-start; flex-direction: column; }
   .trace-topk-grid, .trace-story-grid, .trace-result-layout { grid-template-columns: 1fr; }
-  .trace-timing-grid { grid-template-columns: repeat(2, 1fr); }
+  .trace-evidence-panel { border-left: 0; border-top: 1px solid #e1e7f0; }
+  .trace-timing-head { align-items: flex-start; flex-direction: column; }
+  .trace-timing-bottleneck { text-align: left; }
+  .trace-bar-row { grid-template-columns: 92px 1fr 52px; }
   .trace-pipeline { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
   .trace-pipeline-stage:nth-child(even) > .trace-pipeline-popover { left: auto; right: 0; }
   .trace-pipeline-stage .trace-pipeline-node::after { display: none; }
@@ -727,49 +741,49 @@ def _pipeline_html(
     cited_count = len(citation_numbers(response.answer))
     verification = "PASS" if response.status == "answered" and cited_count else "STOP"
     verification_class = "verified" if verification == "PASS" else ""
+    document_metric = f"{document_value} → {chunk_value}"
+    document_popover = (
+        _document_popover_html(attempt, document_summaries, document_count)
+        + '<div class="trace-popover-divider"></div>'
+        + _chunk_popover_html(attempt, document_summaries, chunk_count)
+    )
+    final_popover = (
+        _evidence_popover_html(response)
+        + '<div class="trace-popover-divider"></div>'
+        + _verification_popover_html(response)
+    )
     nodes = [
         _pipeline_stage_html(
-            "입력 문서",
-            document_value,
-            _document_popover_html(attempt, document_summaries, document_count),
+            "문서 처리",
+            document_metric,
+            document_popover,
         ),
         _pipeline_stage_html(
-            "Chunk",
-            chunk_value,
-            _chunk_popover_html(attempt, document_summaries, chunk_count),
-        ),
-        _pipeline_stage_html(
-            "같은 단어",
-            f"BM25 {_stage_count(attempt, 'bm25')}개",
+            "BM25",
+            f"{_stage_count(attempt, 'bm25')}개",
             _result_popover_html(attempt, "bm25", "BM25", "질문과 같은 단어를 찾음"),
         ),
         _pipeline_stage_html(
-            "비슷한 뜻",
-            f"Embedding {_stage_count(attempt, 'vector')}개",
+            "Embedding",
+            f"{_stage_count(attempt, 'vector')}개",
             _result_popover_html(attempt, "vector", "Embedding", "질문과 의미가 비슷한 글을 찾음"),
         ),
         _pipeline_stage_html(
-            "순위 결합",
-            f"RRF {_stage_count(attempt, 'rrf')}개",
+            "RRF 결합",
+            f"{_stage_count(attempt, 'rrf')}개",
             _result_popover_html(attempt, "rrf", "RRF", "두 검색 순위를 점수가 아닌 순위로 합침"),
         ),
         _pipeline_stage_html(
-            "재정렬",
-            f"BGE {_stage_count(attempt, 'reranker')}개",
+            "BGE 재정렬",
+            f"{_stage_count(attempt, 'reranker')}개",
             _result_popover_html(attempt, "reranker", "BGE", "질문과 후보를 함께 읽고 다시 정렬"),
             "selected",
         ),
         _pipeline_stage_html(
-            "답변 근거",
-            f"{cited_count}개",
-            _evidence_popover_html(response),
-            "selected",
-        ),
-        _pipeline_stage_html(
-            "근거 검증",
-            verification,
-            _verification_popover_html(response),
-            verification_class,
+            "답변·검증",
+            f"근거 {cited_count}개 · {verification}",
+            final_popover,
+            verification_class or "selected",
         ),
     ]
     return '<div class="trace-pipeline">' + "".join(nodes) + "</div>"
@@ -781,15 +795,15 @@ def _rank_insight(item: RAGEvidence) -> str:
     rrf_rank = item.get("rrf_rank")
     final_rank = item["rank"]
     if bm25_rank is None and vector_rank is not None:
-        return "키워드 검색에서 놓친 근거를 의미 검색이 찾고 BGE가 최종 근거로 선택했습니다."
+        return "키워드 검색에서 놓쳤지만, 의미 검색과 재정렬을 거쳐 최종 근거가 됐습니다."
     if bm25_rank is not None and int(bm25_rank) > final_rank:
         return (
-            f"BM25 {int(bm25_rank)}위였던 근거가 의미 검색·순위 결합을 거쳐 "
-            f"BGE {final_rank}위로 올라왔습니다."
+            f"키워드 검색에서는 {int(bm25_rank)}위였지만, 의미 검색과 재정렬을 거쳐 "
+            f"최종 {final_rank}위 근거가 됐습니다."
         )
     if rrf_rank is not None and int(rrf_rank) > final_rank:
-        return f"RRF {int(rrf_rank)}위 후보를 BGE가 {final_rank}위로 끌어올렸습니다."
-    return "여러 검색기가 공통으로 찾은 상위 근거를 BGE가 유지하고 답변에 인용했습니다."
+        return f"결합 검색 {int(rrf_rank)}위 후보를 BGE가 {final_rank}위로 끌어올렸습니다."
+    return "여러 검색기가 공통으로 찾은 상위 근거를 BGE가 유지해 답변에 인용했습니다."
 
 
 def _rank_journey_html(response: RAGResponse) -> str:
@@ -809,10 +823,10 @@ def _rank_journey_html(response: RAGResponse) -> str:
             )
             for label, value, css_class in steps
         )
-        source = f"{item['source_filename']} · {_page_label(item)}"
+        source = f"선택된 근거 · {_page_label(item)}"
         cards.append(
             '<div class="trace-rank-card">'
-            f'<div class="trace-rank-source">{html.escape(source)}</div>'
+            f'<div class="trace-rank-source" title="{html.escape(item["source_filename"])}">{html.escape(source)}</div>'
             f'<div class="trace-rank-flow">{journey}</div>'
             f'<div class="trace-insight">{html.escape(_rank_insight(item))}</div>'
             "</div>"
@@ -849,21 +863,45 @@ def _timing_html(
             - (validation_ms or 0.0),
             0.0,
         )
-    values = (
+    stage_values = (
         ("문서 준비", document_prep_ms),
         ("검색·재정렬", retrieval_ms),
-        ("답변 판단·생성", generation_ms),
+        ("LLM 판단·생성", generation_ms),
         ("근거 검증", validation_ms),
-        ("전체", elapsed_seconds * 1000 if elapsed_seconds is not None else None),
     )
-    cards = "".join(
-        '<div class="trace-timing-card">'
-        f'<div class="trace-timing-label">{html.escape(label)}</div>'
-        f'<div class="trace-timing-value">{_format_duration(value)}</div>'
+    measured = [(label, float(value)) for label, value in stage_values if value is not None]
+    max_value = max((value for _, value in measured), default=0.0)
+    bottleneck_label = max(measured, key=lambda item: item[1])[0] if measured else "측정 정보 없음"
+    total_ms = elapsed_seconds * 1000 if elapsed_seconds is not None else sum(
+        value for _, value in measured
+    )
+    rows: list[str] = []
+    for label, value in stage_values:
+        numeric_value = float(value) if value is not None else 0.0
+        width = (numeric_value / max_value * 100) if max_value > 0 else 0.0
+        if numeric_value > 0:
+            width = max(width, 2.5)
+        selected = " selected" if max_value > 0 and numeric_value == max_value else ""
+        rows.append(
+            '<div class="trace-bar-row">'
+            f'<div class="trace-bar-label">{html.escape(label)}</div>'
+            '<div class="trace-bar-track">'
+            f'<div class="trace-bar-fill{selected}" style="width:{width:.1f}%"></div>'
+            "</div>"
+            f'<div class="trace-bar-value">{_format_duration(value)}</div>'
+            "</div>"
+        )
+    return (
+        '<div class="trace-timing-panel">'
+        '<div class="trace-timing-head"><div>'
+        '<div class="trace-timing-total-label">전체 실행</div>'
+        f'<div class="trace-timing-total">{_format_duration(total_ms)}</div>'
         "</div>"
-        for label, value in values
+        f'<div class="trace-timing-bottleneck">가장 오래 걸린 단계<br><strong>{html.escape(bottleneck_label)}</strong></div>'
+        "</div>"
+        f'<div class="trace-bar-chart">{"".join(rows)}</div>'
+        "</div>"
     )
-    return f'<div class="trace-timing-grid">{cards}</div>'
 
 
 def _overview_html(
@@ -904,7 +942,7 @@ def _overview_html(
         for value in summary_values
     )
     return (
-        '<div class="trace-result-layout">'
+        '<div class="trace-result-card"><div class="trace-result-layout">'
         '<section class="trace-answer-box">'
         f'<div class="trace-answer-label">{html.escape(answer_label)}</div>'
         f'<div class="trace-answer">{_answer_html(response.answer, response.evidence)}</div>'
@@ -914,7 +952,7 @@ def _overview_html(
         '<div class="trace-evidence-label">직접 근거와 검증</div>'
         f'{"".join(evidence_cards)}'
         f'<div class="trace-check-row">{check_html}</div>'
-        "</section></div>"
+        "</section></div></div>"
     )
 
 
@@ -1200,7 +1238,7 @@ def render_trace_workspace(
     attempts = list(response.retrieval_trace) or [_fallback_attempt(response)]
     final_attempt = attempts[-1]
 
-    st.markdown("### 답변과 직접 근거")
+    st.markdown("### 최종 답변과 직접 근거")
     st.markdown(
         _overview_html(
             response,
@@ -1217,7 +1255,7 @@ def render_trace_workspace(
             unsafe_allow_html=True,
         )
 
-    st.markdown("### 한 번의 실행에서 근거가 좁혀진 과정")
+    st.markdown("### 근거 후보가 좁혀진 과정")
     st.markdown(
         _pipeline_html(
             response,
@@ -1232,10 +1270,10 @@ def render_trace_workspace(
 
     cited_journey = _rank_journey_html(response)
     if cited_journey:
-        st.markdown("### 최종 근거가 선택된 이유")
+        st.markdown("### 이 근거가 선택된 이유")
         st.markdown(cited_journey, unsafe_allow_html=True)
 
-    st.markdown("### 어디에서 시간이 걸렸나")
+    st.markdown("### 실행 시간 분석")
     st.markdown(
         _timing_html(
             response,
