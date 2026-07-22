@@ -150,7 +150,7 @@ APP_STYLE = """
 }
 .trace-pipeline-node::-webkit-details-marker { display: none; }
 .trace-pipeline-node:hover,
-.trace-pipeline-stage[open] > .trace-pipeline-node {
+.trace-pipeline-toggle[open] > .trace-pipeline-node {
   border-color: #b8c9e8;
   box-shadow: 0 8px 22px rgba(43, 66, 105, .10);
   transform: translateY(-1px);
@@ -159,7 +159,8 @@ APP_STYLE = """
 .trace-pipeline-node.selected { border-color: #bfd2f3; background: #f4f8ff; }
 .trace-pipeline-node.verified { border-color: #cfe9d8; background: #f2faf5; }
 .trace-pipeline-stage { position: relative; min-width: 0; }
-.trace-pipeline-stage:not(:last-child) > .trace-pipeline-node::after {
+.trace-pipeline-toggle { height: 100%; }
+.trace-pipeline-stage:not(:last-child) .trace-pipeline-node::after {
   content: "→";
   position: absolute;
   right: -.57rem;
@@ -191,7 +192,7 @@ APP_STYLE = """
 }
 .trace-pipeline-stage:nth-last-child(-n+3) > .trace-pipeline-popover { left: auto; right: 0; }
 .trace-pipeline-stage:hover > .trace-pipeline-popover,
-.trace-pipeline-stage[open] > .trace-pipeline-popover {
+.trace-pipeline-toggle[open] + .trace-pipeline-popover {
   visibility: visible;
   opacity: 1;
   pointer-events: auto;
@@ -390,7 +391,7 @@ APP_STYLE = """
   .trace-timing-grid { grid-template-columns: repeat(2, 1fr); }
   .trace-pipeline { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
   .trace-pipeline-stage:nth-child(even) > .trace-pipeline-popover { left: auto; right: 0; }
-  .trace-pipeline-stage > .trace-pipeline-node::after { display: none; }
+  .trace-pipeline-stage .trace-pipeline-node::after { display: none; }
 }
 </style>
 """
@@ -704,11 +705,12 @@ def _verification_popover_html(response: RAGResponse) -> str:
 
 def _pipeline_stage_html(label: str, value: str, body: str, css_class: str = "") -> str:
     return (
-        '<details class="trace-pipeline-stage" name="trace-pipeline-stage">'
+        '<div class="trace-pipeline-stage">'
+        '<details class="trace-pipeline-toggle" name="trace-pipeline-stage">'
         f'<summary class="trace-pipeline-node {css_class}">{html.escape(label)}'
-        f'<strong>{html.escape(value)}</strong></summary>'
+        f'<strong>{html.escape(value)}</strong></summary></details>'
         f'<div class="trace-pipeline-popover">{body}</div>'
-        "</details>"
+        "</div>"
     )
 
 

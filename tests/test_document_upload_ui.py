@@ -100,6 +100,15 @@ def test_saved_rag_response_renders_inside_existing_streamlit_app():
     assert any("BM25" in block.value and "Embedding" in block.value and "RRF" in block.value and "BGE" in block.value for block in app.markdown)
     assert any("각 단계를 가리키면 Top-3 미리보기" in block.value for block in app.caption)
     assert any("지원사업 공고문.pdf" in block.value and "Chunk 20개" in block.value for block in app.markdown)
+    assert any(
+        ".trace-pipeline-stage:hover > .trace-pipeline-popover" in block.value
+        for block in app.markdown
+    )
+    assert any(
+        '<div class="trace-pipeline-stage"><details class="trace-pipeline-toggle"'
+        in block.value
+        for block in app.markdown
+    )
     assert len(app.dataframe) >= 3
     assert build_rank_flow_rows(response)[0]["순위 변화"] == "유지"
 
