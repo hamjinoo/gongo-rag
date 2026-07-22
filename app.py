@@ -121,13 +121,20 @@ with run_tab:
             placeholder="예: 신청 대상과 지원 금액은 어떻게 되나요?",
             key="rag_question",
         )
+        is_rag_running = bool(st.session_state.get("rag_is_running", False))
+        local_llm_status = load_local_llm_status()
         run_clicked = st.button(
             "전체 RAG 실행",
             type="primary",
-            disabled=not question.strip() or (not uploaded_files and saved_text_count == 0),
+            disabled=(
+                is_rag_running
+                or not local_llm_status.ready
+                or not question.strip()
+                or (not uploaded_files and saved_text_count == 0)
+            ),
+            help="실행이 끝날 때까지 다시 누를 수 없습니다." if is_rag_running else None,
         )
 
-        local_llm_status = load_local_llm_status()
         if local_llm_status.ready:
             st.caption(
                 f"🟢 {local_llm_status.message} · 문서와 질문을 외부 API로 보내지 않습니다."
@@ -144,6 +151,8 @@ with run_tab:
                         f"ollama pull {local_llm_status.model}",
                         language="powershell",
                     )
+        if run_error := st.session_state.pop("rag_run_error", None):
+            st.error(str(run_error))
 
         if run_clicked:
             for key in (
@@ -156,12 +165,19 @@ with run_tab:
                 "rag_document_count",
                 "rag_chunk_count",
                 "rag_document_summaries",
+                "rag_run_error",
             ):
                 st.session_state.pop(key, None)
+            st.session_state["rag_is_running"] = True
+            st.rerun()
+
+        if is_rag_running:
             load_local_llm_status.clear()
             run_llm_status = get_ollama_status(timeout_seconds=1.0)
             if not run_llm_status.ready:
-                st.error(run_llm_status.message)
+                st.session_state["rag_is_running"] = False
+                st.session_state["rag_run_error"] = run_llm_status.message
+                st.rerun()
             else:
                 with st.spinner(
                     "문서 준비 → BM25·Embedding → RRF → BGE → LangGraph 답변을 실행합니다. "
@@ -258,9 +274,14 @@ with run_tab:
                         st.session_state["rag_chunk_count"] = chunk_count
                         st.session_state["rag_document_summaries"] = document_summaries
                         st.session_state["rag_response"] = response
+                        st.session_state["rag_is_running"] = False
                         st.rerun()
                     except Exception as exc:
-                        st.error(f"RAG 실행에 실패했습니다: {exc}")
+                        st.session_state["rag_is_running"] = False
+                        st.session_state["rag_run_error"] = (
+                            f"RAG 실행에 실패했습니다: {exc}"
+                        )
+                        st.rerun()
 
 with evaluation_tab:
     render_evaluation_portfolio()

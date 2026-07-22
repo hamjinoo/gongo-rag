@@ -40,7 +40,8 @@ def test_upload_screen_renders():
     assert len(app.get("file_uploader")) == 2
     assert any(uploader.label == "검색할 문서 (선택)" for uploader in app.get("file_uploader"))
     assert any(button.label == "텍스트 추출" for button in app.button)
-    assert any(button.label == "전체 RAG 실행" for button in app.button)
+    run_button = next(button for button in app.button if button.label == "전체 RAG 실행")
+    assert run_button.disabled is True
 
 
 def test_saved_rag_response_renders_inside_existing_streamlit_app():
