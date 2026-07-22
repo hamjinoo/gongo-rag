@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
 from bm25 import BM25  # noqa: E402
 from chunker import chunk_fixed  # noqa: E402
+from document_chunk_ui import render_document_chunking  # noqa: E402
 from document_upload_ui import render_document_upload  # noqa: E402
 import rag_answer  # noqa: E402
 
@@ -37,7 +38,8 @@ st.sidebar.caption("업로드한 문서는 아직 검색 색인에 자동 추가
 upload_tab, question_tab = st.tabs(["1. 문서 넣기", "2. 질문하기"])
 
 with upload_tab:
-    render_document_upload()
+    uploaded_documents = render_document_upload()
+    render_document_chunking(uploaded_documents)
 
 with question_tab:
     st.subheader("저장된 문서에 질문하기")
