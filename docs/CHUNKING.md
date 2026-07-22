@@ -245,8 +245,8 @@ Chunking 공부가 끝난 뒤 다음 순서로 진행합니다.
 
 각 단계의 자세한 내용은 [BM25 검색](BM25.md), [Chroma 벡터 검색](VECTOR_SEARCH.md),
 [RRF 통합 검색](RRF.md), [CrossEncoder 재정렬](RERANKER.md),
-[검색 평가](EVALUATION.md)에서 이어집니다. 현재 검색 파이프라인과 test 1회 확인까지
-완료했고, 다음은 LangGraph로 답변·재검색·정보 없음 거절 흐름을 연결하는 작업입니다.
+[검색 평가](EVALUATION.md)에서 이어집니다. 현재 검색 파이프라인, test 1회 확인,
+LangGraph 답변·재검색·정보 없음 거절 흐름까지 완료했고 다음은 답변 평가입니다.
 
 ---
 

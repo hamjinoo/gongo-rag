@@ -18,6 +18,7 @@ cohere>=7,<8                   # 선택: 관리형 Cohere Rerank API 비교
 langchain-core>=1.4,<2         # Document와 Embeddings 표준 인터페이스
 langchain-huggingface>=1.2,<2  # HuggingFaceEmbeddings 연결
 langchain-chroma>=1.1,<2       # LangChain용 Chroma vector store
+langgraph>=1.2,<2              # 검색·재검색·답변·거절 상태 흐름
 chromadb>=1.5,<2               # 로컬 vector DB
 
 # --- 답변 생성 ---
@@ -29,5 +30,5 @@ kiwipiepy>=0.23,<1          # 조사·어미를 분리하는 한국어 형태소
 # --- 데모 UI ---
 streamlit>=1.36
 
-# --- 테스트 (선택 — 테스트 파일은 pytest 없이 python으로도 실행됨) ---
-# pytest>=8.0
+# --- 테스트 ---
+pytest>=8,<10

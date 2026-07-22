@@ -1,0 +1,248 @@
+"""LangGraph RAG의 성공·재검색·거절 경로 테스트."""
+
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from types import SimpleNamespace
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.stdout.reconfigure(encoding="utf-8")
+
+from chunker import DocumentChunk  # noqa: E402
+from rag_workflow import (  # noqa: E402
+    ANSWERED,
+    NO_ANSWER,
+    REFUSED,
+    EvidenceDecision,
+    RAGWorkflow,
+    RAGWorkflowConfig,
+    parse_evidence_decision,
+)
+
+
+@dataclass
+class FakeRetriever:
+    results_by_query: dict[str, list[SimpleNamespace]]
+
+    def __post_init__(self) -> None:
+        self.queries: list[tuple[str, int]] = []
+
+    def search(self, query: str, k: int = 5) -> list[SimpleNamespace]:
+        self.queries.append((query, k))
+        return self.results_by_query.get(query, [])[:k]
+
+
+def make_result(
+    chunk_id: str,
+    text: str,
+    *,
+    rank: int = 1,
+    page_number: int = 2,
+) -> SimpleNamespace:
+    chunk = DocumentChunk(
+        id=chunk_id,
+        text=text,
+        source_filename="지원사업 공고문.pdf",
+        source_sha256="a" * 64,
+        file_type="pdf",
+        page_number=page_number,
+        page_label=f"페이지 {page_number}",
+        extraction_method="text",
+        chunk_index=rank - 1,
+        page_chunk_index=rank - 1,
+        start_char=0,
+        end_char=len(text),
+        strategy="paragraph",
+    )
+    return SimpleNamespace(
+        rank=rank,
+        reranker_score=0.9,
+        chunk=chunk,
+    )
+
+
+def test_answer_path_returns_cited_answer_and_source_metadata():
+    question = "신청 마감은 언제인가요?"
+    retriever = FakeRetriever(
+        {
+            question: [
+                make_result(
+                    "chunk-1",
+                    "신청 마감은 2026년 2월 24일 18시입니다.",
+                )
+            ]
+        }
+    )
+
+    workflow = RAGWorkflow(
+        retriever,
+        judge=lambda _question, _evidence: EvidenceDecision(
+            True,
+            "마감 날짜가 근거에 직접 있습니다.",
+        ),
+        rewriter=lambda _question, _evidence: (_ for _ in ()).throw(
+            AssertionError("충분한 근거에서는 재작성하면 안 됩니다.")
+        ),
+        answer_generator=lambda _question, _evidence: (
+            "신청 마감은 2026년 2월 24일 18시입니다. [근거 1]"
+        ),
+    )
+
+    response = workflow.invoke(question)
+
+    assert response.status == ANSWERED
+    assert response.rewrite_count == 0
+    assert response.steps == ("retrieve", "assess_evidence", "answer")
+    assert response.evidence[0]["source_filename"] == "지원사업 공고문.pdf"
+    assert response.evidence[0]["page_number"] == 2
+    assert retriever.queries == [(question, 5)]
+
+
+def test_rewrite_path_searches_once_more_then_answers_original_question():
+    question = "접수는 언제 끝나요?"
+    rewritten = "지원사업 신청 접수 마감일 제출기간"
+    retriever = FakeRetriever(
+        {
+            question: [make_result("weak", "사업 개요를 안내합니다.")],
+            rewritten: [
+                make_result("strong", "제출기간은 2026년 3월 10일까지입니다.")
+            ],
+        }
+    )
+    decisions = iter(
+        [
+            EvidenceDecision(False, "마감 날짜가 없습니다."),
+            EvidenceDecision(True, "제출기간이 직접 있습니다."),
+        ]
+    )
+
+    workflow = RAGWorkflow(
+        retriever,
+        judge=lambda _question, _evidence: next(decisions),
+        rewriter=lambda original, _evidence: (
+            rewritten if original == question else original
+        ),
+        answer_generator=lambda original, _evidence: (
+            "접수는 2026년 3월 10일까지입니다. [근거 1]"
+            if original == question
+            else NO_ANSWER
+        ),
+    )
+
+    response = workflow.invoke(question)
+
+    assert response.status == ANSWERED
+    assert response.final_query == rewritten
+    assert response.rewrite_count == 1
+    assert response.steps == (
+        "retrieve",
+        "assess_evidence",
+        "rewrite_query",
+        "retrieve",
+        "assess_evidence",
+        "answer",
+    )
+    assert retriever.queries == [(question, 5), (rewritten, 5)]
+
+
+def test_refusal_path_stops_after_one_rewrite_when_evidence_is_still_missing():
+    question = "공고문에서 숙박비를 지원하나요?"
+    rewritten = "숙박비 지원 비용 항목"
+    retriever = FakeRetriever({question: [], rewritten: []})
+
+    workflow = RAGWorkflow(
+        retriever,
+        judge=lambda _question, _evidence: (_ for _ in ()).throw(
+            AssertionError("검색 결과가 없으면 LLM 판정기를 호출하지 않습니다.")
+        ),
+        rewriter=lambda _question, _evidence: rewritten,
+        answer_generator=lambda _question, _evidence: (_ for _ in ()).throw(
+            AssertionError("근거가 없으면 답변을 생성하면 안 됩니다.")
+        ),
+        config=RAGWorkflowConfig(max_rewrites=1),
+    )
+
+    response = workflow.invoke(question)
+
+    assert response.status == REFUSED
+    assert response.answer == NO_ANSWER
+    assert response.rewrite_count == 1
+    assert response.steps == (
+        "retrieve",
+        "assess_evidence",
+        "rewrite_query",
+        "retrieve",
+        "assess_evidence",
+        "refuse",
+    )
+    assert len(retriever.queries) == 2
+
+
+def test_invalid_citation_fails_closed_instead_of_showing_answer():
+    question = "지원 금액은 얼마인가요?"
+    retriever = FakeRetriever(
+        {question: [make_result("money", "지원 금액은 최대 1억원입니다.")]}
+    )
+    workflow = RAGWorkflow(
+        retriever,
+        judge=lambda _question, _evidence: EvidenceDecision(True, "금액이 있습니다."),
+        rewriter=lambda original, _evidence: original,
+        answer_generator=lambda _question, _evidence: (
+            "지원 금액은 최대 1억원입니다. [근거 2]"
+        ),
+    )
+
+    response = workflow.invoke(question)
+
+    assert response.status == REFUSED
+    assert response.answer == NO_ANSWER
+    assert response.refusal_reason is not None
+    assert "존재하지 않는 근거 번호" in response.refusal_reason
+
+
+def test_number_must_exist_in_the_cited_evidence_not_an_uncited_chunk():
+    question = "지원 금액은 얼마인가요?"
+    retriever = FakeRetriever(
+        {
+            question: [
+                make_result("cited", "지원 대상은 중소기업입니다.", rank=1),
+                make_result("uncited", "지원 금액은 최대 2억원입니다.", rank=2),
+            ]
+        }
+    )
+    workflow = RAGWorkflow(
+        retriever,
+        judge=lambda _question, _evidence: EvidenceDecision(True, "근거가 있습니다."),
+        rewriter=lambda original, _evidence: original,
+        answer_generator=lambda _question, _evidence: (
+            "지원 금액은 최대 2억원입니다. [근거 1]"
+        ),
+    )
+
+    response = workflow.invoke(question)
+
+    assert response.status == REFUSED
+    assert response.refusal_reason is not None
+    assert "근거에 없는 숫자" in response.refusal_reason
+
+
+def test_malformed_evidence_decision_fails_closed():
+    decision = parse_evidence_decision("아마 답할 수 있을 것 같습니다.")
+    assert decision.sufficient is False
+    assert "안전하게 부족함" in decision.reason
+
+
+def test_empty_question_is_rejected_before_search():
+    workflow = RAGWorkflow(
+        FakeRetriever({}),
+        judge=lambda _question, _evidence: EvidenceDecision(False, ""),
+        rewriter=lambda question, _evidence: question,
+        answer_generator=lambda _question, _evidence: NO_ANSWER,
+    )
+
+    try:
+        workflow.invoke("  ")
+    except ValueError as exc:
+        assert "비어 있을 수 없습니다" in str(exc)
+    else:
+        raise AssertionError("빈 질문을 거부해야 합니다.")

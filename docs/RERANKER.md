@@ -346,7 +346,7 @@ CrossEncoder 점수는 `0.998472`였습니다.
 - [x] Cohere Rerank API adapter와 응답 검증 테스트
 - [x] Cohere 실제 비교 보류 이유 기록: API 키 부재, 로컬 BGE로 완성 가능
 - [x] 로컬 BGE·후보 7개 고정 후 test 검색 평가 1회
-- [ ] 최종 LLM 답변과 인용에 연결
+- [x] LangGraph 최종 LLM 답변·재검색·인용·거절에 연결
 
 ---
 
@@ -680,7 +680,7 @@ Copy-Item .env.example .env
 reranker는 검색 품질 실험이 라이브러리에 묶이지 않도록 작은 Python 인터페이스로
 분리했습니다.
 
-이후 LangGraph에서는 다음 노드로 사용할 수 있습니다.
+현재 LangGraph에서는 다음 node로 사용합니다.
 
 ```text
 retrieve node
@@ -688,11 +688,14 @@ retrieve node
 → rerank node
 → relevance check
 → 충분하면 answer
-→ 부족하면 query rewrite 또는 정보 없음
+→ 부족하면 query rewrite 후 재검색 1회
+→ 그래도 부족하면 정보 없음
 ```
 
 즉 LangGraph는 검색 알고리즘을 대신하는 도구가 아니라, 검색·재검색·거절 흐름을
-명확한 상태 전이로 연결하는 역할입니다.
+명확한 상태 전이로 연결하는 역할입니다. 답변의 `[근거 N]`은 reranker가 보존한
+파일명·페이지·chunk ID와 연결되며, 잘못된 인용 번호나 근거에 없는 숫자는
+fail-closed 방식으로 `정보 없음` 처리합니다.
 
 ---
 
@@ -714,7 +717,8 @@ retrieve node
 > `rerank-v4.0-pro`를 연결해 로컬과 관리형 API를 같은 골든셋으로 비교할 수 있게
 > 했습니다. 실제 비교는 API 키가 없어 보류했고 로컬 BGE·후보 7개로 test를 한 번
 > 실행했습니다. test Hit@1은 0.80, MRR은 0.85였으며 이 결과로 다시 튜닝하지
-> 않고 LangGraph 답변 단계로 이동합니다.
+> 않았습니다. 이 검색기를 LangGraph의 검색 node로 연결하고, 근거 판단·질문
+> 재작성·재검색 1회·인용 답변·정보 없음 거절 경로를 자동 테스트했습니다.
 
 ---
 
@@ -782,9 +786,8 @@ rewrite로 다시 검색해야 합니다.
 
 ### Q12. 다음 단계는 무엇인가요?
 
-후보 7개와 로컬 BGE로 검색 설정을 잠그고 test도 한 번 실행했습니다. 다음은 이
-검색 결과를 LangGraph에 연결해 근거가 충분하면 출처와 함께 답하고, 부족하면 질문을
-한 번 고쳐 재검색한 뒤 그래도 없으면 `정보 없음`으로 거절하는 흐름을 구현합니다.
+LangGraph 연결까지 끝났습니다. 다음은 normal 질문의 답변 관련성·근거 충실성과
+no-answer 질문의 안전한 거절을 Ragas와 사람 검토로 따로 평가하는 단계입니다.
 
 ---
 
