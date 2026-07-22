@@ -64,8 +64,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--ks",
-        default="1,3,5,10",
-        help="평가할 순위 컷오프. 예: 1,3,5,10",
+        default="1,3,5",
+        help=(
+            "평가할 순위 컷오프. 기본값 1,3,5. Hit@10은 "
+            "--rerank-candidates 10 이상과 함께 사용합니다."
+        ),
     )
     parser.add_argument(
         "--golden",
@@ -144,6 +147,29 @@ def parse_ks(raw_value: str) -> tuple[int, ...]:
     if not ks or ks[0] < 1:
         raise ValueError("ks에는 1 이상의 값이 필요합니다.")
     return ks
+
+
+def validate_run_settings(
+    systems: tuple[str, ...],
+    ks: tuple[int, ...],
+    *,
+    rerank_candidates: int,
+    rerank_batch_size: int,
+    rerank_max_length: int,
+) -> None:
+    """겉보기 설정과 실제 reranker 후보 수가 달라지는 실험을 막는다."""
+
+    if rerank_candidates < 1:
+        raise ValueError("rerank-candidates는 1 이상이어야 합니다.")
+    if rerank_batch_size < 1:
+        raise ValueError("rerank-batch-size는 1 이상이어야 합니다.")
+    if rerank_max_length < 1:
+        raise ValueError("rerank-max-length는 1 이상이어야 합니다.")
+    if "reranker" in systems and rerank_candidates < max(ks):
+        raise ValueError(
+            "rerank-candidates는 가장 큰 평가 k 이상이어야 합니다. "
+            "후보 5개 실험은 --ks 1,3,5를 사용하세요."
+        )
 
 
 def load_corpus(
@@ -459,12 +485,13 @@ def main() -> None:
     args = parse_args()
     systems = parse_systems(args.systems)
     ks = parse_ks(args.ks)
-    if args.rerank_candidates < 1:
-        raise ValueError("rerank-candidates는 1 이상이어야 합니다.")
-    if args.rerank_batch_size < 1:
-        raise ValueError("rerank-batch-size는 1 이상이어야 합니다.")
-    if args.rerank_max_length < 1:
-        raise ValueError("rerank-max-length는 1 이상이어야 합니다.")
+    validate_run_settings(
+        systems,
+        ks,
+        rerank_candidates=args.rerank_candidates,
+        rerank_batch_size=args.rerank_batch_size,
+        rerank_max_length=args.rerank_max_length,
+    )
 
     split_filter = None if args.split == "all" else args.split
     questions = load_golden_questions(args.golden, split=split_filter)

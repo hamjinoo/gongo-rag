@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at_utc": "2026-07-20T12:21:25.238195+00:00",
+    "generated_at_utc": "2026-07-20T10:28:03.629447+00:00",
     "split": "dev",
     "systems": [
       "bm25",
@@ -11,7 +11,8 @@
     "ks": [
       1,
       3,
-      5
+      5,
+      10
     ],
     "golden_path": "data\\golden_set.jsonl",
     "golden_sha256": "040454e92e3bf4e10544f3a0c2688e37aa851d4edfcad8dbe5c823183f047e8f",
@@ -46,7 +47,7 @@
       "rrf_rank_constant": 60,
       "rrf_fetch_k": 20,
       "reranker_model": "BAAI/bge-reranker-v2-m3",
-      "reranker_candidates": 7,
+      "reranker_candidates": 10,
       "reranker_batch_size": 2,
       "reranker_max_length": 512
     },
@@ -60,22 +61,25 @@
       "ks": [
         1,
         3,
-        5
+        5,
+        10
       ],
       "hit_rates": {
         "hit@1": 0.7,
         "hit@3": 0.95,
-        "hit@5": 1.0
+        "hit@5": 1.0,
+        "hit@10": 1.0
       },
       "mrr": 0.8266666666666668,
       "ndcg": {
         "ndcg@1": 0.7,
         "ndcg@3": 0.8349681428548552,
-        "ndcg@5": 0.8543107832165822
+        "ndcg@5": 0.8543107832165822,
+        "ndcg@10": 0.8543107832165822
       },
-      "mean_latency_ms": 0.7339449919527397,
-      "p95_latency_ms": 1.075899985153228,
-      "misses@5": [],
+      "mean_latency_ms": 0.624145005713217,
+      "p95_latency_ms": 0.8163999882526696,
+      "misses@10": [],
       "cases": [
         {
           "question_id": "q001",
@@ -86,7 +90,12 @@
             "3fa2ee4d25fa-p1-c3",
             "0bc7ebd932e4-p1-c0",
             "3fa2ee4d25fa-p1-c1",
-            "3fa2ee4d25fa-p1-c2"
+            "3fa2ee4d25fa-p1-c2",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c7",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c1"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c0"
@@ -96,16 +105,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 1.116700004786253,
+          "latency_ms": 1.1639000149443746,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -117,7 +128,12 @@
             "3fa2ee4d25fa-p1-c0",
             "3fa2ee4d25fa-p1-c2",
             "3fa2ee4d25fa-p1-c1",
-            "e91c0bd83ff8-p1-c6"
+            "e91c0bd83ff8-p1-c6",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c0",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c1"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c0"
@@ -127,16 +143,18 @@
           ],
           "first_relevant_rank": 2,
           "reciprocal_rank": 0.5,
-          "latency_ms": 0.8753000292927027,
+          "latency_ms": 0.8163999882526696,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.6309297535714575,
-            "ndcg@5": 0.6309297535714575
+            "ndcg@5": 0.6309297535714575,
+            "ndcg@10": 0.6309297535714575
           }
         },
         {
@@ -148,7 +166,12 @@
             "3fa2ee4d25fa-p1-c3",
             "0bc7ebd932e4-p1-c0",
             "3fa2ee4d25fa-p1-c5",
-            "0bc7ebd932e4-p1-c1"
+            "0bc7ebd932e4-p1-c1",
+            "e91c0bd83ff8-p1-c7",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "e91c0bd83ff8-p1-c14"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c2",
@@ -159,16 +182,18 @@
           ],
           "first_relevant_rank": 2,
           "reciprocal_rank": 0.5,
-          "latency_ms": 0.685199978761375,
+          "latency_ms": 0.6806000019423664,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.38685280723454163,
-            "ndcg@5": 0.38685280723454163
+            "ndcg@5": 0.38685280723454163,
+            "ndcg@10": 0.38685280723454163
           }
         },
         {
@@ -180,7 +205,12 @@
             "3fa2ee4d25fa-p1-c0",
             "3fa2ee4d25fa-p1-c5",
             "e91c0bd83ff8-p1-c14",
-            "3fa2ee4d25fa-p1-c1"
+            "3fa2ee4d25fa-p1-c1",
+            "0bc7ebd932e4-p1-c0",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c7",
+            "e91c0bd83ff8-p1-c13",
+            "e91c0bd83ff8-p1-c15"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c3"
@@ -190,16 +220,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.727800012100488,
+          "latency_ms": 0.6940000457689166,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -211,7 +243,8 @@
             "0bc7ebd932e4-p1-c1",
             "3fa2ee4d25fa-p1-c4",
             "3fa2ee4d25fa-p1-c6",
-            "e91c0bd83ff8-p1-c4"
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c3"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c4"
@@ -221,16 +254,18 @@
           ],
           "first_relevant_rank": 3,
           "reciprocal_rank": 0.3333333333333333,
-          "latency_ms": 0.3504999913275242,
+          "latency_ms": 0.32519997330382466,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.5,
-            "ndcg@5": 0.5
+            "ndcg@5": 0.5,
+            "ndcg@10": 0.5
           }
         },
         {
@@ -242,7 +277,12 @@
             "3fa2ee4d25fa-p1-c5",
             "3fa2ee4d25fa-p1-c6",
             "0bc7ebd932e4-p1-c2",
-            "3fa2ee4d25fa-p1-c3"
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c1",
+            "e91c0bd83ff8-p1-c4",
+            "3fa2ee4d25fa-p1-c7",
+            "e91c0bd83ff8-p1-c1",
+            "0bc7ebd932e4-p1-c8"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c4",
@@ -254,16 +294,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.6244999822229147,
+          "latency_ms": 0.5556999822147191,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -275,7 +317,12 @@
             "3fa2ee4d25fa-p1-c5",
             "3fa2ee4d25fa-p1-c4",
             "e91c0bd83ff8-p1-c4",
-            "e91c0bd83ff8-p1-c3"
+            "e91c0bd83ff8-p1-c3",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c7",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c13"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c6"
@@ -285,16 +332,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.7793999975547194,
+          "latency_ms": 0.5773999728262424,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -306,7 +355,12 @@
             "0bc7ebd932e4-p1-c2",
             "0bc7ebd932e4-p1-c1",
             "3fa2ee4d25fa-p1-c2",
-            "0bc7ebd932e4-p1-c10"
+            "0bc7ebd932e4-p1-c10",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c7",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c6"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c0"
@@ -316,16 +370,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.8130999631248415,
+          "latency_ms": 0.6470000371336937,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -337,7 +393,12 @@
             "0bc7ebd932e4-p1-c0",
             "0bc7ebd932e4-p1-c1",
             "0bc7ebd932e4-p1-c7",
-            "e91c0bd83ff8-p1-c3"
+            "e91c0bd83ff8-p1-c3",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c8",
+            "e91c0bd83ff8-p1-c2",
+            "0bc7ebd932e4-p1-c10",
+            "e91c0bd83ff8-p1-c0"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c0"
@@ -347,16 +408,18 @@
           ],
           "first_relevant_rank": 2,
           "reciprocal_rank": 0.5,
-          "latency_ms": 0.6359000108204782,
+          "latency_ms": 0.507500022649765,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.6309297535714575,
-            "ndcg@5": 0.6309297535714575
+            "ndcg@5": 0.6309297535714575,
+            "ndcg@10": 0.6309297535714575
           }
         },
         {
@@ -368,7 +431,12 @@
             "0bc7ebd932e4-p1-c1",
             "0bc7ebd932e4-p1-c9",
             "3fa2ee4d25fa-p1-c7",
-            "3fa2ee4d25fa-p1-c6"
+            "3fa2ee4d25fa-p1-c6",
+            "e91c0bd83ff8-p1-c14",
+            "3fa2ee4d25fa-p1-c1",
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c8"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c1"
@@ -378,16 +446,18 @@
           ],
           "first_relevant_rank": 2,
           "reciprocal_rank": 0.5,
-          "latency_ms": 0.6409999914467335,
+          "latency_ms": 0.5380000220611691,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.6309297535714575,
-            "ndcg@5": 0.6309297535714575
+            "ndcg@5": 0.6309297535714575,
+            "ndcg@10": 0.6309297535714575
           }
         },
         {
@@ -399,7 +469,12 @@
             "0bc7ebd932e4-p1-c0",
             "0bc7ebd932e4-p1-c2",
             "0bc7ebd932e4-p1-c10",
-            "0bc7ebd932e4-p1-c8"
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c7",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c6"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c1"
@@ -409,16 +484,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.6921000313013792,
+          "latency_ms": 0.5813000025227666,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -430,7 +507,12 @@
             "0bc7ebd932e4-p1-c0",
             "0bc7ebd932e4-p1-c1",
             "0bc7ebd932e4-p1-c10",
-            "0bc7ebd932e4-p1-c3"
+            "0bc7ebd932e4-p1-c3",
+            "0bc7ebd932e4-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "e91c0bd83ff8-p1-c17",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c4"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c2"
@@ -440,16 +522,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.833400001283735,
+          "latency_ms": 0.6618999759666622,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -461,7 +545,12 @@
             "0bc7ebd932e4-p1-c5",
             "0bc7ebd932e4-p1-c0",
             "3fa2ee4d25fa-p1-c3",
-            "0bc7ebd932e4-p1-c7"
+            "0bc7ebd932e4-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c1",
+            "e91c0bd83ff8-p1-c12",
+            "3fa2ee4d25fa-p1-c0",
+            "0bc7ebd932e4-p1-c6"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c4"
@@ -471,16 +560,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.7519000209867954,
+          "latency_ms": 0.5973000079393387,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -492,7 +583,12 @@
             "0bc7ebd932e4-p1-c7",
             "e91c0bd83ff8-p1-c3",
             "0bc7ebd932e4-p1-c9",
-            "e91c0bd83ff8-p1-c17"
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c16",
+            "0bc7ebd932e4-p1-c2",
+            "e91c0bd83ff8-p1-c2",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c1"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c8"
@@ -502,16 +598,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.6554999854415655,
+          "latency_ms": 0.4729999927803874,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -523,7 +621,12 @@
             "e91c0bd83ff8-p1-c16",
             "e91c0bd83ff8-p1-c1",
             "e91c0bd83ff8-p1-c5",
-            "e91c0bd83ff8-p1-c4"
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c15"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c0",
@@ -535,16 +638,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 1.075899985153228,
+          "latency_ms": 0.7279000128619373,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 0.9197207891481876,
-            "ndcg@5": 0.9197207891481876
+            "ndcg@5": 0.9197207891481876,
+            "ndcg@10": 0.9197207891481876
           }
         },
         {
@@ -556,7 +661,12 @@
             "e91c0bd83ff8-p1-c1",
             "e91c0bd83ff8-p1-c4",
             "3fa2ee4d25fa-p1-c4",
-            "3fa2ee4d25fa-p1-c1"
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c6",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "e91c0bd83ff8-p1-c18",
+            "0bc7ebd932e4-p1-c2"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c1",
@@ -570,16 +680,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.7059999625198543,
+          "latency_ms": 0.5168000352568924,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -591,7 +703,12 @@
             "e91c0bd83ff8-p1-c1",
             "e91c0bd83ff8-p1-c17",
             "e91c0bd83ff8-p1-c3",
-            "e91c0bd83ff8-p1-c18"
+            "e91c0bd83ff8-p1-c18",
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c13"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c1",
@@ -603,16 +720,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.8060999680310488,
+          "latency_ms": 0.6639999919570982,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -624,7 +743,12 @@
             "e91c0bd83ff8-p1-c6",
             "e91c0bd83ff8-p1-c9",
             "e91c0bd83ff8-p1-c8",
-            "e91c0bd83ff8-p1-c4"
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c15"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c4"
@@ -634,16 +758,18 @@
           ],
           "first_relevant_rank": 5,
           "reciprocal_rank": 0.2,
-          "latency_ms": 0.6339999963529408,
+          "latency_ms": 0.5683000199496746,
           "hits": {
             "hit@1": false,
             "hit@3": false,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.0,
-            "ndcg@5": 0.38685280723454163
+            "ndcg@5": 0.38685280723454163,
+            "ndcg@10": 0.38685280723454163
           }
         },
         {
@@ -655,7 +781,12 @@
             "e91c0bd83ff8-p1-c8",
             "e91c0bd83ff8-p1-c6",
             "e91c0bd83ff8-p1-c9",
-            "e91c0bd83ff8-p1-c11"
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c5",
+            "3fa2ee4d25fa-p1-c3"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c4"
@@ -665,16 +796,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.6828999612480402,
+          "latency_ms": 0.5978000117465854,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -686,7 +819,12 @@
             "e91c0bd83ff8-p1-c11",
             "e91c0bd83ff8-p1-c3",
             "0bc7ebd932e4-p1-c2",
-            "e91c0bd83ff8-p1-c8"
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c9",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c16"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c10"
@@ -696,16 +834,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 0.5916999652981758,
+          "latency_ms": 0.5889000021852553,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         }
       ]
@@ -717,25 +857,26 @@
       "ks": [
         1,
         3,
-        5
+        5,
+        10
       ],
       "hit_rates": {
         "hit@1": 0.6,
         "hit@3": 0.7,
-        "hit@5": 0.8
+        "hit@5": 0.8,
+        "hit@10": 0.9
       },
-      "mrr": 0.6616666666666666,
+      "mrr": 0.6734722222222222,
       "ndcg": {
         "ndcg@1": 0.6,
         "ndcg@3": 0.625,
-        "ndcg@5": 0.6666231361172243
+        "ndcg@5": 0.6666231361172243,
+        "ndcg@10": 0.7112938270543235
       },
-      "mean_latency_ms": 17.94893499754835,
-      "p95_latency_ms": 20.71150002302602,
-      "misses@5": [
-        "q007",
+      "mean_latency_ms": 16.257275009411387,
+      "p95_latency_ms": 17.539899970870465,
+      "misses@10": [
         "q028",
-        "q030",
         "q031"
       ],
       "cases": [
@@ -748,7 +889,12 @@
             "3fa2ee4d25fa-p1-c3",
             "3fa2ee4d25fa-p1-c7",
             "3fa2ee4d25fa-p1-c2",
-            "3fa2ee4d25fa-p1-c1"
+            "3fa2ee4d25fa-p1-c1",
+            "0bc7ebd932e4-p1-c9",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c0"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c0"
@@ -758,16 +904,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 34.81959999771789,
+          "latency_ms": 15.306100016459823,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -779,7 +927,12 @@
             "3fa2ee4d25fa-p1-c2",
             "3fa2ee4d25fa-p1-c0",
             "3fa2ee4d25fa-p1-c1",
-            "e91c0bd83ff8-p1-c6"
+            "e91c0bd83ff8-p1-c6",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c7",
+            "e91c0bd83ff8-p1-c1",
+            "0bc7ebd932e4-p1-c9",
+            "e91c0bd83ff8-p1-c5"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c0"
@@ -789,16 +942,18 @@
           ],
           "first_relevant_rank": 3,
           "reciprocal_rank": 0.3333333333333333,
-          "latency_ms": 20.71150002302602,
+          "latency_ms": 14.789999986533076,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.5,
-            "ndcg@5": 0.5
+            "ndcg@5": 0.5,
+            "ndcg@10": 0.5
           }
         },
         {
@@ -810,7 +965,12 @@
             "3fa2ee4d25fa-p1-c3",
             "0bc7ebd932e4-p1-c1",
             "3fa2ee4d25fa-p1-c5",
-            "0bc7ebd932e4-p1-c0"
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c9",
+            "0bc7ebd932e4-p1-c4"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c2",
@@ -821,16 +981,18 @@
           ],
           "first_relevant_rank": 2,
           "reciprocal_rank": 0.5,
-          "latency_ms": 17.661700025200844,
+          "latency_ms": 14.722899999469519,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.38685280723454163,
-            "ndcg@5": 0.38685280723454163
+            "ndcg@5": 0.38685280723454163,
+            "ndcg@10": 0.38685280723454163
           }
         },
         {
@@ -842,7 +1004,12 @@
             "3fa2ee4d25fa-p1-c5",
             "3fa2ee4d25fa-p1-c0",
             "0bc7ebd932e4-p1-c4",
-            "3fa2ee4d25fa-p1-c1"
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c4",
+            "e91c0bd83ff8-p1-c13",
+            "e91c0bd83ff8-p1-c14",
+            "0bc7ebd932e4-p1-c3",
+            "0bc7ebd932e4-p1-c2"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c3"
@@ -852,16 +1019,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 19.655799958854914,
+          "latency_ms": 16.658400010783225,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -873,24 +1042,33 @@
             "0bc7ebd932e4-p1-c4",
             "3fa2ee4d25fa-p1-c6",
             "0bc7ebd932e4-p1-c9",
-            "3fa2ee4d25fa-p1-c7"
+            "3fa2ee4d25fa-p1-c7",
+            "e91c0bd83ff8-p1-c3",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c2"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c4"
           ],
-          "relevant_ranks": [],
-          "first_relevant_rank": null,
-          "reciprocal_rank": 0.0,
-          "latency_ms": 16.941800015047193,
+          "relevant_ranks": [
+            9
+          ],
+          "first_relevant_rank": 9,
+          "reciprocal_rank": 0.1111111111111111,
+          "latency_ms": 15.051200054585934,
           "hits": {
             "hit@1": false,
             "hit@3": false,
-            "hit@5": false
+            "hit@5": false,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.0,
-            "ndcg@5": 0.0
+            "ndcg@5": 0.0,
+            "ndcg@10": 0.3010299956639812
           }
         },
         {
@@ -902,7 +1080,12 @@
             "3fa2ee4d25fa-p1-c6",
             "0bc7ebd932e4-p1-c4",
             "3fa2ee4d25fa-p1-c4",
-            "3fa2ee4d25fa-p1-c1"
+            "3fa2ee4d25fa-p1-c1",
+            "e91c0bd83ff8-p1-c18",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c5"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c4",
@@ -914,16 +1097,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 14.114199962932616,
+          "latency_ms": 17.539899970870465,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 0.6131471927654584,
-            "ndcg@5": 0.8772153153380493
+            "ndcg@5": 0.8772153153380493,
+            "ndcg@10": 0.8772153153380493
           }
         },
         {
@@ -935,7 +1120,12 @@
             "3fa2ee4d25fa-p1-c7",
             "3fa2ee4d25fa-p1-c5",
             "e91c0bd83ff8-p1-c3",
-            "0bc7ebd932e4-p1-c9"
+            "0bc7ebd932e4-p1-c9",
+            "3fa2ee4d25fa-p1-c1",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c3",
+            "e91c0bd83ff8-p1-c18",
+            "3fa2ee4d25fa-p1-c2"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c6"
@@ -945,16 +1135,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 17.408000014256686,
+          "latency_ms": 16.47269999375567,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -966,7 +1158,12 @@
             "0bc7ebd932e4-p1-c2",
             "0bc7ebd932e4-p1-c1",
             "3fa2ee4d25fa-p1-c3",
-            "3fa2ee4d25fa-p1-c4"
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c10",
+            "3fa2ee4d25fa-p1-c2"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c0"
@@ -976,16 +1173,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 14.29310004459694,
+          "latency_ms": 16.48900000145659,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -997,7 +1196,12 @@
             "0bc7ebd932e4-p1-c1",
             "0bc7ebd932e4-p1-c2",
             "0bc7ebd932e4-p1-c7",
-            "0bc7ebd932e4-p1-c0"
+            "0bc7ebd932e4-p1-c0",
+            "3fa2ee4d25fa-p1-c6",
+            "e91c0bd83ff8-p1-c2",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c1",
+            "3fa2ee4d25fa-p1-c7"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c0"
@@ -1007,16 +1211,18 @@
           ],
           "first_relevant_rank": 5,
           "reciprocal_rank": 0.2,
-          "latency_ms": 16.694999998435378,
+          "latency_ms": 16.81760000064969,
           "hits": {
             "hit@1": false,
             "hit@3": false,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.0,
-            "ndcg@5": 0.38685280723454163
+            "ndcg@5": 0.38685280723454163,
+            "ndcg@10": 0.38685280723454163
           }
         },
         {
@@ -1028,7 +1234,12 @@
             "3fa2ee4d25fa-p1-c6",
             "e91c0bd83ff8-p1-c14",
             "e91c0bd83ff8-p1-c16",
-            "0bc7ebd932e4-p1-c2"
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c0"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c1"
@@ -1038,16 +1249,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 15.650800021830946,
+          "latency_ms": 15.762499999254942,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -1059,7 +1272,12 @@
             "0bc7ebd932e4-p1-c2",
             "0bc7ebd932e4-p1-c0",
             "0bc7ebd932e4-p1-c8",
-            "3fa2ee4d25fa-p1-c2"
+            "3fa2ee4d25fa-p1-c2",
+            "0bc7ebd932e4-p1-c9",
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c10",
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c6"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c1"
@@ -1069,16 +1287,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 18.13619997119531,
+          "latency_ms": 15.147500031162053,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -1090,7 +1310,12 @@
             "0bc7ebd932e4-p1-c0",
             "0bc7ebd932e4-p1-c1",
             "3fa2ee4d25fa-p1-c3",
-            "3fa2ee4d25fa-p1-c4"
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c9",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c10",
+            "0bc7ebd932e4-p1-c5"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c2"
@@ -1100,16 +1325,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 18.809299974236637,
+          "latency_ms": 16.742600011639297,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -1121,7 +1348,12 @@
             "3fa2ee4d25fa-p1-c3",
             "0bc7ebd932e4-p1-c2",
             "0bc7ebd932e4-p1-c5",
-            "0bc7ebd932e4-p1-c1"
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c7",
+            "0bc7ebd932e4-p1-c3",
+            "0bc7ebd932e4-p1-c6",
+            "3fa2ee4d25fa-p1-c5"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c4"
@@ -1131,16 +1363,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 19.97780002420768,
+          "latency_ms": 16.2090000230819,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -1152,7 +1386,12 @@
             "e91c0bd83ff8-p1-c16",
             "0bc7ebd932e4-p1-c9",
             "e91c0bd83ff8-p1-c6",
-            "e91c0bd83ff8-p1-c17"
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c5",
+            "0bc7ebd932e4-p1-c7",
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c7"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c8"
@@ -1162,16 +1401,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 16.339999972842634,
+          "latency_ms": 16.913000028580427,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -1183,7 +1424,12 @@
             "e91c0bd83ff8-p1-c1",
             "e91c0bd83ff8-p1-c15",
             "e91c0bd83ff8-p1-c5",
-            "e91c0bd83ff8-p1-c16"
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c2"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c0",
@@ -1195,16 +1441,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 15.741000010166317,
+          "latency_ms": 16.00150001468137,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -1216,7 +1464,12 @@
             "3fa2ee4d25fa-p1-c4",
             "3fa2ee4d25fa-p1-c6",
             "0bc7ebd932e4-p1-c4",
-            "e91c0bd83ff8-p1-c1"
+            "e91c0bd83ff8-p1-c1",
+            "0bc7ebd932e4-p1-c5",
+            "e91c0bd83ff8-p1-c18",
+            "3fa2ee4d25fa-p1-c5",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c4"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c1",
@@ -1224,20 +1477,24 @@
             "e91c0bd83ff8-p1-c4"
           ],
           "relevant_ranks": [
-            5
+            5,
+            9,
+            10
           ],
           "first_relevant_rank": 5,
           "reciprocal_rank": 0.2,
-          "latency_ms": 14.839999959804118,
+          "latency_ms": 16.69329998549074,
           "hits": {
             "hit@1": false,
             "hit@3": false,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.0,
-            "ndcg@5": 0.18154179253735267
+            "ndcg@5": 0.18154179253735267,
+            "ndcg@10": 0.45846073882962946
           }
         },
         {
@@ -1249,7 +1506,12 @@
             "e91c0bd83ff8-p1-c3",
             "e91c0bd83ff8-p1-c5",
             "e91c0bd83ff8-p1-c16",
-            "e91c0bd83ff8-p1-c14"
+            "e91c0bd83ff8-p1-c14",
+            "0bc7ebd932e4-p1-c2",
+            "e91c0bd83ff8-p1-c15",
+            "e91c0bd83ff8-p1-c0",
+            "0bc7ebd932e4-p1-c9",
+            "0bc7ebd932e4-p1-c10"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c1",
@@ -1258,16 +1520,18 @@
           "relevant_ranks": [],
           "first_relevant_rank": null,
           "reciprocal_rank": 0.0,
-          "latency_ms": 17.578799976035953,
+          "latency_ms": 17.408500018063933,
           "hits": {
             "hit@1": false,
             "hit@3": false,
-            "hit@5": false
+            "hit@5": false,
+            "hit@10": false
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.0,
-            "ndcg@5": 0.0
+            "ndcg@5": 0.0,
+            "ndcg@10": 0.0
           }
         },
         {
@@ -1279,24 +1543,33 @@
             "e91c0bd83ff8-p1-c6",
             "e91c0bd83ff8-p1-c7",
             "e91c0bd83ff8-p1-c9",
-            "e91c0bd83ff8-p1-c14"
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c15",
+            "e91c0bd83ff8-p1-c2",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c8"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c4"
           ],
-          "relevant_ranks": [],
-          "first_relevant_rank": null,
-          "reciprocal_rank": 0.0,
-          "latency_ms": 15.5879000085406,
+          "relevant_ranks": [
+            8
+          ],
+          "first_relevant_rank": 8,
+          "reciprocal_rank": 0.125,
+          "latency_ms": 16.823100042529404,
           "hits": {
             "hit@1": false,
             "hit@3": false,
-            "hit@5": false
+            "hit@5": false,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.0,
-            "ndcg@5": 0.0
+            "ndcg@5": 0.0,
+            "ndcg@10": 0.31546487678572877
           }
         },
         {
@@ -1308,7 +1581,12 @@
             "e91c0bd83ff8-p1-c6",
             "e91c0bd83ff8-p1-c7",
             "e91c0bd83ff8-p1-c5",
-            "e91c0bd83ff8-p1-c8"
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c2",
+            "e91c0bd83ff8-p1-c9",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c18"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c4"
@@ -1316,16 +1594,18 @@
           "relevant_ranks": [],
           "first_relevant_rank": null,
           "reciprocal_rank": 0.0,
-          "latency_ms": 17.455199966207147,
+          "latency_ms": 15.779900015331805,
           "hits": {
             "hit@1": false,
             "hit@3": false,
-            "hit@5": false
+            "hit@5": false,
+            "hit@10": false
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.0,
-            "ndcg@5": 0.0
+            "ndcg@5": 0.0,
+            "ndcg@10": 0.0
           }
         },
         {
@@ -1337,7 +1617,12 @@
             "e91c0bd83ff8-p1-c11",
             "e91c0bd83ff8-p1-c12",
             "e91c0bd83ff8-p1-c3",
-            "e91c0bd83ff8-p1-c7"
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c2",
+            "e91c0bd83ff8-p1-c18"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c10"
@@ -1347,16 +1632,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 16.561000025831163,
+          "latency_ms": 17.816799983847886,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         }
       ]
@@ -1368,25 +1655,25 @@
       "ks": [
         1,
         3,
-        5
+        5,
+        10
       ],
       "hit_rates": {
         "hit@1": 0.6,
         "hit@3": 0.85,
-        "hit@5": 0.9
+        "hit@5": 0.9,
+        "hit@10": 1.0
       },
-      "mrr": 0.7183333333333334,
+      "mrr": 0.7338095238095238,
       "ndcg": {
         "ndcg@1": 0.6,
         "ndcg@3": 0.7156932235885932,
-        "ndcg@5": 0.744112953577188
+        "ndcg@5": 0.744112953577188,
+        "ndcg@10": 0.790171775741187
       },
-      "mean_latency_ms": 18.20016501005739,
-      "p95_latency_ms": 20.25790000334382,
-      "misses@5": [
-        "q028",
-        "q031"
-      ],
+      "mean_latency_ms": 19.172714999876916,
+      "p95_latency_ms": 23.12019997043535,
+      "misses@10": [],
       "cases": [
         {
           "question_id": "q001",
@@ -1397,7 +1684,12 @@
             "3fa2ee4d25fa-p1-c3",
             "3fa2ee4d25fa-p1-c1",
             "3fa2ee4d25fa-p1-c2",
-            "3fa2ee4d25fa-p1-c7"
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c4"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c0"
@@ -1407,16 +1699,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 20.25790000334382,
+          "latency_ms": 17.92299997759983,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -1428,7 +1722,12 @@
             "3fa2ee4d25fa-p1-c0",
             "3fa2ee4d25fa-p1-c2",
             "3fa2ee4d25fa-p1-c1",
-            "e91c0bd83ff8-p1-c6"
+            "e91c0bd83ff8-p1-c6",
+            "0bc7ebd932e4-p1-c1",
+            "e91c0bd83ff8-p1-c1",
+            "3fa2ee4d25fa-p1-c7",
+            "e91c0bd83ff8-p1-c5",
+            "0bc7ebd932e4-p1-c8"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c0"
@@ -1438,16 +1737,18 @@
           ],
           "first_relevant_rank": 2,
           "reciprocal_rank": 0.5,
-          "latency_ms": 17.37299998058006,
+          "latency_ms": 18.554299953393638,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.6309297535714575,
-            "ndcg@5": 0.6309297535714575
+            "ndcg@5": 0.6309297535714575,
+            "ndcg@10": 0.6309297535714575
           }
         },
         {
@@ -1459,7 +1760,12 @@
             "3fa2ee4d25fa-p1-c3",
             "0bc7ebd932e4-p1-c0",
             "0bc7ebd932e4-p1-c1",
-            "3fa2ee4d25fa-p1-c5"
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c1",
+            "0bc7ebd932e4-p1-c7"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c2",
@@ -1470,16 +1776,18 @@
           ],
           "first_relevant_rank": 2,
           "reciprocal_rank": 0.5,
-          "latency_ms": 19.202100054826587,
+          "latency_ms": 17.58809998864308,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.38685280723454163,
-            "ndcg@5": 0.38685280723454163
+            "ndcg@5": 0.38685280723454163,
+            "ndcg@10": 0.38685280723454163
           }
         },
         {
@@ -1491,7 +1799,12 @@
             "3fa2ee4d25fa-p1-c0",
             "3fa2ee4d25fa-p1-c5",
             "3fa2ee4d25fa-p1-c1",
-            "e91c0bd83ff8-p1-c14"
+            "e91c0bd83ff8-p1-c14",
+            "3fa2ee4d25fa-p1-c4",
+            "e91c0bd83ff8-p1-c13",
+            "0bc7ebd932e4-p1-c0",
+            "3fa2ee4d25fa-p1-c7",
+            "e91c0bd83ff8-p1-c2"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c3"
@@ -1501,16 +1814,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 19.010999996680766,
+          "latency_ms": 20.47569997375831,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -1522,7 +1837,12 @@
             "0bc7ebd932e4-p1-c2",
             "3fa2ee4d25fa-p1-c4",
             "e91c0bd83ff8-p1-c3",
-            "0bc7ebd932e4-p1-c1"
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c3",
+            "0bc7ebd932e4-p1-c4",
+            "0bc7ebd932e4-p1-c9",
+            "e91c0bd83ff8-p1-c4",
+            "3fa2ee4d25fa-p1-c7"
           ],
           "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c4"
@@ -1532,16 +1852,18 @@
           ],
           "first_relevant_rank": 3,
           "reciprocal_rank": 0.3333333333333333,
-          "latency_ms": 16.855800000485033,
+          "latency_ms": 18.01360002718866,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.5,
-            "ndcg@5": 0.5
+            "ndcg@5": 0.5,
+            "ndcg@10": 0.5
           }
         },
         {
@@ -1553,6 +1875,811 @@
             "3fa2ee4d25fa-p1-c4",
             "3fa2ee4d25fa-p1-c6",
             "3fa2ee4d25fa-p1-c3",
+            "e91c0bd83ff8-p1-c18",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c2",
+            "e91c0bd83ff8-p1-c4"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c5"
+          ],
+          "relevant_ranks": [
+            1,
+            2
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 17.181100032757968,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q010",
+          "question": "사업이 끝난 뒤에도 성과 자료 제출 요청에 몇 년 동안 응해야 하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c6",
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c7",
+            "e91c0bd83ff8-p1-c3",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c4",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c18",
+            "3fa2ee4d25fa-p1-c3"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c6"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 19.79569997638464,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q013",
+          "question": "글로벌 IP스타기업 육성사업에는 어떤 기업이 신청할 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c10",
+            "3fa2ee4d25fa-p1-c0",
+            "0bc7ebd932e4-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c0"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 17.35079998616129,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q014",
+          "question": "선정되면 지식재산권 지원을 몇 년 동안 받을 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c7",
+            "3fa2ee4d25fa-p1-c6",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c2",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c4"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c0"
+          ],
+          "relevant_ranks": [
+            3
+          ],
+          "first_relevant_rank": 3,
+          "reciprocal_rank": 0.3333333333333333,
+          "latency_ms": 16.768300032708794,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.5,
+            "ndcg@5": 0.5,
+            "ndcg@10": 0.5
+          }
+        },
+        {
+          "question_id": "q016",
+          "question": "이 사업의 기업분담금 비율은 어떻게 구성되나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c6",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c16",
+            "3fa2ee4d25fa-p1-c1",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c4"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 17.633399984333664,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q017",
+          "question": "예전에 글로벌 IP스타기업을 졸업한 기업도 다시 신청할 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c10",
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c9",
+            "3fa2ee4d25fa-p1-c6"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 18.282400036696345,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q019",
+          "question": "글로벌 IP스타기업은 온라인에서 어떤 순서로 신청하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c10",
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c9",
+            "0bc7ebd932e4-p1-c7",
+            "0bc7ebd932e4-p1-c3"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c2"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 18.811399990227073,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q020",
+          "question": "PCT 방식의 해외 특허 출원은 전체 지원한도가 얼마인가요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c4",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c5",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c6",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c4"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c4"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 22.187699971254915,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q022",
+          "question": "AI 기업으로 인정되면 가점을 몇 점 더 받을 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c9",
+            "e91c0bd83ff8-p1-c16",
+            "0bc7ebd932e4-p1-c7",
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c6",
+            "0bc7ebd932e4-p1-c2",
+            "e91c0bd83ff8-p1-c9"
+          ],
+          "relevant_chunk_ids": [
+            "0bc7ebd932e4-p1-c8"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 19.623400003183633,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q025",
+          "question": "중소기업AI훈련확산센터 추가모집에서는 몇 개 기관을 선정하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c1",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c15",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c14"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c1"
+          ],
+          "relevant_ranks": [
+            1,
+            2
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 18.89780000783503,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q027",
+          "question": "제안서 파일은 어느 이메일로 제출하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c4",
+            "e91c0bd83ff8-p1-c1",
+            "3fa2ee4d25fa-p1-c7",
+            "3fa2ee4d25fa-p1-c6",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c18",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c8"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c1",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c4"
+          ],
+          "relevant_ranks": [
+            2,
+            5,
+            6
+          ],
+          "first_relevant_rank": 2,
+          "reciprocal_rank": 0.5,
+          "latency_ms": 18.298900045920163,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.2960819109658652,
+            "ndcg@5": 0.4776237035032179,
+            "ndcg@10": 0.6447841584694202
+          }
+        },
+        {
+          "question_id": "q028",
+          "question": "AI나 스마트제조 관련 기업도 확산센터 운영기관으로 신청할 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c13",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c18",
+            "e91c0bd83ff8-p1-c1",
+            "e91c0bd83ff8-p1-c2",
+            "e91c0bd83ff8-p1-c16",
+            "0bc7ebd932e4-p1-c2"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c1",
+            "e91c0bd83ff8-p1-c2"
+          ],
+          "relevant_ranks": [
+            7,
+            8
+          ],
+          "first_relevant_rank": 7,
+          "reciprocal_rank": 0.14285714285714285,
+          "latency_ms": 23.12019997043535,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": false,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.0,
+            "ndcg@10": 0.39780880120575696
+          }
+        },
+        {
+          "question_id": "q030",
+          "question": "기업의 AI 도입 훈련로드맵은 몇 개 기업을 대상으로 수립해야 하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c9",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c15",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c11"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c4"
+          ],
+          "relevant_ranks": [
+            5
+          ],
+          "first_relevant_rank": 5,
+          "reciprocal_rank": 0.2,
+          "latency_ms": 23.97670003119856,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.38685280723454163,
+            "ndcg@10": 0.38685280723454163
+          }
+        },
+        {
+          "question_id": "q031",
+          "question": "문제해결형 AI 직무 훈련과정 개발 목표는 몇 개소인가요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c9",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c12"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c4"
+          ],
+          "relevant_ranks": [
+            6
+          ],
+          "first_relevant_rank": 6,
+          "reciprocal_rank": 0.16666666666666666,
+          "latency_ms": 20.002299977932125,
+          "hits": {
+            "hit@1": false,
+            "hit@3": false,
+            "hit@5": false,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.0,
+            "ndcg@5": 0.0,
+            "ndcg@10": 0.3562071871080222
+          }
+        },
+        {
+          "question_id": "q033",
+          "question": "석사학위가 없어도 AI 분야 실무 경력만으로 훈련코치가 될 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c9",
+            "e91c0bd83ff8-p1-c2"
+          ],
+          "relevant_chunk_ids": [
+            "e91c0bd83ff8-p1-c10"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 18.969500029925257,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "system_name": "Reranker",
+      "split": "dev",
+      "question_count": 20,
+      "ks": [
+        1,
+        3,
+        5,
+        10
+      ],
+      "hit_rates": {
+        "hit@1": 0.8,
+        "hit@3": 1.0,
+        "hit@5": 1.0,
+        "hit@10": 1.0
+      },
+      "mrr": 0.9,
+      "ndcg": {
+        "ndcg@1": 0.8,
+        "ndcg@3": 0.9139821033974457,
+        "ndcg@5": 0.9139821033974457,
+        "ndcg@10": 0.9139821033974457
+      },
+      "mean_latency_ms": 6276.970140004414,
+      "p95_latency_ms": 6625.4394999705255,
+      "misses@10": [],
+      "cases": [
+        {
+          "question_id": "q001",
+          "question": "글로벌화 사전검증 사업은 대전의 어떤 기업이 신청할 수 있나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 6320.820299966726,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q002",
+          "question": "대전에 있는 AI 스타트업도 해외 실증이 가능하면 지원 대상인가요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c1",
+            "3fa2ee4d25fa-p1-c2",
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c1",
+            "0bc7ebd932e4-p1-c8",
+            "e91c0bd83ff8-p1-c5",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0"
+          ],
+          "relevant_ranks": [
+            2
+          ],
+          "first_relevant_rank": 2,
+          "reciprocal_rank": 0.5,
+          "latency_ms": 6546.844099997543,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.6309297535714575,
+            "ndcg@5": 0.6309297535714575,
+            "ndcg@10": 0.6309297535714575
+          }
+        },
+        {
+          "question_id": "q004",
+          "question": "글로벌화 사전검증 지원사업은 기업을 몇 곳 정도 선정하나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c2",
+            "0bc7ebd932e4-p1-c0",
+            "0bc7ebd932e4-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c1",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c7"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c2",
+            "3fa2ee4d25fa-p1-c3"
+          ],
+          "relevant_ranks": [
+            2
+          ],
+          "first_relevant_rank": 2,
+          "reciprocal_rank": 0.5,
+          "latency_ms": 6285.271300002933,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.38685280723454163,
+            "ndcg@5": 0.38685280723454163,
+            "ndcg@10": 0.38685280723454163
+          }
+        },
+        {
+          "question_id": "q005",
+          "question": "북미에서 PoC를 진행할 현지 수요처나 협력기관도 연결해 주나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c1",
+            "0bc7ebd932e4-p1-c0",
+            "e91c0bd83ff8-p1-c14",
+            "3fa2ee4d25fa-p1-c7",
+            "e91c0bd83ff8-p1-c13",
+            "e91c0bd83ff8-p1-c2"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c3"
+          ],
+          "relevant_ranks": [
+            1
+          ],
+          "first_relevant_rank": 1,
+          "reciprocal_rank": 1.0,
+          "latency_ms": 5596.198200015351,
+          "hits": {
+            "hit@1": true,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 1.0,
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
+          }
+        },
+        {
+          "question_id": "q007",
+          "question": "신청서는 어디로 보내면 돼요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c4",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c2",
+            "e91c0bd83ff8-p1-c3",
+            "0bc7ebd932e4-p1-c4",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c3",
+            "0bc7ebd932e4-p1-c9",
+            "0bc7ebd932e4-p1-c1"
+          ],
+          "relevant_chunk_ids": [
+            "3fa2ee4d25fa-p1-c4"
+          ],
+          "relevant_ranks": [
+            2
+          ],
+          "first_relevant_rank": 2,
+          "reciprocal_rank": 0.5,
+          "latency_ms": 6273.218300018925,
+          "hits": {
+            "hit@1": false,
+            "hit@3": true,
+            "hit@5": true,
+            "hit@10": true
+          },
+          "ndcg": {
+            "ndcg@1": 0.0,
+            "ndcg@3": 0.6309297535714575,
+            "ndcg@5": 0.6309297535714575,
+            "ndcg@10": 0.6309297535714575
+          }
+        },
+        {
+          "question_id": "q008",
+          "question": "제출할 회사 소개자료는 한국어 자료만 준비하면 되나요?",
+          "split": "dev",
+          "returned_chunk_ids": [
+            "3fa2ee4d25fa-p1-c5",
+            "3fa2ee4d25fa-p1-c4",
+            "e91c0bd83ff8-p1-c4",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c2",
             "e91c0bd83ff8-p1-c18"
           ],
           "relevant_chunk_ids": [
@@ -1565,16 +2692,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 19.885200017597526,
+          "latency_ms": 6105.2654000232,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -1584,662 +2713,16 @@
           "returned_chunk_ids": [
             "3fa2ee4d25fa-p1-c6",
             "3fa2ee4d25fa-p1-c5",
-            "3fa2ee4d25fa-p1-c7",
-            "e91c0bd83ff8-p1-c3",
-            "0bc7ebd932e4-p1-c1"
-          ],
-          "relevant_chunk_ids": [
-            "3fa2ee4d25fa-p1-c6"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 20.450300013180822,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q013",
-          "question": "글로벌 IP스타기업 육성사업에는 어떤 기업이 신청할 수 있나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "0bc7ebd932e4-p1-c0",
-            "0bc7ebd932e4-p1-c2",
-            "0bc7ebd932e4-p1-c1",
-            "3fa2ee4d25fa-p1-c3",
-            "0bc7ebd932e4-p1-c8"
-          ],
-          "relevant_chunk_ids": [
-            "0bc7ebd932e4-p1-c0"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 17.334300035145134,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q014",
-          "question": "선정되면 지식재산권 지원을 몇 년 동안 받을 수 있나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "0bc7ebd932e4-p1-c2",
-            "0bc7ebd932e4-p1-c1",
-            "0bc7ebd932e4-p1-c0",
-            "0bc7ebd932e4-p1-c7",
-            "3fa2ee4d25fa-p1-c6"
-          ],
-          "relevant_chunk_ids": [
-            "0bc7ebd932e4-p1-c0"
-          ],
-          "relevant_ranks": [
-            3
-          ],
-          "first_relevant_rank": 3,
-          "reciprocal_rank": 0.3333333333333333,
-          "latency_ms": 17.48600002611056,
-          "hits": {
-            "hit@1": false,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 0.0,
-            "ndcg@3": 0.5,
-            "ndcg@5": 0.5
-          }
-        },
-        {
-          "question_id": "q016",
-          "question": "이 사업의 기업분담금 비율은 어떻게 구성되나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "0bc7ebd932e4-p1-c1",
-            "3fa2ee4d25fa-p1-c6",
-            "e91c0bd83ff8-p1-c14",
-            "e91c0bd83ff8-p1-c16",
-            "3fa2ee4d25fa-p1-c1"
-          ],
-          "relevant_chunk_ids": [
-            "0bc7ebd932e4-p1-c1"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 18.262800003867596,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q017",
-          "question": "예전에 글로벌 IP스타기업을 졸업한 기업도 다시 신청할 수 있나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "0bc7ebd932e4-p1-c1",
-            "0bc7ebd932e4-p1-c0",
-            "0bc7ebd932e4-p1-c2",
-            "0bc7ebd932e4-p1-c8",
-            "0bc7ebd932e4-p1-c10"
-          ],
-          "relevant_chunk_ids": [
-            "0bc7ebd932e4-p1-c1"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 18.382499983999878,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q019",
-          "question": "글로벌 IP스타기업은 온라인에서 어떤 순서로 신청하나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "0bc7ebd932e4-p1-c2",
-            "0bc7ebd932e4-p1-c0",
-            "0bc7ebd932e4-p1-c1",
-            "3fa2ee4d25fa-p1-c3",
-            "0bc7ebd932e4-p1-c10"
-          ],
-          "relevant_chunk_ids": [
-            "0bc7ebd932e4-p1-c2"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 17.09320000372827,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q020",
-          "question": "PCT 방식의 해외 특허 출원은 전체 지원한도가 얼마인가요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "0bc7ebd932e4-p1-c4",
-            "3fa2ee4d25fa-p1-c3",
-            "0bc7ebd932e4-p1-c5",
-            "0bc7ebd932e4-p1-c0",
-            "0bc7ebd932e4-p1-c1"
-          ],
-          "relevant_chunk_ids": [
-            "0bc7ebd932e4-p1-c4"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 19.053000025451183,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q022",
-          "question": "AI 기업으로 인정되면 가점을 몇 점 더 받을 수 있나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "0bc7ebd932e4-p1-c8",
-            "0bc7ebd932e4-p1-c9",
-            "e91c0bd83ff8-p1-c16",
-            "0bc7ebd932e4-p1-c7",
-            "e91c0bd83ff8-p1-c17"
-          ],
-          "relevant_chunk_ids": [
-            "0bc7ebd932e4-p1-c8"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 17.152700049337,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q025",
-          "question": "중소기업AI훈련확산센터 추가모집에서는 몇 개 기관을 선정하나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "e91c0bd83ff8-p1-c0",
-            "e91c0bd83ff8-p1-c1",
-            "e91c0bd83ff8-p1-c16",
-            "e91c0bd83ff8-p1-c5",
-            "e91c0bd83ff8-p1-c15"
-          ],
-          "relevant_chunk_ids": [
-            "e91c0bd83ff8-p1-c0",
-            "e91c0bd83ff8-p1-c1"
-          ],
-          "relevant_ranks": [
-            1,
-            2
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 17.31399999698624,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q027",
-          "question": "제안서 파일은 어느 이메일로 제출하나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
             "3fa2ee4d25fa-p1-c4",
-            "e91c0bd83ff8-p1-c1",
+            "e91c0bd83ff8-p1-c18",
+            "0bc7ebd932e4-p1-c1",
+            "e91c0bd83ff8-p1-c4",
             "3fa2ee4d25fa-p1-c7",
-            "3fa2ee4d25fa-p1-c6",
+            "3fa2ee4d25fa-p1-c3",
+            "e91c0bd83ff8-p1-c16",
             "e91c0bd83ff8-p1-c3"
           ],
           "relevant_chunk_ids": [
-            "e91c0bd83ff8-p1-c1",
-            "e91c0bd83ff8-p1-c3",
-            "e91c0bd83ff8-p1-c4"
-          ],
-          "relevant_ranks": [
-            2,
-            5
-          ],
-          "first_relevant_rank": 2,
-          "reciprocal_rank": 0.5,
-          "latency_ms": 17.844200017862022,
-          "hits": {
-            "hit@1": false,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 0.0,
-            "ndcg@3": 0.2960819109658652,
-            "ndcg@5": 0.4776237035032179
-          }
-        },
-        {
-          "question_id": "q028",
-          "question": "AI나 스마트제조 관련 기업도 확산센터 운영기관으로 신청할 수 있나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "e91c0bd83ff8-p1-c3",
-            "e91c0bd83ff8-p1-c13",
-            "e91c0bd83ff8-p1-c14",
-            "e91c0bd83ff8-p1-c0",
-            "e91c0bd83ff8-p1-c5"
-          ],
-          "relevant_chunk_ids": [
-            "e91c0bd83ff8-p1-c1",
-            "e91c0bd83ff8-p1-c2"
-          ],
-          "relevant_ranks": [],
-          "first_relevant_rank": null,
-          "reciprocal_rank": 0.0,
-          "latency_ms": 17.579800041858107,
-          "hits": {
-            "hit@1": false,
-            "hit@3": false,
-            "hit@5": false
-          },
-          "ndcg": {
-            "ndcg@1": 0.0,
-            "ndcg@3": 0.0,
-            "ndcg@5": 0.0
-          }
-        },
-        {
-          "question_id": "q030",
-          "question": "기업의 AI 도입 훈련로드맵은 몇 개 기업을 대상으로 수립해야 하나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "e91c0bd83ff8-p1-c5",
-            "e91c0bd83ff8-p1-c6",
-            "e91c0bd83ff8-p1-c9",
-            "e91c0bd83ff8-p1-c7",
-            "e91c0bd83ff8-p1-c4"
-          ],
-          "relevant_chunk_ids": [
-            "e91c0bd83ff8-p1-c4"
-          ],
-          "relevant_ranks": [
-            5
-          ],
-          "first_relevant_rank": 5,
-          "reciprocal_rank": 0.2,
-          "latency_ms": 17.18659995822236,
-          "hits": {
-            "hit@1": false,
-            "hit@3": false,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 0.0,
-            "ndcg@3": 0.0,
-            "ndcg@5": 0.38685280723454163
-          }
-        },
-        {
-          "question_id": "q031",
-          "question": "문제해결형 AI 직무 훈련과정 개발 목표는 몇 개소인가요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "e91c0bd83ff8-p1-c6",
-            "e91c0bd83ff8-p1-c11",
-            "e91c0bd83ff8-p1-c8",
-            "e91c0bd83ff8-p1-c7",
-            "e91c0bd83ff8-p1-c9"
-          ],
-          "relevant_chunk_ids": [
-            "e91c0bd83ff8-p1-c4"
-          ],
-          "relevant_ranks": [],
-          "first_relevant_rank": null,
-          "reciprocal_rank": 0.0,
-          "latency_ms": 18.27529998263344,
-          "hits": {
-            "hit@1": false,
-            "hit@3": false,
-            "hit@5": false
-          },
-          "ndcg": {
-            "ndcg@1": 0.0,
-            "ndcg@3": 0.0,
-            "ndcg@5": 0.0
-          }
-        },
-        {
-          "question_id": "q033",
-          "question": "석사학위가 없어도 AI 분야 실무 경력만으로 훈련코치가 될 수 있나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "e91c0bd83ff8-p1-c10",
-            "e91c0bd83ff8-p1-c11",
-            "e91c0bd83ff8-p1-c3",
-            "e91c0bd83ff8-p1-c12",
-            "e91c0bd83ff8-p1-c7"
-          ],
-          "relevant_chunk_ids": [
-            "e91c0bd83ff8-p1-c10"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 18.003600009251386,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        }
-      ]
-    },
-    {
-      "system_name": "Reranker",
-      "split": "dev",
-      "question_count": 20,
-      "ks": [
-        1,
-        3,
-        5
-      ],
-      "hit_rates": {
-        "hit@1": 0.85,
-        "hit@3": 1.0,
-        "hit@5": 1.0
-      },
-      "mrr": 0.925,
-      "ndcg": {
-        "ndcg@1": 0.85,
-        "ndcg@3": 0.9130929753571457,
-        "ndcg@5": 0.9130929753571457
-      },
-      "mean_latency_ms": 4197.173590003513,
-      "p95_latency_ms": 4453.9776999736205,
-      "misses@5": [],
-      "cases": [
-        {
-          "question_id": "q001",
-          "question": "글로벌화 사전검증 사업은 대전의 어떤 기업이 신청할 수 있나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "3fa2ee4d25fa-p1-c0",
-            "3fa2ee4d25fa-p1-c3",
-            "3fa2ee4d25fa-p1-c2",
-            "3fa2ee4d25fa-p1-c1",
-            "3fa2ee4d25fa-p1-c7"
-          ],
-          "relevant_chunk_ids": [
-            "3fa2ee4d25fa-p1-c0"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 3975.679500028491,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q002",
-          "question": "대전에 있는 AI 스타트업도 해외 실증이 가능하면 지원 대상인가요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "3fa2ee4d25fa-p1-c3",
-            "3fa2ee4d25fa-p1-c0",
-            "3fa2ee4d25fa-p1-c1",
-            "3fa2ee4d25fa-p1-c2",
-            "e91c0bd83ff8-p1-c6"
-          ],
-          "relevant_chunk_ids": [
-            "3fa2ee4d25fa-p1-c0"
-          ],
-          "relevant_ranks": [
-            2
-          ],
-          "first_relevant_rank": 2,
-          "reciprocal_rank": 0.5,
-          "latency_ms": 4363.176300015766,
-          "hits": {
-            "hit@1": false,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 0.0,
-            "ndcg@3": 0.6309297535714575,
-            "ndcg@5": 0.6309297535714575
-          }
-        },
-        {
-          "question_id": "q004",
-          "question": "글로벌화 사전검증 지원사업은 기업을 몇 곳 정도 선정하나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "3fa2ee4d25fa-p1-c0",
-            "3fa2ee4d25fa-p1-c3",
-            "3fa2ee4d25fa-p1-c5",
-            "0bc7ebd932e4-p1-c2",
-            "0bc7ebd932e4-p1-c0"
-          ],
-          "relevant_chunk_ids": [
-            "3fa2ee4d25fa-p1-c2",
-            "3fa2ee4d25fa-p1-c3"
-          ],
-          "relevant_ranks": [
-            2
-          ],
-          "first_relevant_rank": 2,
-          "reciprocal_rank": 0.5,
-          "latency_ms": 3918.9721000147983,
-          "hits": {
-            "hit@1": false,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 0.0,
-            "ndcg@3": 0.38685280723454163,
-            "ndcg@5": 0.38685280723454163
-          }
-        },
-        {
-          "question_id": "q005",
-          "question": "북미에서 PoC를 진행할 현지 수요처나 협력기관도 연결해 주나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "3fa2ee4d25fa-p1-c3",
-            "3fa2ee4d25fa-p1-c5",
-            "3fa2ee4d25fa-p1-c0",
-            "3fa2ee4d25fa-p1-c4",
-            "3fa2ee4d25fa-p1-c1"
-          ],
-          "relevant_chunk_ids": [
-            "3fa2ee4d25fa-p1-c3"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 4076.1506999842823,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q007",
-          "question": "신청서는 어디로 보내면 돼요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "3fa2ee4d25fa-p1-c4",
-            "0bc7ebd932e4-p1-c2",
-            "e91c0bd83ff8-p1-c3",
-            "0bc7ebd932e4-p1-c4",
-            "3fa2ee4d25fa-p1-c6"
-          ],
-          "relevant_chunk_ids": [
-            "3fa2ee4d25fa-p1-c4"
-          ],
-          "relevant_ranks": [
-            1
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 4166.660699993372,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q008",
-          "question": "제출할 회사 소개자료는 한국어 자료만 준비하면 되나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "3fa2ee4d25fa-p1-c5",
-            "3fa2ee4d25fa-p1-c4",
-            "3fa2ee4d25fa-p1-c6",
-            "3fa2ee4d25fa-p1-c3",
-            "0bc7ebd932e4-p1-c8"
-          ],
-          "relevant_chunk_ids": [
-            "3fa2ee4d25fa-p1-c4",
-            "3fa2ee4d25fa-p1-c5"
-          ],
-          "relevant_ranks": [
-            1,
-            2
-          ],
-          "first_relevant_rank": 1,
-          "reciprocal_rank": 1.0,
-          "latency_ms": 4035.185899992939,
-          "hits": {
-            "hit@1": true,
-            "hit@3": true,
-            "hit@5": true
-          },
-          "ndcg": {
-            "ndcg@1": 1.0,
-            "ndcg@3": 1.0,
-            "ndcg@5": 1.0
-          }
-        },
-        {
-          "question_id": "q010",
-          "question": "사업이 끝난 뒤에도 성과 자료 제출 요청에 몇 년 동안 응해야 하나요?",
-          "split": "dev",
-          "returned_chunk_ids": [
-            "3fa2ee4d25fa-p1-c6",
-            "3fa2ee4d25fa-p1-c5",
-            "3fa2ee4d25fa-p1-c4",
-            "0bc7ebd932e4-p1-c1",
-            "e91c0bd83ff8-p1-c4"
-          ],
-          "relevant_chunk_ids": [
             "3fa2ee4d25fa-p1-c6"
           ],
           "relevant_ranks": [
@@ -2247,16 +2730,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4056.9068000186235,
+          "latency_ms": 6275.554799998645,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2267,8 +2752,13 @@
             "0bc7ebd932e4-p1-c0",
             "0bc7ebd932e4-p1-c2",
             "0bc7ebd932e4-p1-c1",
+            "0bc7ebd932e4-p1-c10",
             "3fa2ee4d25fa-p1-c2",
-            "0bc7ebd932e4-p1-c8"
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c7",
+            "3fa2ee4d25fa-p1-c3",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c0"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c0"
@@ -2278,16 +2768,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4392.8781999857165,
+          "latency_ms": 6182.82139999792,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2299,7 +2791,12 @@
             "0bc7ebd932e4-p1-c0",
             "0bc7ebd932e4-p1-c1",
             "3fa2ee4d25fa-p1-c6",
-            "0bc7ebd932e4-p1-c7"
+            "0bc7ebd932e4-p1-c7",
+            "3fa2ee4d25fa-p1-c7",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c4",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c2"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c0"
@@ -2309,16 +2806,18 @@
           ],
           "first_relevant_rank": 2,
           "reciprocal_rank": 0.5,
-          "latency_ms": 4175.6923999637365,
+          "latency_ms": 6379.894600016996,
           "hits": {
             "hit@1": false,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 0.0,
             "ndcg@3": 0.6309297535714575,
-            "ndcg@5": 0.6309297535714575
+            "ndcg@5": 0.6309297535714575,
+            "ndcg@10": 0.6309297535714575
           }
         },
         {
@@ -2330,7 +2829,12 @@
             "e91c0bd83ff8-p1-c16",
             "3fa2ee4d25fa-p1-c6",
             "3fa2ee4d25fa-p1-c3",
-            "3fa2ee4d25fa-p1-c1"
+            "3fa2ee4d25fa-p1-c0",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c1",
+            "0bc7ebd932e4-p1-c2",
+            "3fa2ee4d25fa-p1-c2",
+            "e91c0bd83ff8-p1-c14"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c1"
@@ -2340,16 +2844,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4223.889300017618,
+          "latency_ms": 6497.096400009468,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2361,7 +2867,12 @@
             "0bc7ebd932e4-p1-c2",
             "0bc7ebd932e4-p1-c0",
             "0bc7ebd932e4-p1-c10",
-            "3fa2ee4d25fa-p1-c2"
+            "3fa2ee4d25fa-p1-c2",
+            "0bc7ebd932e4-p1-c8",
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c9",
+            "3fa2ee4d25fa-p1-c6",
+            "3fa2ee4d25fa-p1-c3"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c1"
@@ -2371,16 +2882,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4408.536400005687,
+          "latency_ms": 6553.725899953861,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2392,7 +2905,12 @@
             "0bc7ebd932e4-p1-c0",
             "0bc7ebd932e4-p1-c1",
             "0bc7ebd932e4-p1-c10",
-            "0bc7ebd932e4-p1-c8"
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c7",
+            "0bc7ebd932e4-p1-c9",
+            "3fa2ee4d25fa-p1-c4",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c3"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c2"
@@ -2402,16 +2920,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4342.506300017703,
+          "latency_ms": 6625.4394999705255,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2423,7 +2943,12 @@
             "0bc7ebd932e4-p1-c5",
             "0bc7ebd932e4-p1-c7",
             "0bc7ebd932e4-p1-c0",
-            "0bc7ebd932e4-p1-c1"
+            "0bc7ebd932e4-p1-c1",
+            "3fa2ee4d25fa-p1-c3",
+            "0bc7ebd932e4-p1-c8",
+            "0bc7ebd932e4-p1-c6",
+            "3fa2ee4d25fa-p1-c4",
+            "0bc7ebd932e4-p1-c2"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c4"
@@ -2433,16 +2958,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4453.9776999736205,
+          "latency_ms": 6460.412900021765,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2454,7 +2981,12 @@
             "0bc7ebd932e4-p1-c9",
             "0bc7ebd932e4-p1-c7",
             "e91c0bd83ff8-p1-c17",
-            "e91c0bd83ff8-p1-c16"
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c5",
+            "0bc7ebd932e4-p1-c2",
+            "e91c0bd83ff8-p1-c9",
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c3"
           ],
           "relevant_chunk_ids": [
             "0bc7ebd932e4-p1-c8"
@@ -2464,16 +2996,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4609.237399999984,
+          "latency_ms": 6808.348399994429,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2485,7 +3019,12 @@
             "e91c0bd83ff8-p1-c1",
             "e91c0bd83ff8-p1-c5",
             "e91c0bd83ff8-p1-c16",
-            "e91c0bd83ff8-p1-c4"
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c15",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c10",
+            "e91c0bd83ff8-p1-c7"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c0",
@@ -2497,16 +3036,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4030.285899993032,
+          "latency_ms": 5856.048199988436,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2518,7 +3059,12 @@
             "e91c0bd83ff8-p1-c1",
             "e91c0bd83ff8-p1-c3",
             "3fa2ee4d25fa-p1-c4",
-            "3fa2ee4d25fa-p1-c7"
+            "3fa2ee4d25fa-p1-c7",
+            "3fa2ee4d25fa-p1-c5",
+            "0bc7ebd932e4-p1-c2",
+            "e91c0bd83ff8-p1-c18",
+            "3fa2ee4d25fa-p1-c6",
+            "0bc7ebd932e4-p1-c8"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c1",
@@ -2532,16 +3078,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 3848.710899997968,
+          "latency_ms": 6252.1065000328235,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2549,31 +3097,39 @@
           "question": "AI나 스마트제조 관련 기업도 확산센터 운영기관으로 신청할 수 있나요?",
           "split": "dev",
           "returned_chunk_ids": [
+            "e91c0bd83ff8-p1-c2",
             "e91c0bd83ff8-p1-c1",
             "e91c0bd83ff8-p1-c0",
+            "e91c0bd83ff8-p1-c16",
             "e91c0bd83ff8-p1-c5",
             "e91c0bd83ff8-p1-c3",
-            "e91c0bd83ff8-p1-c14"
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c13",
+            "e91c0bd83ff8-p1-c18",
+            "0bc7ebd932e4-p1-c2"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c1",
             "e91c0bd83ff8-p1-c2"
           ],
           "relevant_ranks": [
-            1
+            1,
+            2
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 3877.252100035548,
+          "latency_ms": 5874.12710004719,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
-            "ndcg@3": 0.6131471927654584,
-            "ndcg@5": 0.6131471927654584
+            "ndcg@3": 1.0,
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2585,7 +3141,12 @@
             "e91c0bd83ff8-p1-c5",
             "e91c0bd83ff8-p1-c9",
             "e91c0bd83ff8-p1-c6",
-            "e91c0bd83ff8-p1-c8"
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c8",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c15",
+            "e91c0bd83ff8-p1-c14",
+            "e91c0bd83ff8-p1-c11"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c4"
@@ -2595,16 +3156,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4364.303599984851,
+          "latency_ms": 6201.957100012805,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2616,7 +3179,12 @@
             "e91c0bd83ff8-p1-c8",
             "e91c0bd83ff8-p1-c7",
             "e91c0bd83ff8-p1-c9",
-            "e91c0bd83ff8-p1-c5"
+            "e91c0bd83ff8-p1-c5",
+            "e91c0bd83ff8-p1-c6",
+            "e91c0bd83ff8-p1-c17",
+            "e91c0bd83ff8-p1-c11",
+            "e91c0bd83ff8-p1-c12",
+            "e91c0bd83ff8-p1-c10"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c4"
@@ -2626,16 +3194,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4208.394000015687,
+          "latency_ms": 6160.400599997956,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         },
         {
@@ -2647,7 +3217,12 @@
             "e91c0bd83ff8-p1-c11",
             "e91c0bd83ff8-p1-c12",
             "e91c0bd83ff8-p1-c8",
-            "e91c0bd83ff8-p1-c7"
+            "e91c0bd83ff8-p1-c9",
+            "e91c0bd83ff8-p1-c7",
+            "e91c0bd83ff8-p1-c4",
+            "e91c0bd83ff8-p1-c16",
+            "e91c0bd83ff8-p1-c3",
+            "e91c0bd83ff8-p1-c2"
           ],
           "relevant_chunk_ids": [
             "e91c0bd83ff8-p1-c10"
@@ -2657,16 +3232,18 @@
           ],
           "first_relevant_rank": 1,
           "reciprocal_rank": 1.0,
-          "latency_ms": 4415.075600030832,
+          "latency_ms": 6283.851800020784,
           "hits": {
             "hit@1": true,
             "hit@3": true,
-            "hit@5": true
+            "hit@5": true,
+            "hit@10": true
           },
           "ndcg": {
             "ndcg@1": 1.0,
             "ndcg@3": 1.0,
-            "ndcg@5": 1.0
+            "ndcg@5": 1.0,
+            "ndcg@10": 1.0
           }
         }
       ]
