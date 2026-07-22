@@ -45,12 +45,19 @@ class BM25:
         # results = [(문서 인덱스, 점수), ...] 점수 내림차순
     """
 
-    def __init__(self, corpus: list[str], k1: float = 1.5, b: float = 0.75,  
-                 tokenizer=tokenize):
+    def __init__(
+        self,
+        corpus: list[str],
+        k1: float = 1.5,
+        b: float = 0.75,
+        tokenizer=tokenize,
+        debug: bool = False,
+    ):
         self.k1 = k1
         self.b = b
         self.tokenizer = tokenizer
         self.corpus = corpus
+        self.debug = debug
 
         # TODO(직접 구현) — 색인 단계. 단계 힌트:
         #  1. self.doc_tokens: 각 문서를 토큰화한 리스트의 리스트
@@ -66,7 +73,8 @@ class BM25:
         self.doc_tokens = []
         for text in corpus:
             self.doc_tokens.append(self.tokenizer(text))
-        print(f"self.doc_tokens: {self.doc_tokens}")
+        if self.debug:
+            print(f"self.doc_tokens: {self.doc_tokens}")
         
 
         #  2. self.doc_lens:   각 문서의 토큰 수 리스트
@@ -75,7 +83,8 @@ class BM25:
             num_len = len(num)
             self.doc_lens.append(num_len)
 
-        print(f"self.doc_lens: {self.doc_lens}")
+        if self.debug:
+            print(f"self.doc_lens: {self.doc_lens}")
 
         #  3. self.avgdl:      토큰 수의 평균
         # self.avgdl = 0
@@ -84,7 +93,8 @@ class BM25:
         
         self.avgdl = sum(self.doc_lens) / len(self.doc_lens)
 
-        print(f"self.avgdl: {self.avgdl}")
+        if self.debug:
+            print(f"self.avgdl: {self.avgdl}")
             
 
         #  4. self.df:         {단어: 그 단어가 '등장하는 문서 수'} dict
@@ -93,11 +103,13 @@ class BM25:
         for tokens in self.doc_tokens:
             for word in set(tokens):
                 self.df[word] = self.df.get(word, 0) + 1
-        print(f"self.df: {self.df}")
+        if self.debug:
+            print(f"self.df: {self.df}")
 
         #  5. self.N:          문서 수            
         self.N = len(self.doc_tokens)
-        print(f"self.N: {self.N}")
+        if self.debug:
+            print(f"self.N: {self.N}")
 
 
     def idf(self, term: str) -> float:
@@ -144,13 +156,15 @@ class BM25:
           정렬 힌트: sorted(..., key=lambda x: x[1], reverse=True)[:k]
         """
         query_tokens = self.tokenizer(query)
-        print(f"{query_tokens=}")
+        if self.debug:
+            print(f"{query_tokens=}")
 
         results = []                          # 밖: 짝 모을 빈 통
         for i in range(self.N):               # 문서 0, 1, 2 ... 돌기
             s = self.score(query_tokens, i)   # 이 문서 점수 (score 재사용!)
             results.append((i, s))            # (문서번호, 점수) 짝을 통에 담기
-            print(f"  문서{i} score={s:.3f}")  # 계기판
+            if self.debug:
+                print(f"  문서{i} score={s:.3f}")  # 계기판
 
         return sorted(results, key=lambda x: x[1], reverse=True)[:k]
     
@@ -169,7 +183,7 @@ if __name__ == "__main__":
     print("기대값(문서 참고): D2≈1.41 > D1≈0.91 > D3≈0.50  (k1=1.5, b=0.75)\n")
 
     try:
-        bm25 = BM25(corpus)
+        bm25 = BM25(corpus, debug=True)
         for idx, s in bm25.search(query, k=3):
             print(f"  D{idx+1}  score={s:.3f}   {corpus[idx]}")
         print("\n위 기대값과 ±0.01 안에서 같으면 구현 성공. tests\\test_bm25.py 도 돌려보세요.")

@@ -1,13 +1,5 @@
-"""
-app.py — 데모 UI (Streamlit)  [✅ 배관 뼈대 — 계획서: "Streamlit UI 뼈대"는 맡겨도 됨]
+"""문서 업로드와 근거 기반 질문·답변을 한 화면에서 확인하는 Streamlit 데모."""
 
-⚠️ 11주차 전에 이 파일을 열지 마세요. UI는 이틀 이상 금지 (계획서 금지사항 4).
-   데모의 전부: 질문 입력 → 답변 → 근거 chunk 표시. 그 이상 꾸미지 않는다.
-
-실행:
-    pip install streamlit
-    streamlit run app.py
-"""
 import sys
 from pathlib import Path
 
@@ -15,44 +7,65 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from chunker import chunk_fixed          # noqa: E402
-from bm25 import BM25                     # noqa: E402
-import rag_answer                         # noqa: E402
+from bm25 import BM25  # noqa: E402
+from chunker import chunk_fixed  # noqa: E402
+from document_upload_ui import render_document_upload  # noqa: E402
+import rag_answer  # noqa: E402
 
 TEXT_DIR = Path(__file__).resolve().parent / "docs" / "text"
 
 
 @st.cache_resource
 def build_index():
-    """문서 로드 + chunking + BM25 색인 (앱 시작 시 1회만)."""
+    """저장된 텍스트를 읽어 BM25 기준선 색인을 만든다."""
     chunks = []
     for f in sorted(TEXT_DIR.glob("*.txt")):
         chunks += chunk_fixed(f.read_text(encoding="utf-8"), doc_id=f.stem)
+    if not chunks:
+        return chunks, None
     return chunks, BM25([c["text"] for c in chunks])
 
 
-st.title("📄 gongo-rag — 공고문 질문 답변 데모")
-st.caption("한국어 공공문서 RAG · 근거 인용 · 정보 없음 처리")
+st.set_page_config(page_title="gongo-rag", page_icon="📄", layout="wide")
+st.title("📄 gongo-rag")
+st.caption("문서를 글자로 바꾸고, 그 글에서 근거를 찾아 답하는 한국어 RAG")
 
 chunks, bm25 = build_index()
 st.sidebar.markdown(f"**색인 현황**\n\n- chunk 수: {len(chunks)}\n- 검색: BM25 (top-3)")
+st.sidebar.caption("업로드한 문서는 아직 검색 색인에 자동 추가되지 않습니다.")
 
-question = st.text_input("질문을 입력하세요", placeholder="예: 신청 자격이 어떻게 되나요?")
+upload_tab, question_tab = st.tabs(["1. 문서 넣기", "2. 질문하기"])
 
-if question:
-    top = bm25.search(question, k=3)
-    retrieved = [chunks[i]["text"] for i, _ in top]
+with upload_tab:
+    render_document_upload()
 
-    with st.spinner("답변 생성 중..."):
-        try:
-            ans = rag_answer.answer(question, retrieved)
-        except Exception as e:
-            ans = f"(생성 실패: {e} — API 키 확인)"
+with question_tab:
+    st.subheader("저장된 문서에 질문하기")
+    st.caption("현재는 `docs/text` 폴더에 저장된 텍스트를 검색합니다.")
 
-    st.subheader("답변")
-    st.write(ans)
+    if bm25 is None:
+        st.warning("검색할 문서가 없습니다. `docs/text` 폴더에 TXT 파일을 먼저 넣어주세요.")
+    else:
+        question = st.text_input(
+            "질문을 입력하세요",
+            placeholder="예: 신청 자격이 어떻게 되나요?",
+        )
 
-    st.subheader("근거 chunk")
-    for rank, (i, score) in enumerate(top, 1):
-        with st.expander(f"[근거 {rank}] {chunks[i]['id']} (score {score:.2f})"):
-            st.text(chunks[i]["text"])
+        if question:
+            top = bm25.search(question, k=3)
+            retrieved = [chunks[i]["text"] for i, _ in top]
+
+            with st.spinner("답변 생성 중..."):
+                try:
+                    answer = rag_answer.answer(question, retrieved)
+                except Exception as exc:
+                    answer = f"(생성 실패: {exc} — API 키를 확인해주세요.)"
+
+            st.subheader("답변")
+            st.write(answer)
+
+            st.subheader("근거 chunk")
+            for rank, (index, score) in enumerate(top, 1):
+                chunk = chunks[index]
+                with st.expander(f"[근거 {rank}] {chunk['id']} (score {score:.2f})"):
+                    st.text(chunk["text"])
