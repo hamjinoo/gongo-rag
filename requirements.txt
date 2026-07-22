@@ -15,8 +15,8 @@ numpy>=1.26
 sentence-transformers>=3.0   # 문장 임베딩. 최초 실행 시 모델 ~400MB 자동 다운로드
 openai>=1.40                 # LLM 답변 생성용 (또는 anthropic — rag_answer.py 주석 참고)
 
-# --- Week 6부터 (한국어 형태소 분석 실험) ---
-# kiwipiepy>=0.18
+# --- 한국어 BM25 ---
+kiwipiepy>=0.23,<1          # 조사·어미를 분리하는 한국어 형태소 분석
 
 # --- 데모 UI ---
 streamlit>=1.36

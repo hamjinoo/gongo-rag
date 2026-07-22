@@ -164,7 +164,7 @@ def render_document_chunking(
         mime="application/json",
         key=f"{key_prefix}_download",
     )
-    st.info("다음 단계에서 이 chunk들을 BM25와 ChromaDB 검색에 연결합니다.")
+    st.success("Chunking이 끝났습니다. 아래에서 BM25 키워드 검색을 실행할 수 있습니다.")
 
     return chunks
 

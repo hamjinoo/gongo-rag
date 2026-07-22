@@ -1,48 +1,134 @@
-"""
-bm25.py — BM25 키워드 검색 직접 구현  [✍️ Week 3: 이 프로젝트의 첫 번째 산]
+"""BM25 기준선과 metadata가 보존된 한국어 chunk 검색기."""
 
-먼저 읽기: ../../04-concepts/BM25-완전정복.md  ← 공식과 손계산 예제가 있음. 필수!
-자가 채점:  python tests\\test_bm25.py  +  아래 데모의 기대값 비교
-GPT 규칙:  TF-IDF/BM25 전체 구현 대행 금지 (WORKFLOW.md). 리뷰는 OK.
+from __future__ import annotations
 
-공식 (k1=1.5, b=0.75):
-    IDF(t)      = ln( (N - df(t) + 0.5) / (df(t) + 0.5) + 1 )
-    score(D, Q) = Σ_{t∈Q}  IDF(t) * f(t,D) * (k1+1) / ( f(t,D) + k1*(1 - b + b*|D|/avgdl) )
-
-    N=문서 수, df(t)=t가 등장하는 문서 수, f(t,D)=D 안의 t 등장 횟수,
-    |D|=D의 토큰 수, avgdl=평균 토큰 수
-"""
 import math
+import re
+from collections import Counter
+from dataclasses import dataclass
+from functools import lru_cache
+from typing import Callable, Literal, Protocol
+
+from chunker import DocumentChunk
+
+
+TokenizerName = Literal["simple", "kiwi"]
+CONTENT_POS_TAGS = {
+    "NR",
+    "NP",
+    "MM",
+    "MAG",
+    "MAJ",
+    "XR",
+    "SL",
+    "SN",
+    "SH",
+}
+CONTENT_POS_PREFIXES = ("NN", "VV", "VA", "VX")
+
+
+class Tokenizer(Protocol):
+    def __call__(self, text: str) -> list[str]:
+        """검색에 사용할 단어 목록을 반환한다."""
+
+
+class KiwiUnavailableError(RuntimeError):
+    """Kiwi 한국어 형태소 분석기를 불러올 수 없음."""
+
+
+@dataclass(frozen=True)
+class TokenizerStatus:
+    name: TokenizerName
+    ready: bool
+    message: str
+
+
+@dataclass(frozen=True)
+class SearchResult:
+    """순위·점수·원본 chunk를 함께 가진 BM25 검색 결과."""
+
+    rank: int
+    score: float
+    chunk: DocumentChunk
+    matched_terms: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "rank": self.rank,
+            "score": self.score,
+            "matched_terms": list(self.matched_terms),
+            "chunk": self.chunk.to_dict(),
+        }
 
 
 def tokenize(text: str) -> list[str]:
-    """v0 tokenizer: 소문자화 + 공백 분리.  [✅ 제공 — 단순함이 의도]
+    """기존 손계산 테스트를 위한 공백 분리 tokenizer."""
 
-    Week 6 실험: 아래 kiwi 버전으로 교체했을 때 hit@k가 얼마나 오르는지 비교.
-    (한국어 조사 문제는 BM25-완전정복.md '한국어 함정' 참고)
-    """
     return text.lower().split()
 
 
-# --- Week 6에 주석 해제하고 실험 (설치: pip install kiwipiepy) -----------------
-# from kiwipiepy import Kiwi
-# _kiwi = Kiwi()
-#
-# def tokenize_kiwi(text: str) -> list[str]:
-#     """형태소 분석 tokenizer. 어떤 품사를 남길지 자체가 실험 변수다.
-#     시작점: 명사(NN*), 외국어(SL), 숫자(SN)만 남기기. 동사(VV)를 넣으면? 직접 비교!
-#     """
-#     tokens = _kiwi.tokenize(text)
-#     keep = ("NN", "SL", "SN")   # ← 이 목록을 바꿔가며 실험
-#     return [t.form.lower() for t in tokens if t.tag.startswith(keep)]
-# ------------------------------------------------------------------------------
+def tokenize_simple(text: str) -> list[str]:
+    """문장부호를 제거하고 한글·영문·숫자 덩어리를 나누는 기준선."""
+
+    return re.findall(r"[가-힣]+|[a-z]+|\d+(?:[.,]\d+)*", text.lower())
+
+
+class KiwiTokenizer:
+    """조사·어미를 제외하고 검색에 중요한 한국어 형태소만 남긴다."""
+
+    def __init__(self) -> None:
+        try:
+            from kiwipiepy import Kiwi
+        except ImportError as exc:
+            raise KiwiUnavailableError(
+                "kiwipiepy가 없습니다. requirements.txt를 설치해주세요."
+            ) from exc
+
+        self._kiwi = Kiwi()
+
+    def __call__(self, text: str) -> list[str]:
+        tokens: list[str] = []
+        for token in self._kiwi.tokenize(text):
+            if (
+                token.tag not in CONTENT_POS_TAGS
+                and not token.tag.startswith(CONTENT_POS_PREFIXES)
+            ):
+                continue
+
+            value = getattr(token, "lemma", None) or token.form
+            normalized = value.lower().strip()
+            if normalized:
+                tokens.append(normalized)
+        return tokens
+
+
+def get_tokenizer_status(name: TokenizerName) -> TokenizerStatus:
+    if name == "simple":
+        return TokenizerStatus("simple", True, "기본 tokenizer 준비 완료")
+
+    try:
+        KiwiTokenizer()
+    except KiwiUnavailableError as exc:
+        return TokenizerStatus("kiwi", False, str(exc))
+    except Exception as exc:
+        return TokenizerStatus("kiwi", False, f"Kiwi 초기화에 실패했습니다: {exc}")
+
+    return TokenizerStatus("kiwi", True, "Kiwi 한국어 형태소 분석 준비 완료")
+
+
+@lru_cache(maxsize=2)
+def create_tokenizer(name: TokenizerName) -> Tokenizer:
+    if name == "simple":
+        return tokenize_simple
+    if name == "kiwi":
+        return KiwiTokenizer()
+    raise ValueError("tokenizer는 simple 또는 kiwi여야 합니다.")
 
 
 class BM25:
-    """사용법:
-        bm25 = BM25([chunk["text"] for chunk in chunks])   # 색인 (1회, 비쌈)
-        results = bm25.search("신청 자격", k=3)             # 검색 (여러 번, 쌈)
-        # results = [(문서 인덱스, 점수), ...] 점수 내림차순
+    """BM25Okapi 공식을 직접 구현한 키워드 검색 기준선.
+
+    IDF(t) = ln((N - df(t) + 0.5) / (df(t) + 0.5) + 1)
     """
 
     def __init__(
@@ -50,142 +136,168 @@ class BM25:
         corpus: list[str],
         k1: float = 1.5,
         b: float = 0.75,
-        tokenizer=tokenize,
+        tokenizer: Callable[[str], list[str]] = tokenize,
         debug: bool = False,
-    ):
+    ) -> None:
+        if k1 <= 0:
+            raise ValueError("k1은 0보다 커야 합니다.")
+        if not 0 <= b <= 1:
+            raise ValueError("b는 0~1 사이여야 합니다.")
+
         self.k1 = k1
         self.b = b
         self.tokenizer = tokenizer
         self.corpus = corpus
         self.debug = debug
+        self.doc_tokens = [self.tokenizer(text) for text in corpus]
+        self.doc_term_frequencies = [Counter(tokens) for tokens in self.doc_tokens]
+        self.doc_lens = [len(tokens) for tokens in self.doc_tokens]
+        self.N = len(self.doc_tokens)
+        self.avgdl = sum(self.doc_lens) / self.N if self.N else 0.0
+        self.df: dict[str, int] = {}
 
-        # TODO(직접 구현) — 색인 단계. 단계 힌트:
-        #  1. self.doc_tokens: 각 문서를 토큰화한 리스트의 리스트
-        #  2. self.doc_lens:   각 문서의 토큰 수 리스트
-        #  3. self.avgdl:      토큰 수의 평균
-        #  4. self.df:         {단어: 그 단어가 '등장하는 문서 수'} dict
-        #     ⚠️ 함정: 한 문서에 10번 나와도 df는 +1.  힌트: set(문서 토큰들)
-        #  5. self.N:          문서 수            
+        for tokens in self.doc_tokens:
+            for term in set(tokens):
+                self.df[term] = self.df.get(term, 0) + 1
 
-
-
-        #  1. self.doc_tokens: 각 문서를 토큰화한 리스트의 리스트
-        self.doc_tokens = []
-        for text in corpus:
-            self.doc_tokens.append(self.tokenizer(text))
         if self.debug:
             print(f"self.doc_tokens: {self.doc_tokens}")
-        
-
-        #  2. self.doc_lens:   각 문서의 토큰 수 리스트
-        self.doc_lens = []
-        for num in self.doc_tokens:
-            num_len = len(num)
-            self.doc_lens.append(num_len)
-
-        if self.debug:
             print(f"self.doc_lens: {self.doc_lens}")
-
-        #  3. self.avgdl:      토큰 수의 평균
-        # self.avgdl = 0
-        # for text in self.doc_tokens:
-        #     sum += len(text)
-        
-        self.avgdl = sum(self.doc_lens) / len(self.doc_lens)
-
-        if self.debug:
             print(f"self.avgdl: {self.avgdl}")
-            
-
-        #  4. self.df:         {단어: 그 단어가 '등장하는 문서 수'} dict
-        #     ⚠️ 함정: 한 문서에 10번 나와도 df는 +1.  힌트: set(문서 토큰들)
-        self.df = {}
-        for tokens in self.doc_tokens:
-            for word in set(tokens):
-                self.df[word] = self.df.get(word, 0) + 1
-        if self.debug:
             print(f"self.df: {self.df}")
-
-        #  5. self.N:          문서 수            
-        self.N = len(self.doc_tokens)
-        if self.debug:
             print(f"self.N: {self.N}")
 
-
     def idf(self, term: str) -> float:
-        """단어의 희귀도. 문서에 없는 단어는 df=0으로 계산하면 됨.
-
-        TODO(직접 구현): 위 공식 그대로.  힌트: math.log는 자연로그(ln).
-        자가 검증: 희귀한 단어의 idf > 흔한 단어의 idf 여야 한다.
-        """
-        # IDF(t) = ln( (N - df(t) + 0.5) / (df(t) + 0.5) + 1 )
-        return math.log((self.N - self.df.get(term, 0) + 0.5) / (self.df.get(term, 0) + 0.5) + 1)
-
-        
+        document_frequency = self.df.get(term, 0)
+        return math.log(
+            (self.N - document_frequency + 0.5)
+            / (document_frequency + 0.5)
+            + 1
+        )
 
     def score(self, query_tokens: list[str], doc_idx: int) -> float:
-        """질문 토큰들에 대한 doc_idx번 문서의 BM25 점수.
+        if not 0 <= doc_idx < self.N:
+            raise IndexError("doc_idx가 corpus 범위를 벗어났습니다.")
 
-        TODO(직접 구현) — 단계 힌트:
-          1. 이 문서의 토큰 리스트에서 각 질문 토큰의 등장 횟수 f를 센다.
-             힌트: 매번 .count()는 느리니 dict로 한 번에 세어두면 좋다 (일단은 count도 OK)
-          2. f가 0인 토큰은 건너뛴다 (기여 0).
-          3. 공식의 분모에 길이 보정: k1 * (1 - b + b * |D| / avgdl)
-          4. 토큰별 기여(idf * f*(k1+1)/(f+보정분모))를 전부 더해 반환.
-        """
+        document_length = self.doc_lens[doc_idx]
+        if self.avgdl:
+            length_normalization = self.k1 * (
+                1 - self.b + self.b * document_length / self.avgdl
+            )
+        else:
+            length_normalization = self.k1
 
-        total = 0 
-
-        tokens = self.doc_tokens[doc_idx]
-        docs_len = self.doc_lens[doc_idx]
-        norm = self.k1 * (1 - self.b + self.b * docs_len / self.avgdl)
-
+        frequencies = self.doc_term_frequencies[doc_idx]
+        total = 0.0
         for token in query_tokens:
-            f = tokens.count(token)
-            if f == 0:
+            frequency = frequencies.get(token, 0)
+            if not frequency:
                 continue
-            total += self.idf(token) * f * (self.k1 + 1) / (f + norm)
+            total += (
+                self.idf(token)
+                * frequency
+                * (self.k1 + 1)
+                / (frequency + length_normalization)
+            )
         return total
 
-
     def search(self, query: str, k: int = 3) -> list[tuple[int, float]]:
-        """전 문서 점수 계산 → 내림차순 상위 k개 (인덱스, 점수) 반환.
+        if k <= 0 or not self.corpus:
+            return []
 
-        TODO(직접 구현) 힌트:
-          query를 토큰화 → 모든 문서에 self.score → 정렬.
-          정렬 힌트: sorted(..., key=lambda x: x[1], reverse=True)[:k]
-        """
         query_tokens = self.tokenizer(query)
         if self.debug:
             print(f"{query_tokens=}")
 
-        results = []                          # 밖: 짝 모을 빈 통
-        for i in range(self.N):               # 문서 0, 1, 2 ... 돌기
-            s = self.score(query_tokens, i)   # 이 문서 점수 (score 재사용!)
-            results.append((i, s))            # (문서번호, 점수) 짝을 통에 담기
+        results: list[tuple[int, float]] = []
+        for index in range(self.N):
+            score = self.score(query_tokens, index)
+            results.append((index, score))
             if self.debug:
-                print(f"  문서{i} score={s:.3f}")  # 계기판
+                print(f"  문서{index} score={score:.3f}")
 
-        return sorted(results, key=lambda x: x[1], reverse=True)[:k]
-    
-# ──────────────────────────────────────────────────────────────
-# 완성 배관: 손계산 예제 데모 (BM25-완전정복.md의 코퍼스와 동일)
-# 실행:  python src\bm25.py
-# ──────────────────────────────────────────────────────────────
-if __name__ == "__main__":
+        return sorted(results, key=lambda item: item[1], reverse=True)[:k]
+
+
+class BM25ChunkRetriever:
+    """DocumentChunk를 색인하고 출처가 포함된 검색 결과를 반환한다."""
+
+    def __init__(
+        self,
+        chunks: list[DocumentChunk],
+        *,
+        tokenizer_name: TokenizerName = "kiwi",
+        k1: float = 1.5,
+        b: float = 0.75,
+    ) -> None:
+        if not chunks:
+            raise ValueError("검색할 chunk가 없습니다.")
+
+        self.chunks = chunks
+        self.tokenizer_name = tokenizer_name
+        self.tokenizer = create_tokenizer(tokenizer_name)
+        self.index = BM25(
+            [chunk.text for chunk in chunks],
+            k1=k1,
+            b=b,
+            tokenizer=self.tokenizer,
+        )
+
+    def analyze_query(self, query: str) -> list[str]:
+        return self.tokenizer(query)
+
+    def search(self, query: str, k: int = 5) -> list[SearchResult]:
+        if k <= 0 or not query.strip():
+            return []
+
+        query_tokens = self.analyze_query(query)
+        if not query_tokens:
+            return []
+
+        raw_results = self.index.search(query, k=len(self.chunks))
+        positive_results = [
+            (chunk_index, score)
+            for chunk_index, score in raw_results
+            if score > 0
+        ][:k]
+
+        results: list[SearchResult] = []
+        unique_query_terms = list(dict.fromkeys(query_tokens))
+        for rank, (chunk_index, score) in enumerate(positive_results, start=1):
+            document_terms = set(self.index.doc_tokens[chunk_index])
+            matched_terms = tuple(
+                term for term in unique_query_terms if term in document_terms
+            )
+            results.append(
+                SearchResult(
+                    rank=rank,
+                    score=score,
+                    chunk=self.chunks[chunk_index],
+                    matched_terms=matched_terms,
+                )
+            )
+        return results
+
+    def retrieve_texts(self, query: str, k: int = 5) -> list[str]:
+        """기존 hit_rate_at_k 평가 함수와 연결할 수 있는 어댑터."""
+
+        return [result.chunk.text for result in self.search(query, k=k)]
+
+
+def main() -> None:
     corpus = [
-        "청년 창업 지원 사업 공고",   # D1
-        "창업 기업 지원 금액 안내",   # D2
-        "청년 주택 정책 안내",       # D3
+        "청년 창업 지원 사업 공고",
+        "창업 기업 지원 금액 안내",
+        "청년 주택 정책 안내",
     ]
     query = "청년 지원 금액"
-    print(f"질문: {query!r}")
-    print("기대값(문서 참고): D2≈1.41 > D1≈0.91 > D3≈0.50  (k1=1.5, b=0.75)\n")
 
-    try:
-        bm25 = BM25(corpus, debug=True)
-        for idx, s in bm25.search(query, k=3):
-            print(f"  D{idx+1}  score={s:.3f}   {corpus[idx]}")
-        print("\n위 기대값과 ±0.01 안에서 같으면 구현 성공. tests\\test_bm25.py 도 돌려보세요.")
-    except NotImplementedError as e:
-        print(f"아직 구현 전: {e}")
+    bm25 = BM25(corpus, debug=True)
+    print(f"\n질문: {query!r}")
+    print("기대 순위: D2 > D1 > D3\n")
+    for index, score in bm25.search(query, k=3):
+        print(f"D{index + 1} · {score:.3f} · {corpus[index]}")
+
+
+if __name__ == "__main__":
+    main()

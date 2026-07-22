@@ -71,6 +71,51 @@ def test_extracted_text_can_be_chunked_and_previewed():
     )
 
 
+def test_chunked_text_can_be_searched_with_bm25():
+    app = open_app()
+    text = (
+        "신청 자격은 창업 3년 이내 기업입니다.\n\n"
+        "지원 금액은 최대 1억원입니다.\n\n"
+        "접수 기간은 7월 31일까지입니다.\n\n"
+    ) * 20
+
+    app.get("file_uploader")[0].upload(
+        "search-sample.txt",
+        text.encode("utf-8"),
+        "text/plain",
+    ).run()
+    next(button for button in app.button if button.label == "텍스트 추출").click().run()
+    next(button for button in app.button if button.label == "Chunk 만들기").click().run()
+
+    tokenizer = next(
+        selectbox
+        for selectbox in app.selectbox
+        if selectbox.label == "검색 단어를 나누는 방법"
+    )
+    tokenizer.set_value("simple").run()
+    query = next(
+        text_input
+        for text_input in app.text_input
+        if text_input.label == "검색 질문"
+    )
+    query.set_value("지원 금액").run()
+    next(button for button in app.button if button.label == "BM25 검색").click().run()
+
+    assert not app.exception
+    assert any(
+        area.label == "검색된 Chunk" and "최대 1억원" in area.value
+        for area in app.text_area
+    )
+    assert any(
+        "질문에서 사용한 검색 단어" in markdown.value
+        for markdown in app.markdown
+    )
+    assert any(
+        button.label == "BM25 검색 결과 JSON 받기"
+        for button in app.get("download_button")
+    )
+
+
 if __name__ == "__main__":
     tests = [value for name, value in sorted(globals().items()) if name.startswith("test_")]
     passed = 0
