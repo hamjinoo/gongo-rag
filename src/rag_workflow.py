@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from time import perf_counter
 from typing import Any, Callable, Literal, Protocol, TypedDict
 
 from langgraph.graph import END, START, StateGraph
@@ -59,6 +60,7 @@ class RAGState(TypedDict, total=False):
     draft_answer: str
     rewrite_count: int
     rewrite_changed: bool
+    timings_ms: dict[str, float]
     answer: str
     status: Literal["answered", "refused"]
     refusal_reason: str | None
@@ -112,6 +114,7 @@ class RAGResponse:
     decision_reason: str
     refusal_reason: str | None
     retrieval_trace: tuple[dict[str, object], ...] = ()
+    timings_ms: dict[str, float] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -125,6 +128,7 @@ class RAGResponse:
             "decision_reason": self.decision_reason,
             "refusal_reason": self.refusal_reason,
             "retrieval_trace": [dict(attempt) for attempt in self.retrieval_trace],
+            "timings_ms": dict(self.timings_ms),
         }
 
 
@@ -442,6 +446,14 @@ def validate_generated_answer(
     )
 
 
+def _add_timing(state: RAGState, key: str, elapsed_ms: float) -> dict[str, float]:
+    """반복 node의 시간을 기존 값에 더해 응답 trace에 보존한다."""
+
+    timings = dict(state.get("timings_ms", {}))
+    timings[key] = timings.get(key, 0.0) + elapsed_ms
+    return timings
+
+
 class RAGWorkflow:
     """의존성을 주입할 수 있는 LangGraph RAG workflow."""
 
@@ -507,6 +519,7 @@ class RAGWorkflow:
                 "active_query": normalized_question,
                 "evidence": [],
                 "rewrite_count": 0,
+                "timings_ms": {},
                 "steps": [],
             }
         )
@@ -523,19 +536,27 @@ class RAGWorkflow:
             retrieval_trace=tuple(
                 getattr(self.retriever, "retrieval_trace", ())
             ),
+            timings_ms=dict(state.get("timings_ms", {})),
         )
 
     def _retrieve(self, state: RAGState) -> dict[str, object]:
+        started_at = perf_counter()
         query = state.get("active_query") or state["question"]
         results = self.retriever.search(query, k=self.config.top_k)
         evidence = _results_to_evidence(results)
         return {
             "active_query": query,
             "evidence": evidence,
+            "timings_ms": _add_timing(
+                state,
+                "retrieval",
+                (perf_counter() - started_at) * 1000,
+            ),
             "steps": [*state.get("steps", []), "retrieve"],
         }
 
     def _assess_evidence(self, state: RAGState) -> dict[str, object]:
+        started_at = perf_counter()
         evidence = state.get("evidence", [])
         decision = (
             self.judge(state["question"], evidence)
@@ -546,6 +567,11 @@ class RAGWorkflow:
             "sufficient": decision.sufficient,
             "decision_reason": decision.reason,
             "draft_answer": decision.draft_answer or "",
+            "timings_ms": _add_timing(
+                state,
+                "generation",
+                (perf_counter() - started_at) * 1000,
+            ),
             "steps": [*state.get("steps", []), "assess_evidence"],
         }
 
@@ -560,6 +586,7 @@ class RAGWorkflow:
         return "refuse"
 
     def _rewrite_query(self, state: RAGState) -> dict[str, object]:
+        started_at = perf_counter()
         rewritten = self.rewriter(
             state["question"],
             state.get("evidence", []),
@@ -569,6 +596,11 @@ class RAGWorkflow:
             "active_query": next_query,
             "rewrite_count": state.get("rewrite_count", 0) + 1,
             "rewrite_changed": next_query != state.get("active_query", state["question"]),
+            "timings_ms": _add_timing(
+                state,
+                "generation",
+                (perf_counter() - started_at) * 1000,
+            ),
             "steps": [*state.get("steps", []), "rewrite_query"],
         }
 
@@ -581,31 +613,46 @@ class RAGWorkflow:
     def _answer(self, state: RAGState) -> dict[str, object]:
         evidence = state.get("evidence", [])
         draft_answer = state.get("draft_answer", "").strip()
-        generated = (
-            draft_answer
-            if draft_answer
-            else self.answer_generator(state["question"], evidence).strip()
-        )
+        timings = dict(state.get("timings_ms", {}))
+        if draft_answer:
+            generated = draft_answer
+        else:
+            generation_started_at = perf_counter()
+            generated = self.answer_generator(state["question"], evidence).strip()
+            timings["generation"] = timings.get("generation", 0.0) + (
+                perf_counter() - generation_started_at
+            ) * 1000
+
+        validation_started_at = perf_counter()
         if generated == NO_ANSWER:
+            timings["validation"] = timings.get("validation", 0.0) + (
+                perf_counter() - validation_started_at
+            ) * 1000
             return {
                 "answer": NO_ANSWER,
                 "status": REFUSED,
                 "refusal_reason": "답변 생성기가 근거 부족으로 정보 없음을 반환했습니다.",
+                "timings_ms": timings,
                 "steps": [*state.get("steps", []), "answer", "refuse"],
             }
 
         validation = validate_generated_answer(generated, evidence)
+        timings["validation"] = timings.get("validation", 0.0) + (
+            perf_counter() - validation_started_at
+        ) * 1000
         if not validation.grounded:
             return {
                 "answer": NO_ANSWER,
                 "status": REFUSED,
                 "refusal_reason": f"답변 근거 검증 실패: {validation.reason}",
+                "timings_ms": timings,
                 "steps": [*state.get("steps", []), "answer", "refuse"],
             }
         return {
             "answer": generated,
             "status": ANSWERED,
             "refusal_reason": None,
+            "timings_ms": timings,
             "steps": [*state.get("steps", []), "answer"],
         }
 

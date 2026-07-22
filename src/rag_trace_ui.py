@@ -70,10 +70,38 @@ APP_STYLE = """
   border-radius: .9rem;
   background: #f8faff;
   padding: 1.15rem 1.25rem;
-  margin: .55rem 0 1.35rem;
+  margin: 0;
+  min-height: 100%;
 }
 .trace-answer-label { color: var(--trace-blue); font-size: .75rem; font-weight: 800; }
-.trace-answer { color: #344056; font-size: 1.03rem; line-height: 1.85; margin-top: .45rem; }
+.trace-answer { color: #273248; font-size: 1.15rem; line-height: 1.8; margin-top: .55rem; font-weight: 650; }
+.trace-result-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  gap: .85rem;
+  margin: .65rem 0 1.1rem;
+}
+.trace-evidence-panel {
+  border: 1px solid var(--trace-line);
+  border-radius: .9rem;
+  background: #fff;
+  padding: 1rem 1.1rem;
+}
+.trace-evidence-label { color: #3e4a60; font-size: .75rem; font-weight: 850; margin-bottom: .5rem; }
+.trace-evidence-card { border-left: 3px solid var(--trace-blue); padding: .1rem 0 .1rem .75rem; margin: .55rem 0; }
+.trace-evidence-source { color: #344056; font-size: .82rem; font-weight: 800; }
+.trace-evidence-quote { color: #667287; font-size: .78rem; line-height: 1.55; margin-top: .3rem; }
+.trace-check-row { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .8rem; }
+.trace-check {
+  color: #227849;
+  background: #eaf7ef;
+  border: 1px solid #cfead9;
+  border-radius: 999px;
+  padding: .22rem .55rem;
+  font-size: .7rem;
+  font-weight: 800;
+}
+.trace-check.stop { color: #a35b2d; background: #fff4e8; border-color: #f1d7bb; }
 .trace-citation {
   display: inline-block;
   color: var(--trace-blue);
@@ -94,6 +122,50 @@ APP_STYLE = """
   font-size: .82rem;
   margin-bottom: .9rem;
 }
+.trace-pipeline {
+  display: flex;
+  align-items: stretch;
+  gap: .35rem;
+  margin: .65rem 0 1.15rem;
+  overflow-x: auto;
+  padding-bottom: .2rem;
+}
+.trace-pipeline-node {
+  flex: 1 0 128px;
+  border: 1px solid var(--trace-line);
+  border-radius: .7rem;
+  background: #fff;
+  padding: .7rem .75rem;
+  text-align: center;
+  color: #69758a;
+  font-size: .7rem;
+  line-height: 1.45;
+}
+.trace-pipeline-node strong { display: block; color: #2d384d; font-size: .85rem; margin-top: .12rem; }
+.trace-pipeline-node.selected { border-color: #bfd2f3; background: #f4f8ff; }
+.trace-pipeline-node.verified { border-color: #cfe9d8; background: #f2faf5; }
+.trace-pipeline-arrow { color: #a5afbf; display: flex; align-items: center; font-weight: 900; }
+.trace-search-pair { display: grid; grid-template-columns: 1fr 1fr; gap: .28rem; margin-top: .2rem; }
+.trace-search-pair span { background: #f4f6f9; border-radius: .35rem; padding: .25rem; color: #445168; font-weight: 750; }
+.trace-rank-card {
+  border: 1px solid #dce4f1;
+  border-radius: .85rem;
+  background: #fbfcff;
+  padding: .9rem 1rem;
+  margin: .55rem 0 1rem;
+}
+.trace-rank-source { color: #344056; font-size: .82rem; font-weight: 800; }
+.trace-rank-flow { display: flex; align-items: center; gap: .3rem; overflow-x: auto; margin: .7rem 0 .55rem; }
+.trace-rank-step { flex: 1 0 105px; border-radius: .55rem; background: #f0f3f8; padding: .55rem; text-align: center; color: #7a8597; font-size: .68rem; }
+.trace-rank-step strong { display: block; color: #2e394e; font-size: .9rem; margin-top: .12rem; }
+.trace-rank-step.final { color: #315ea9; background: #eaf1fd; }
+.trace-rank-step.cited { color: #227849; background: #eaf7ef; }
+.trace-rank-arrow { color: #a4afbf; font-size: .8rem; }
+.trace-insight { color: #526078; font-size: .8rem; line-height: 1.55; }
+.trace-timing-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: .55rem; margin: .6rem 0 1rem; }
+.trace-timing-card { border: 1px solid var(--trace-line); border-radius: .7rem; background: #fff; padding: .68rem .75rem; }
+.trace-timing-label { color: #7a8698; font-size: .68rem; }
+.trace-timing-value { color: #2d384d; font-size: .92rem; font-weight: 850; margin-top: .18rem; }
 .trace-topk-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -195,7 +267,7 @@ APP_STYLE = """
   border: 1px solid var(--trace-line);
   border-radius: .8rem;
   padding: 1.25rem;
-  min-height: 18rem;
+  min-height: 9rem;
   line-height: 1.8;
 }
 .trace-document mark {
@@ -246,7 +318,8 @@ APP_STYLE = """
 @media (max-width: 760px) {
   .block-container { padding-left: 1rem; padding-right: 1rem; }
   .trace-header { align-items: flex-start; flex-direction: column; }
-  .trace-topk-grid, .trace-story-grid { grid-template-columns: 1fr; }
+  .trace-topk-grid, .trace-story-grid, .trace-result-layout { grid-template-columns: 1fr; }
+  .trace-timing-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 """
@@ -312,6 +385,238 @@ def _format_score(value: object) -> str:
 
 def _format_rank(value: object) -> str:
     return "—" if value is None else f"{int(value)}위"
+
+
+def _cited_evidence(response: RAGResponse) -> list[RAGEvidence]:
+    cited = set(citation_numbers(response.answer))
+    return [item for item in response.evidence if item["rank"] in cited]
+
+
+def _supporting_excerpt(claim: str, source_text: str, limit: int = 280) -> str:
+    """답변 단어와 가장 많이 겹치는 원문 줄만 골라 직접 근거로 보여준다."""
+
+    clean_claim = CITATION_PATTERN.sub("", claim)
+    stopwords = {
+        "근거",
+        "신청",
+        "지원",
+        "가능",
+        "사람",
+        "합니다",
+        "있습니다",
+        "됩니다",
+    }
+    terms = {
+        token
+        for token in re.findall(r"[가-힣A-Za-z0-9]{2,}", clean_claim)
+        if token not in stopwords
+    }
+    segments = [
+        segment.strip()
+        for segment in re.split(r"[\r\n]+|(?<=[.!?])\s+", source_text)
+        if segment.strip()
+    ]
+    scored = [
+        (index, segment, sum(term in segment for term in terms))
+        for index, segment in enumerate(segments)
+    ]
+    selected = sorted(
+        sorted((item for item in scored if item[2] > 0), key=lambda item: item[2], reverse=True)[:3],
+        key=lambda item: item[0],
+    )
+    excerpt = " ".join(item[1] for item in selected)
+    return _excerpt(excerpt or source_text, limit)
+
+
+def _stage_count(attempt: dict[str, object], stage_key: str) -> int:
+    stages = attempt.get("stages", {})
+    stage = stages.get(stage_key, {}) if isinstance(stages, dict) else {}
+    return int(stage.get("candidate_count", len(stage.get("results", []))))
+
+
+def _pipeline_html(
+    response: RAGResponse,
+    attempt: dict[str, object],
+    *,
+    document_count: int | None,
+    chunk_count: int | None,
+) -> str:
+    document_value = "—" if document_count is None else f"{document_count}개"
+    chunk_value = "—" if chunk_count is None else f"{chunk_count}개"
+    cited_count = len(citation_numbers(response.answer))
+    verification = "PASS" if response.status == "answered" and cited_count else "STOP"
+    verification_class = "verified" if verification == "PASS" else ""
+    search_pair = (
+        '<div class="trace-search-pair">'
+        f'<span>BM25 {_stage_count(attempt, "bm25")}</span>'
+        f'<span>Embedding {_stage_count(attempt, "vector")}</span>'
+        "</div>"
+    )
+    nodes = [
+        f'<div class="trace-pipeline-node">입력 문서<strong>{document_value}</strong></div>',
+        f'<div class="trace-pipeline-node">Chunk<strong>{chunk_value}</strong></div>',
+        f'<div class="trace-pipeline-node">후보 검색{search_pair}</div>',
+        (
+            '<div class="trace-pipeline-node">순위 결합'
+            f'<strong>RRF {_stage_count(attempt, "rrf")}개</strong></div>'
+        ),
+        (
+            '<div class="trace-pipeline-node selected">재정렬'
+            f'<strong>BGE {_stage_count(attempt, "reranker")}개</strong></div>'
+        ),
+        (
+            '<div class="trace-pipeline-node selected">답변 근거'
+            f'<strong>{cited_count}개</strong></div>'
+        ),
+        (
+            f'<div class="trace-pipeline-node {verification_class}">근거 검증'
+            f'<strong>{verification}</strong></div>'
+        ),
+    ]
+    return '<div class="trace-pipeline">' + '<span class="trace-pipeline-arrow">→</span>'.join(nodes) + "</div>"
+
+
+def _rank_insight(item: RAGEvidence) -> str:
+    bm25_rank = item.get("bm25_rank")
+    vector_rank = item.get("vector_rank")
+    rrf_rank = item.get("rrf_rank")
+    final_rank = item["rank"]
+    if bm25_rank is None and vector_rank is not None:
+        return "키워드 검색에서 놓친 근거를 의미 검색이 찾고 BGE가 최종 근거로 선택했습니다."
+    if bm25_rank is not None and int(bm25_rank) > final_rank:
+        return (
+            f"BM25 {int(bm25_rank)}위였던 근거가 의미 검색·순위 결합을 거쳐 "
+            f"BGE {final_rank}위로 올라왔습니다."
+        )
+    if rrf_rank is not None and int(rrf_rank) > final_rank:
+        return f"RRF {int(rrf_rank)}위 후보를 BGE가 {final_rank}위로 끌어올렸습니다."
+    return "여러 검색기가 공통으로 찾은 상위 근거를 BGE가 유지하고 답변에 인용했습니다."
+
+
+def _rank_journey_html(response: RAGResponse) -> str:
+    cards: list[str] = []
+    for item in _cited_evidence(response):
+        steps = [
+            ("BM25", _format_rank(item.get("bm25_rank")), ""),
+            ("Embedding", _format_rank(item.get("vector_rank")), ""),
+            ("RRF", _format_rank(item.get("rrf_rank")), ""),
+            ("BGE", f"{item['rank']}위", "final"),
+            ("최종 답변", "인용", "cited"),
+        ]
+        journey = '<span class="trace-rank-arrow">→</span>'.join(
+            (
+                f'<div class="trace-rank-step {css_class}">{html.escape(label)}'
+                f'<strong>{html.escape(value)}</strong></div>'
+            )
+            for label, value, css_class in steps
+        )
+        source = f"{item['source_filename']} · {_page_label(item)}"
+        cards.append(
+            '<div class="trace-rank-card">'
+            f'<div class="trace-rank-source">{html.escape(source)}</div>'
+            f'<div class="trace-rank-flow">{journey}</div>'
+            f'<div class="trace-insight">{html.escape(_rank_insight(item))}</div>'
+            "</div>"
+        )
+    return "".join(cards)
+
+
+def _format_duration(elapsed_ms: float | None) -> str:
+    if elapsed_ms is None:
+        return "—"
+    if elapsed_ms < 1000:
+        return f"{elapsed_ms:.0f}ms"
+    return f"{elapsed_ms / 1000:.1f}s"
+
+
+def _timing_html(
+    response: RAGResponse,
+    attempts: list[dict[str, object]],
+    *,
+    elapsed_seconds: float | None,
+    document_prep_ms: float | None,
+) -> str:
+    timings = response.timings_ms
+    retrieval_ms = timings.get("retrieval")
+    if retrieval_ms is None:
+        retrieval_ms = sum(float(item.get("total_ms", 0.0)) for item in attempts)
+    generation_ms = timings.get("generation")
+    validation_ms = timings.get("validation")
+    if generation_ms is None and elapsed_seconds is not None:
+        generation_ms = max(
+            elapsed_seconds * 1000
+            - (document_prep_ms or 0.0)
+            - retrieval_ms
+            - (validation_ms or 0.0),
+            0.0,
+        )
+    values = (
+        ("문서 준비", document_prep_ms),
+        ("검색·재정렬", retrieval_ms),
+        ("답변 판단·생성", generation_ms),
+        ("근거 검증", validation_ms),
+        ("전체", elapsed_seconds * 1000 if elapsed_seconds is not None else None),
+    )
+    cards = "".join(
+        '<div class="trace-timing-card">'
+        f'<div class="trace-timing-label">{html.escape(label)}</div>'
+        f'<div class="trace-timing-value">{_format_duration(value)}</div>'
+        "</div>"
+        for label, value in values
+    )
+    return f'<div class="trace-timing-grid">{cards}</div>'
+
+
+def _overview_html(
+    response: RAGResponse,
+    *,
+    corpus_label: str | None,
+    llm_label: str | None,
+) -> str:
+    cited_items = _cited_evidence(response)
+    evidence_cards: list[str] = []
+    for item in cited_items[:2]:
+        claim = _claim_for_citation(response.answer, item["rank"])
+        source = f"{item['source_filename']} · {_page_label(item)}"
+        quote = _supporting_excerpt(claim, item["text"])
+        evidence_cards.append(
+            '<div class="trace-evidence-card">'
+            f'<div class="trace-evidence-source">{html.escape(source)}</div>'
+            f'<div class="trace-evidence-quote">“{html.escape(quote)}”</div>'
+            "</div>"
+        )
+    if not evidence_cards:
+        evidence_cards.append('<div class="trace-note">검증을 통과한 인용 근거가 없습니다.</div>')
+
+    answer_without_citations = CITATION_PATTERN.sub("", response.answer)
+    has_numeric_claim = bool(re.search(r"\d", answer_without_citations))
+    if response.status == "answered" and cited_items:
+        checks = ["✓ 인용 존재", "✓ 의미 근거 판정"]
+        checks.append("✓ 숫자 원문 일치" if has_numeric_claim else "✓ 숫자 주장 없음")
+        check_html = "".join(f'<span class="trace-check">{item}</span>' for item in checks)
+        answer_label = "근거가 있는 답변"
+    else:
+        check_html = '<span class="trace-check stop">근거 검증 중단</span>'
+        answer_label = "근거 부족 · 답변 중단"
+
+    summary_values = [value for value in (corpus_label, llm_label) if value]
+    summary_html = "".join(
+        f'<span class="trace-summary-chip">{html.escape(value)}</span>'
+        for value in summary_values
+    )
+    return (
+        '<div class="trace-result-layout">'
+        '<section class="trace-answer-box">'
+        f'<div class="trace-answer-label">{html.escape(answer_label)}</div>'
+        f'<div class="trace-answer">{_answer_html(response.answer, response.evidence)}</div>'
+        f'<div class="trace-run-summary">{summary_html}</div>'
+        "</section>"
+        '<section class="trace-evidence-panel">'
+        '<div class="trace-evidence-label">직접 근거와 검증</div>'
+        f'{"".join(evidence_cards)}'
+        f'<div class="trace-check-row">{check_html}</div>'
+        "</section></div>"
+    )
 
 
 def build_rank_flow_rows(response: RAGResponse) -> list[dict[str, object]]:
@@ -508,10 +813,11 @@ def _render_verification_view(response: RAGResponse) -> None:
     source_column, claim_column = st.columns([2, 1], gap="large")
     with source_column:
         st.markdown(f"#### {item['source_filename']} · {_page_label(item)}")
-        st.caption(f"검색된 원문 구간 · chunk ID {item['chunk_id']}")
+        st.caption("답변 주장을 직접 지지하는 원문 구간")
+        supporting_excerpt = _supporting_excerpt(claim, item["text"], limit=520)
         st.markdown(
             '<div class="trace-document"><mark>'
-            f'{html.escape(item["text"]).replace(chr(10), "<br>")}'
+            f'{html.escape(supporting_excerpt).replace(chr(10), "<br>")}'
             "</mark></div>",
             unsafe_allow_html=True,
         )
@@ -523,15 +829,34 @@ def _render_verification_view(response: RAGResponse) -> None:
             "</div>",
             unsafe_allow_html=True,
         )
-        st.markdown('<div class="trace-pass">✓ 실제 검색 결과의 인용 번호</div>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="trace-pass">✓ 인용 번호가 실제 검색 결과에 존재</div>',
+            unsafe_allow_html=True,
+        )
         if numeric_check["grounded"]:
-            st.markdown('<div class="trace-pass">✓ 주장의 숫자가 원문에 있음</div>', unsafe_allow_html=True)
+            numeric_message = (
+                "✓ 주장의 숫자가 원문에 있음"
+                if re.search(r"\d", CITATION_PATTERN.sub("", claim))
+                else "✓ 별도로 검증할 숫자 주장 없음"
+            )
+            st.markdown(
+                f'<div class="trace-pass">{numeric_message}</div>',
+                unsafe_allow_html=True,
+            )
         else:
             st.warning(f"숫자 확인 필요: {numeric_check['missing']}")
         st.markdown(
-            '<p class="trace-note">인용 번호와 숫자는 자동 검사하고, 문장 전체의 의미는 Ragas와 사람 검토로 추가 확인합니다.</p>',
+            '<div class="trace-pass">✓ 로컬 LLM의 의미적 근거 충분성 판정 통과</div>',
             unsafe_allow_html=True,
         )
+        st.markdown(
+            '<p class="trace-note">인용·숫자 검증은 코드가 수행합니다. 의미적 근거 판정은 현재 로컬 LLM의 1차 판정이며, 독립적인 Ragas 평가와 사람 검토는 평가 탭에서 구분합니다.</p>',
+            unsafe_allow_html=True,
+        )
+
+    if st.checkbox("전체 Chunk 원문 보기", key=f"trace_full_chunk_{selected_rank}"):
+        st.caption(f"chunk ID · {item['chunk_id']}")
+        st.code(item["text"], language=None)
 
 
 def _raw_rows(response: RAGResponse, attempt: dict[str, object]) -> list[dict[str, object]]:
@@ -566,53 +891,24 @@ def render_trace_workspace(
     trace_id: str,
     corpus_label: str | None = None,
     llm_label: str | None = None,
+    document_prep_ms: float | None = None,
+    document_count: int | None = None,
+    chunk_count: int | None = None,
 ) -> None:
-    """답변과 BM25→Embedding→RRF→BGE Top-k를 한 화면에 이어서 보여준다."""
+    """답변·직접 근거를 먼저, 전체 검색 trace를 그 다음 계층에 보여준다."""
 
-    cited = set(citation_numbers(response.answer))
     attempts = list(response.retrieval_trace) or [_fallback_attempt(response)]
-    if len(attempts) > 1:
-        selected_index = st.selectbox(
-            "검색 시도",
-            range(len(attempts)),
-            index=len(attempts) - 1,
-            format_func=lambda index: (
-                f"{index + 1}차 · {attempts[index].get('query', '')}"
-                + (" (질문 재작성)" if index else "")
-            ),
-            key="trace_attempt",
-        )
-        attempt = attempts[selected_index]
-    else:
-        attempt = attempts[0]
+    final_attempt = attempts[-1]
 
-    elapsed_label = f"{elapsed_seconds:.2f}s" if elapsed_seconds is not None else "측정 안 됨"
-    summary_values = [
-        corpus_label or "기본 공고문",
-        f"검색 {len(attempts)}회",
-        f"최종 Top-{len(response.evidence)}",
-        f"답변 인용 {len(cited)}개",
-        f"전체 {elapsed_label}",
-    ]
-    if llm_label:
-        summary_values.append(llm_label)
+    st.markdown("### 답변과 직접 근거")
     st.markdown(
-        '<div class="trace-run-summary">'
-        + "".join(f'<span class="trace-summary-chip">{html.escape(value)}</span>' for value in summary_values)
-        + "</div>",
+        _overview_html(
+            response,
+            corpus_label=corpus_label,
+            llm_label=llm_label,
+        ),
         unsafe_allow_html=True,
     )
-
-    answer_copy = response.answer
-    answer_label = "근거가 있는 답변" if response.status == "answered" else "근거 부족 · 답변 중단"
-    st.markdown(
-        '<section class="trace-answer-box">'
-        f'<div class="trace-answer-label">{html.escape(answer_label)}</div>'
-        f'<div class="trace-answer">{_answer_html(answer_copy, response.evidence)}</div>'
-        "</section>",
-        unsafe_allow_html=True,
-    )
-
     if response.final_query != response.question:
         st.markdown(
             '<div class="trace-query-note">'
@@ -621,20 +917,70 @@ def render_trace_workspace(
             unsafe_allow_html=True,
         )
 
-    st.markdown("### 같은 질문의 단계별 Top-k")
-    st.caption(
-        f"현재 표시: {attempt.get('attempt', 1)}차 검색 · “{attempt.get('query', response.final_query)}” · "
-        "같은 색은 같은 Chunk입니다. 단계마다 점수 범위가 달라 원점수끼리는 직접 비교하지 않습니다."
+    st.markdown("### 한 번의 실행에서 근거가 좁혀진 과정")
+    st.markdown(
+        _pipeline_html(
+            response,
+            final_attempt,
+            document_count=document_count,
+            chunk_count=chunk_count,
+        ),
+        unsafe_allow_html=True,
     )
-    st.markdown(_topk_html(response, attempt), unsafe_allow_html=True)
 
-    with st.expander("인용 근거 원문 확인"):
+    cited_journey = _rank_journey_html(response)
+    if cited_journey:
+        st.markdown("### 최종 근거가 선택된 이유")
+        st.markdown(cited_journey, unsafe_allow_html=True)
+
+    st.markdown("### 어디에서 시간이 걸렸나")
+    st.markdown(
+        _timing_html(
+            response,
+            attempts,
+            elapsed_seconds=elapsed_seconds,
+            document_prep_ms=document_prep_ms,
+        ),
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "첫 실행은 Embedding·BGE·Ollama 모델을 메모리에 올리는 시간이 포함될 수 있습니다. "
+        "단계별 시간을 분리해 검색 병목과 생성 병목을 구분합니다."
+    )
+
+    with st.expander("실행 추적 · 전체 단계별 Top-k"):
+        if len(attempts) > 1:
+            selected_index = st.selectbox(
+                "검색 시도",
+                range(len(attempts)),
+                index=len(attempts) - 1,
+                format_func=lambda index: (
+                    f"{index + 1}차 · {attempts[index].get('query', '')}"
+                    + (" (질문 재작성)" if index else "")
+                ),
+                key="trace_attempt",
+            )
+            selected_attempt = attempts[selected_index]
+        else:
+            selected_attempt = final_attempt
+        st.caption(
+            f"{selected_attempt.get('attempt', 1)}차 검색 · "
+            f'“{selected_attempt.get("query", response.final_query)}” · '
+            "같은 색은 같은 Chunk입니다. 단계별 원점수 범위는 서로 다릅니다."
+        )
+        st.markdown(_topk_html(response, selected_attempt), unsafe_allow_html=True)
+
+    with st.expander("답변과 원문 자세히 비교"):
         _render_verification_view(response)
 
-    with st.expander("원점수와 실행 정보"):
+    with st.expander("개발자 정보 · Chunk ID와 원점수"):
         st.caption(f"실행 ID · {trace_id} · {' → '.join(response.steps)}")
         st.caption(f"LangGraph 판단 · {response.decision_reason}")
-        st.dataframe(_raw_rows(response, attempt), hide_index=True, use_container_width=True)
+        st.dataframe(
+            _raw_rows(response, final_attempt),
+            hide_index=True,
+            use_container_width=True,
+        )
 
 
 __all__ = [

@@ -99,6 +99,9 @@ def test_answer_path_returns_cited_answer_and_source_metadata():
     assert response.evidence[0]["source_filename"] == "지원사업 공고문.pdf"
     assert response.evidence[0]["page_number"] == 2
     assert retriever.queries == [(question, 5)]
+    assert response.timings_ms["retrieval"] >= 0
+    assert response.timings_ms["generation"] >= 0
+    assert response.timings_ms["validation"] >= 0
 
 
 def test_judge_draft_is_validated_without_second_llm_call():
