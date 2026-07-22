@@ -11,7 +11,11 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 sys.stdout.reconfigure(encoding="utf-8")
 
 from chunker import ChunkingConfig  # noqa: E402
-from reranker import DEFAULT_RERANK_CANDIDATES  # noqa: E402
+from reranker import (  # noqa: E402
+    DEFAULT_RERANK_CANDIDATES,
+    DEFAULT_RERANKER_MODEL,
+    SMALL_RERANKER_MODEL,
+)
 from run_retrieval_evaluation import (  # noqa: E402
     build_retrievers,
     load_corpus,
@@ -136,6 +140,51 @@ def test_candidate_experiment_artifacts_record_same_dev_conditions():
         reranker_5["mean_latency_ms"]
         < reranker_7["mean_latency_ms"]
         < reranker_10["mean_latency_ms"]
+    )
+
+
+def test_reranker_model_experiment_artifacts_record_same_dev_conditions():
+    artifact_names = {
+        DEFAULT_RERANKER_MODEL: "reranker-model-bge-dev.json",
+        SMALL_RERANKER_MODEL: "reranker-model-minilm-dev.json",
+    }
+    payloads = {
+        model_name: json.loads(
+            (PROJECT_ROOT / "experiments" / filename).read_text(encoding="utf-8")
+        )
+        for model_name, filename in artifact_names.items()
+    }
+    baseline = payloads[DEFAULT_RERANKER_MODEL]
+
+    for model_name, payload in payloads.items():
+        metadata = payload["metadata"]
+        retrieval = metadata["retrieval"]
+        assert metadata["split"] == "dev"
+        assert metadata["question_counts"]["normal"] == 20
+        assert metadata["golden_sha256"] == baseline["metadata"]["golden_sha256"]
+        assert metadata["documents"] == baseline["metadata"]["documents"]
+        assert metadata["chunking"] == baseline["metadata"]["chunking"]
+        assert retrieval["reranker_model"] == model_name
+        assert retrieval["reranker_candidates"] == 7
+        assert retrieval["reranker_batch_size"] == 2
+        assert retrieval["reranker_max_length"] == 512
+        assert retrieval["reranker_trust_remote_code"] is False
+        assert len(retrieval["reranker_model_revision"]) == 40
+
+    bge = baseline["systems"][0]
+    minilm = payloads[SMALL_RERANKER_MODEL]["systems"][0]
+    bge_runtime = baseline["metadata"]["reranker_runtime"]
+    minilm_runtime = payloads[SMALL_RERANKER_MODEL]["metadata"]["reranker_runtime"]
+
+    assert bge["hit_rates"]["hit@1"] == 0.85
+    assert minilm["hit_rates"]["hit@1"] == 0.7
+    assert bge["hit_rates"]["hit@5"] == 1.0
+    assert minilm["hit_rates"]["hit@5"] == 0.95
+    assert minilm["misses@5"] == ["q028"]
+    assert minilm["mean_latency_ms"] < bge["mean_latency_ms"]
+    assert (
+        minilm_runtime["peak_process_rss_mb"]
+        < bge_runtime["peak_process_rss_mb"]
     )
 
 

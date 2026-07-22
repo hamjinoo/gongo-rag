@@ -19,7 +19,7 @@
 |---|---|---|
 | 문서 처리 | PDF·DOCX·이미지 추출, 문단 우선 chunking, LangChain Document 변환 | 색인 수명 관리 |
 | 검색 | Kiwi BM25 + E5/Chroma + chunk ID 기반 RRF 통합 검색 | 검색 실패 유형 확장 |
-| 재정렬 | `BAAI/bge-reranker-v2-m3` 로컬 CrossEncoder, dev 기준 후보 7개 | 작은 모델·Cohere와 품질·속도·비용 비교 |
+| 재정렬 | BGE 로컬 CrossEncoder, dev 기준 후보 7개·소형 모델 비교 완료 | Cohere 비교 여부 결정 |
 | 답변 | LLM prompt, 숫자 근거 일치 검사, `정보 없음` 처리 | LangGraph 재검색·거절 흐름 |
 | 평가 | 골든셋 36문항, dev/test 분리, Hit@k·MRR·nDCG·지연 리포트 | 모델 선택 후 test 1회 + Ragas |
 | 서비스 | Streamlit 문서 업로드·추출·질문 데모 | FastAPI + Docker |
@@ -28,6 +28,10 @@
 CPU 평균 약 6.28초였습니다. 후보 7개는 Hit@1 0.85, MRR 0.925를 기록하면서
 평균 지연을 약 4.20초로 33.1% 줄였습니다. 작은 dev 결과이므로 최종 성능으로
 일반화하지 않으며, 모델 선택이 끝난 뒤 test normal 10문항을 한 번만 확인합니다.
+
+같은 후보 7개로 568M BGE와 118M MiniLM을 다시 비교하자 MiniLM은 약 9.8배
+빨랐지만 Hit@1이 0.85에서 0.70으로 떨어졌습니다. 따라서 품질 우선 기본값은
+BGE로 유지하고 MiniLM은 속도 우선 선택지로만 기록했습니다.
 
 ## 현재 아키텍처
 
@@ -116,6 +120,10 @@ dev 결과는 [7번 작업: 같은 시험지로 검색기 성적 비교하기](d
 후보 10·7·5개의 속도와 정확도를 비교해 7개를 선택한 근거는
 [reranker 후보 수 비교](experiments/reranker-candidate-comparison-dev.md)에
 남겼습니다.
+같은 후보 7개에서 BGE와 작은 MiniLM의 품질·속도·메모리를 비교한 결과와
+모델 선택 근거는
+[작은 로컬 reranker 비교](experiments/reranker-model-comparison-dev.md)에
+남겼습니다.
 
 ```powershell
 python src\run_retrieval_evaluation.py --split dev
@@ -161,8 +169,8 @@ gongo-rag/
 
 ## 다음 마일스톤
 
-1. 더 작은 로컬 모델과 Cohere Rerank를 후보 7개로 dev에서 비교하기
-2. 선택한 설정을 고정하고 test split을 한 번 실행하기
+1. Cohere Rerank를 실제 비교할지 결정하고 이유 기록하기
+2. 선택한 검색 설정을 고정하고 test split을 한 번 실행하기
 3. LangGraph 재검색·거절 흐름 구현하기
 4. Ragas·수동 검토를 포함한 답변 평가표 작성하기
 5. FastAPI·Docker와 재현 가능한 실행 환경 제공하기

@@ -291,7 +291,8 @@ def render_reranker(
     )
     st.info(
         "dev에서 후보 7개가 Hit@1 0.85를 유지하면서 CPU 평균 지연을 약 "
-        "6.28초에서 4.20초로 줄였습니다. 다음은 더 작은 모델·Cohere 비교입니다."
+        "6.28초에서 4.20초로 줄였습니다. MiniLM은 약 9.8배 빨랐지만 "
+        "Hit@1이 0.70으로 떨어져 BGE를 유지했습니다. 다음은 Cohere 결정입니다."
     )
     return results
 

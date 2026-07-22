@@ -11,10 +11,15 @@ sys.stdout.reconfigure(encoding="utf-8")
 from chunker import DocumentChunk  # noqa: E402
 from hybrid_search import HybridSearchResult  # noqa: E402
 from reranker import (  # noqa: E402
+    DEFAULT_RERANKER_MODEL,
+    RERANKER_MODEL_SPECS,
+    SMALL_RERANKER_MODEL,
     CrossEncoderReranker,
     RerankerCandidateError,
+    RerankerModelUnavailableError,
     RerankerScoringError,
     SentenceTransformersCrossEncoderScorer,
+    get_reranker_model_spec,
 )
 
 
@@ -283,6 +288,32 @@ def test_sentence_transformers_adapter_builds_query_passage_pairs():
         "show_progress_bar": False,
         "convert_to_numpy": True,
     }
+
+
+def test_model_registry_pins_reviewed_models_and_limits_remote_code():
+    default = get_reranker_model_spec(DEFAULT_RERANKER_MODEL)
+    small = get_reranker_model_spec(SMALL_RERANKER_MODEL)
+
+    assert set(RERANKER_MODEL_SPECS) == {
+        DEFAULT_RERANKER_MODEL,
+        SMALL_RERANKER_MODEL,
+    }
+    assert len(default.revision) == 40
+    assert len(small.revision) == 40
+    assert default.code_revision is None
+    assert small.code_revision is None
+    assert small.parameter_count < default.parameter_count
+    assert default.trust_remote_code is False
+    assert small.trust_remote_code is False
+    assert default.license_name == "Apache-2.0"
+    assert small.license_name == "Apache-2.0"
+
+    try:
+        get_reranker_model_spec("unknown/model")
+    except RerankerModelUnavailableError as exc:
+        assert "허용되지 않은" in str(exc)
+    else:
+        raise AssertionError("검토하지 않은 원격 모델을 허용하면 안 됩니다.")
 
 
 def test_sentence_transformers_adapter_validates_model_output():
