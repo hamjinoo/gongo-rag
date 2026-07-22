@@ -94,6 +94,13 @@ def test_saved_rag_response_renders_inside_existing_streamlit_app():
     assert [tab.label for tab in app.tabs] == ["RAG 실행", "평가", "세부 실험"]
     assert any("지원사업 공고문.pdf" in block.value for block in app.markdown)
     assert any("최종 답변과 직접 근거" in block.value for block in app.markdown)
+    result_card = next(
+        block.value
+        for block in app.markdown
+        if '<div class="trace-result-card">' in block.value
+    )
+    assert '<span class="trace-question-label">질문</span>' in result_card
+    assert "지원 금액은 얼마인가요?" in result_card
     assert any("이 근거가 선택된 이유" in block.value for block in app.markdown)
     assert any("실행 시간 분석" in block.value for block in app.markdown)
     assert any(expander.label == "실행 추적 · 전체 단계별 Top-k" for expander in app.expander)

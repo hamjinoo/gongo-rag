@@ -72,6 +72,26 @@ APP_STYLE = """
   overflow: hidden;
   margin: .65rem 0 1.1rem;
 }
+.trace-question-row {
+  display: flex;
+  align-items: baseline;
+  gap: .75rem;
+  border-bottom: 1px solid #e1e7f0;
+  background: rgba(239,244,253,.72);
+  padding: .8rem 1.3rem;
+}
+.trace-question-label {
+  flex: 0 0 auto;
+  color: var(--trace-blue);
+  font-size: .72rem;
+  font-weight: 850;
+}
+.trace-question-text {
+  color: #273248;
+  font-size: .94rem;
+  line-height: 1.55;
+  font-weight: 750;
+}
 .trace-answer-box {
   border: 0;
   border-radius: 0;
@@ -942,7 +962,11 @@ def _overview_html(
         for value in summary_values
     )
     return (
-        '<div class="trace-result-card"><div class="trace-result-layout">'
+        '<div class="trace-result-card">'
+        '<div class="trace-question-row">'
+        '<span class="trace-question-label">질문</span>'
+        f'<span class="trace-question-text">{html.escape(response.question)}</span>'
+        '</div><div class="trace-result-layout">'
         '<section class="trace-answer-box">'
         f'<div class="trace-answer-label">{html.escape(answer_label)}</div>'
         f'<div class="trace-answer">{_answer_html(response.answer, response.evidence)}</div>'
